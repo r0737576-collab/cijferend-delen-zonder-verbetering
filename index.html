@@ -487,28 +487,37 @@ function verbeterWerkveld(stappen){
     });
 
 
-    /* REST */
-    const restCells = Array.from(
-      restRow.querySelectorAll('.wcell')
-    );
+   /* ===== REST ===== */
 
-    const ingevuldRest =
-      restCells.filter(c => (c.textContent||'').trim() !== '');
+const restCells = Array.from(
+  restRow.querySelectorAll('.wcell')
+);
 
-    const juisteRest = String(stap.aftrek).split('');
+// Enkel ingevulde cellen
+const ingevuldRest =
+  restCells.filter(c => (c.textContent||'').trim() !== '');
 
-    ingevuldRest.forEach((cel, idx)=>{
+const juisteRest = String(stap.aftrek).split('');
 
-      kleurCel(
-        cel,
-        parseInt(juisteRest[idx] || -1),
-        'Foute aftrekking'
-      );
+// 👉 Enkel eerste cijfers = aftrekking
+ingevuldRest.forEach((cel, idx)=>{
 
-    });
+  // Als leerling meer cijfers invult dan de echte rest
+  if (idx >= juisteRest.length){
 
-  });
-}
+    // Dit is neerhalen → niet verbeteren
+    cel.style.backgroundColor = '';
+    cel.title = 'Neergehaald cijfer';
+    return;
+  }
+
+  kleurCel(
+    cel,
+    parseInt(juisteRest[idx]),
+    'Foute aftrekking'
+  );
+
+});
 
 
 /* ===== Alles ===== */
