@@ -361,6 +361,7 @@ main{ padding:1rem; }
 
 /* ===============================
    AUTOMATISCHE VERBETERING
+   Enkel ingevulde cellen + uitleg
 ================================= */
 
 function berekenStappen(deeltal, deler, maxDecimalen = 3){
@@ -375,17 +376,11 @@ function berekenStappen(deeltal, deler, maxDecimalen = 3){
     let product = q * deler;
     let aftrek = huidig - product;
 
-    stappen.push({
-      huidig,
-      q,
-      product,
-      aftrek
-    });
-
+    stappen.push({ huidig, q, product, aftrek });
     rest = aftrek;
   }
 
-  // Decimalen indien nodig
+  // Decimalen
   let dec = 0;
   while (rest !== 0 && dec < maxDecimalen){
     let huidig = rest * 10;
@@ -393,13 +388,7 @@ function berekenStappen(deeltal, deler, maxDecimalen = 3){
     let product = q * deler;
     let aftrek = huidig - product;
 
-    stappen.push({
-      huidig,
-      q,
-      product,
-      aftrek,
-      decimaal:true
-    });
+    stappen.push({ huidig, q, product, aftrek, decimaal:true });
 
     rest = aftrek;
     dec++;
@@ -409,79 +398,126 @@ function berekenStappen(deeltal, deler, maxDecimalen = 3){
 }
 
 
+/* ===== Helper: cel verbeteren ===== */
+function checkCell(cel, juisteWaarde, uitlegFout){
+
+  const txt = (cel.textContent || '').trim();
+
+  // 👉 Leeg = niet nakijken
+  if (txt === ''){
+    cel.style.backgroundColor = '';
+    cel.title = '';
+    return;
+  }
+
+  if (parseInt(txt) === juisteWaarde){
+    cel.style.backgroundColor = 'lightgreen';
+    cel.title = 'Juist ✔';
+  } else {
+    cel.style.backgroundColor = 'lightcoral';
+    cel.title = uitlegFout + ' (moet ' + juisteWaarde + ' zijn)';
+  }
+}
+
+
 /* ===== Quotient verbeteren ===== */
 function verbeterQuotient(stappen){
-  const cells = Array.from(document.querySelectorAll('#quotGrid .gridcell'));
 
-  // komma verwijderen voor vergelijking
-  let cijfers = cells
-    .map(c => (c.textContent || '').trim())
-    .filter(t => t !== ',' && t !== '');
+  const cells = Array.from(
+    document.querySelectorAll('#quotGrid .gridcell')
+  );
 
-  stappen.forEach((stap,i)=>{
-    const cel = cells[i];
-    if (!cel) return;
+  let idx = 0;
 
-    if (parseInt(cijfers[i]) === stap.q){
-      cel.style.backgroundColor = 'lightgreen';
-    } else {
-      cel.style.backgroundColor = 'lightcoral';
-    }
+  cells.forEach(cel => {
+
+    const t = (cel.textContent || '').trim();
+
+    if (t === ',' || t === '') return;
+
+    const stap = stappen[idx];
+    if (!stap) return;
+
+    checkCell(
+      cel,
+      stap.q,
+      'Fout quotiëntcijfer'
+    );
+
+    idx++;
   });
 }
 
 
 /* ===== Werkveld verbeteren ===== */
 function verbeterWerkveld(stappen){
-  const rows = Array.from(document.querySelectorAll('#workArea .workRow'));
+
+  const rows = Array.from(
+    document.querySelectorAll('#workArea .workRow')
+  );
 
   stappen.forEach((stap, i)=>{
+
     const prodRow = rows[i*2];
     const restRow = rows[i*2+1];
+
     if (!prodRow || !restRow) return;
 
-    // PRODUCT controleren
-    const prodCells = Array.from(prodRow.querySelectorAll('.wcell'));
+    /* ===== PRODUCT ===== */
+    const prodCells = Array.from(
+      prodRow.querySelectorAll('.wcell')
+    );
+
     const prodStr = String(stap.product);
 
-    prodCells.forEach(c=> c.style.backgroundColor='');
-
     for (let k=0;k<prodStr.length;k++){
-      const cel = prodCells[prodCells.length - prodStr.length + k];
+
+      const cel =
+        prodCells[prodCells.length - prodStr.length + k];
+
       if (!cel) continue;
 
-      if ((cel.textContent||'').trim() == prodStr[k]){
-        cel.style.backgroundColor = 'lightgreen';
-      } else {
-        cel.style.backgroundColor = 'lightcoral';
-      }
+      checkCell(
+        cel,
+        parseInt(prodStr[k]),
+        'Fout vermenigvuldiging'
+      );
     }
 
-    // REST controleren
-    const restCells = Array.from(restRow.querySelectorAll('.wcell'));
+
+    /* ===== REST ===== */
+    const restCells = Array.from(
+      restRow.querySelectorAll('.wcell')
+    );
+
     const restStr = String(stap.aftrek);
 
-    restCells.forEach(c=> c.style.backgroundColor='');
-
     for (let k=0;k<restStr.length;k++){
-      const cel = restCells[restCells.length - restStr.length + k];
+
+      const cel =
+        restCells[restCells.length - restStr.length + k];
+
       if (!cel) continue;
 
-      if ((cel.textContent||'').trim() == restStr[k]){
-        cel.style.backgroundColor = 'lightgreen';
-      } else {
-        cel.style.backgroundColor = 'lightcoral';
-      }
+      checkCell(
+        cel,
+        parseInt(restStr[k]),
+        'Foute aftrekking'
+      );
     }
+
   });
 }
 
 
 /* ===== Alles verbeteren ===== */
 function verbeterAlles(){
-  if (!document.getElementById('enableCheck').checked) return;
 
-  const stappen = berekenStappen(current.dividend, current.divisor, 3);
+  if (!document.getElementById('enableCheck').checked)
+    return;
+
+  const stappen =
+    berekenStappen(current.dividend, current.divisor, 3);
 
   verbeterQuotient(stappen);
   verbeterWerkveld(stappen);
@@ -489,7 +525,9 @@ function verbeterAlles(){
 
 
 /* ===== Knop koppelen ===== */
-document.getElementById('btnCheck').addEventListener('click', verbeterAlles);
+document
+  .getElementById('btnCheck')
+  .addEventListener('click', verbeterAlles);
 
   
   newExercise();
