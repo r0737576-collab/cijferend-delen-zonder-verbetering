@@ -609,7 +609,106 @@ document
   .getElementById('btnCheck')
   .addEventListener('click', verbeterAlles);
 
-  
+/* ===============================
+   PIJLTJESTOETS NAVIGATIE
+================================= */
+
+function getAllEditableCells(){
+
+  return Array.from(
+    document.querySelectorAll(
+      '#quotGrid .gridcell[contenteditable="true"], ' +
+      '#workArea .wcell[contenteditable="true"]'
+    )
+  );
+}
+
+
+/* Bepaal positie in raster */
+function getCellPosition(cell){
+
+  const row = cell.parentElement;
+  const allRows = Array.from(
+    row.parentElement.children
+  );
+
+  return {
+    rowIndex: allRows.indexOf(row),
+    colIndex: Array.from(row.children).indexOf(cell),
+    row,
+    allRows
+  };
+}
+
+
+/* Ga naar cel */
+function focusCell(target){
+
+  if (!target) return;
+
+  target.focus();
+
+  const range = document.createRange();
+  range.selectNodeContents(target);
+
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+
+/* Key navigation */
+document.addEventListener('keydown', function(e){
+
+  const active = document.activeElement;
+
+  if (
+    !active ||
+    !active.isContentEditable
+  ) return;
+
+  const { rowIndex, colIndex, row, allRows } =
+    getCellPosition(active);
+
+  let target = null;
+
+  switch(e.key){
+
+    case 'ArrowRight':
+      target = row.children[colIndex + 1];
+      break;
+
+    case 'ArrowLeft':
+      target = row.children[colIndex - 1];
+      break;
+
+    case 'ArrowDown':
+      if (allRows[rowIndex + 1]){
+        target =
+          allRows[rowIndex + 1]
+          .children[colIndex];
+      }
+      break;
+
+    case 'ArrowUp':
+      if (allRows[rowIndex - 1]){
+        target =
+          allRows[rowIndex - 1]
+          .children[colIndex];
+      }
+      break;
+
+    default:
+      return;
+  }
+
+  if (target){
+    e.preventDefault();
+    focusCell(target);
+  }
+});
+
+    
   newExercise();
 })();
 </script>
