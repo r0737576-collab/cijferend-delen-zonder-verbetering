@@ -711,6 +711,88 @@ document.addEventListener('keydown', function(e){
   }
 });
 
+  /* ===============================
+   TAB WISSEL QUOTIENT ↔ WERKVELD
+================================= */
+
+document.addEventListener('keydown', function(e){
+
+  if (e.key !== 'Tab') return;
+
+  const active = document.activeElement;
+
+  if (!active || !active.isContentEditable) return;
+
+  e.preventDefault();
+
+  const inQuotient =
+    active.closest('#quotGrid');
+
+  const inWerkveld =
+    active.closest('#workArea');
+
+  const quotCells = Array.from(
+    document.querySelectorAll(
+      '#quotGrid .gridcell[contenteditable="true"]'
+    )
+  );
+
+  const werkCells = Array.from(
+    document.querySelectorAll(
+      '#workArea .wcell[contenteditable="true"]'
+    )
+  );
+
+  let target = null;
+
+  /* ===== VAN QUOTIENT → WERKVELD ===== */
+
+  if (inQuotient){
+
+    const idx = quotCells.indexOf(active);
+
+    target = werkCells[idx] || werkCells[0];
+  }
+
+  /* ===== VAN WERKVELD → QUOTIENT ===== */
+
+  else if (inWerkveld){
+
+    const row = active.parentElement;
+    const col = Array.from(row.children)
+      .indexOf(active);
+
+    target = quotCells[col] || quotCells[0];
+  }
+
+  /* ===== SHIFT+TAB = OMGEKEERD ===== */
+
+  if (e.shiftKey){
+
+    if (inWerkveld){
+
+      const row = active.parentElement;
+      const col = Array.from(row.children)
+        .indexOf(active);
+
+      target = quotCells[col] || quotCells[0];
+
+    } else if (inQuotient){
+
+      const idx = quotCells.indexOf(active);
+
+      target =
+        werkCells[idx] ||
+        werkCells[werkCells.length - 1];
+    }
+  }
+
+  if (target){
+    focusCell(target);
+  }
+
+});
+
     
   newExercise();
 })();
