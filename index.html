@@ -367,30 +367,53 @@ main{ padding:1rem; }
 function berekenStappen(deeltal, deler, maxDecimalen = 3){
 
   let stappen = [];
-  let rest = 0;
   let cijfers = String(deeltal).split("");
 
-  // Integer deel
-  for (let i = 0; i < cijfers.length; i++){
+  let rest = 0;
+  let i = 0;
 
-    let huidig = rest * 10 + parseInt(cijfers[i],10);
-    let q = Math.floor(huidig / deler);
-    let product = q * deler;
-    let aftrek = huidig - product;
+  /* ===== Eerste stap bepalen ===== */
+
+  let huidig = parseInt(cijfers[0],10);
+
+  if (huidig < deler && cijfers.length > 1){
+    huidig = parseInt(cijfers[0] + cijfers[1],10);
+    i = 2;
+  } else {
+    i = 1;
+  }
+
+  let q = Math.floor(huidig / deler);
+  let product = q * deler;
+  let aftrek = huidig - product;
+
+  stappen.push({ huidig, q, product, aftrek });
+
+  rest = aftrek;
+
+  /* ===== Rest integer stappen ===== */
+
+  for (; i < cijfers.length; i++){
+
+    huidig = rest * 10 + parseInt(cijfers[i],10);
+    q = Math.floor(huidig / deler);
+    product = q * deler;
+    aftrek = huidig - product;
 
     stappen.push({ huidig, q, product, aftrek });
 
     rest = aftrek;
   }
 
-  // Decimalen
+  /* ===== Decimalen ===== */
+
   let dec = 0;
   while (rest !== 0 && dec < maxDecimalen){
 
-    let huidig = rest * 10;
-    let q = Math.floor(huidig / deler);
-    let product = q * deler;
-    let aftrek = huidig - product;
+    huidig = rest * 10;
+    q = Math.floor(huidig / deler);
+    product = q * deler;
+    aftrek = huidig - product;
 
     stappen.push({ huidig, q, product, aftrek });
 
@@ -475,16 +498,26 @@ function verbeterWerkveld(stappen){
       prodCells.filter(c => (c.textContent||'').trim() !== '');
 
     const juisteProd = String(stap.product).split('');
+const start = ingevuldProd.length - juisteProd.length;
 
-    ingevuldProd.forEach((cel, idx)=>{
+ingevuldProd.forEach((cel, idx)=>{
 
-      kleurCel(
-        cel,
-        parseInt(juisteProd[idx] || -1),
-        'Fout vermenigvuldiging'
-      );
+  const juistCijfer = juisteProd[idx - start];
 
-    });
+  if (juistCijfer === undefined){
+    // Dit is lege opvulcel → niet verbeteren
+    cel.style.backgroundColor = '';
+    cel.title = '';
+    return;
+  }
+
+  kleurCel(
+    cel,
+    parseInt(juistCijfer),
+    'Fout vermenigvuldiging'
+  );
+
+});
 
 
    /* ===== REST ===== */
