@@ -426,7 +426,7 @@ function berekenStappen(deeltal, deler, maxDecimalen = 3){
 
 
 /* ===== Helper ===== */
-function kleurCel(cel, juist, uitleg){
+function kleurCel(cel, juist, uitleg, extraFout = null){
 
   const txt = (cel.textContent || '').trim();
 
@@ -436,14 +436,25 @@ function kleurCel(cel, juist, uitleg){
     return;
   }
 
-  if (parseInt(txt) === juist){
+  const waarde = parseInt(txt);
+
+  if (waarde === juist){
+
     cel.style.backgroundColor = 'lightgreen';
     cel.title = 'Juist ✔';
+
   } else {
+
     cel.style.backgroundColor = 'lightcoral';
-    cel.title = uitleg + ' (moet ' + juist + ')';
+
+    if (extraFout){
+      cel.title = extraFout;
+    } else {
+      cel.title = uitleg + ' (moet ' + juist + ')';
+    }
   }
 }
+
 
 
 /* ===== Quotient ===== */
@@ -489,15 +500,16 @@ function verbeterWerkveld(stappen){
 
     if (!prodRow || !restRow) return;
 
-    /* PRODUCT */
-    const prodCells = Array.from(
-      prodRow.querySelectorAll('.wcell')
-    );
+  /* PRODUCT */
 
-    const ingevuldProd =
-      prodCells.filter(c => (c.textContent||'').trim() !== '');
+const prodCells = Array.from(
+  prodRow.querySelectorAll('.wcell')
+);
 
-    const juisteProd = String(stap.product).split('');
+const ingevuldProd =
+  prodCells.filter(c => (c.textContent||'').trim() !== '');
+
+const juisteProd = String(stap.product).split('');
 const start = ingevuldProd.length - juisteProd.length;
 
 ingevuldProd.forEach((cel, idx)=>{
@@ -505,9 +517,25 @@ ingevuldProd.forEach((cel, idx)=>{
   const juistCijfer = juisteProd[idx - start];
 
   if (juistCijfer === undefined){
-    // Dit is lege opvulcel → niet verbeteren
     cel.style.backgroundColor = '';
     cel.title = '';
+    return;
+  }
+
+  const leerlingWaarde =
+    parseInt((cel.textContent||'').trim());
+
+  /* ===== NIEUW: product te groot ===== */
+
+  if (stap.product > stap.huidig){
+
+    kleurCel(
+      cel,
+      parseInt(juistCijfer),
+      'Fout vermenigvuldiging',
+      'Product te groot gekozen'
+    );
+
     return;
   }
 
@@ -519,28 +547,39 @@ ingevuldProd.forEach((cel, idx)=>{
 
 });
 
-
-   /* ===== REST ===== */
+/* ===== REST ===== */
 
 const restCells = Array.from(
   restRow.querySelectorAll('.wcell')
 );
 
-// Enkel ingevulde cellen
 const ingevuldRest =
   restCells.filter(c => (c.textContent||'').trim() !== '');
 
 const juisteRest = String(stap.aftrek).split('');
 
-// 👉 Enkel eerste cijfers = aftrekking
 ingevuldRest.forEach((cel, idx)=>{
 
-  // Als leerling meer cijfers invult dan de echte rest
   if (idx >= juisteRest.length){
-
-    // Dit is neerhalen → niet verbeteren
     cel.style.backgroundColor = '';
-    cel.title = 'Cijfer dat je liet zakken';
+    cel.title = 'Neergehaald cijfer';
+    return;
+  }
+
+  const leerlingWaarde =
+    parseInt((cel.textContent||'').trim());
+
+  /* ===== NIEUW: rest ≥ deler ===== */
+
+  if (leerlingWaarde >= current.divisor){
+
+    kleurCel(
+      cel,
+      parseInt(juisteRest[idx]),
+      'Foute aftrekking',
+      'Rest moet kleiner zijn dan de deler'
+    );
+
     return;
   }
 
@@ -551,10 +590,8 @@ ingevuldRest.forEach((cel, idx)=>{
   );
 
 });
-    
-});
 
-}
+
   
 /* ===== Alles ===== */
 function verbeterAlles(){
