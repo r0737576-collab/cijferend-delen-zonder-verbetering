@@ -299,7 +299,44 @@ main{ padding:1rem; }
         cell.setAttribute('contenteditable','true');
 
         // Alleen product-rijen (even r) → rest-rij eronder krijgt topline onder de gebruikte productkolommen
-        cell.addEventListener('input', ()=> handleRowInput(node, row));
+        cell.addEventListener('input', function(){
+
+  let t = cell.textContent || '';
+
+  /* ===== Alleen cijfers ===== */
+  t = t.replace(/\D+/g,'');
+
+  /* ===== Als 2 cijfers → splitsen ===== */
+  if (t.length === 2){
+
+    const first  = t[0];
+    const second = t[1];
+
+    cell.textContent = first;
+
+    const next = cell.nextElementSibling;
+
+    if (next && next.isContentEditable){
+      next.textContent = second;
+      focusCell(next);
+    }
+
+  }
+
+  /* ===== Als 1 cijfer → gewoon laten ===== */
+  else if (t.length === 1){
+    cell.textContent = t;
+  }
+
+  /* ===== Leeg ===== */
+  else{
+    cell.textContent = '';
+  }
+
+  handleRowInput(node, row);
+
+});
+
         cell.addEventListener('blur',  ()=> handleRowInput(node, row));
 
         row.appendChild(cell);
