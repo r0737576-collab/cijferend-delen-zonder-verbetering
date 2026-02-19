@@ -301,13 +301,13 @@ main{ padding:1rem; }
         // Alleen product-rijen (even r) → rest-rij eronder krijgt topline onder de gebruikte productkolommen
         cell.addEventListener('input', function(){
 
-  let t = cell.textContent || '';
+  let t = (cell.textContent || '');
 
-  /* ===== Alleen cijfers ===== */
+  /* Alleen cijfers houden */
   t = t.replace(/\D+/g,'');
 
-  /* ===== Als 2 cijfers → splitsen ===== */
-  if (t.length === 2){
+  /* ===== 2 cijfers → splitsen ===== */
+  if (t.length >= 2){
 
     const first  = t[0];
     const second = t[1];
@@ -317,18 +317,22 @@ main{ padding:1rem; }
     const next = cell.nextElementSibling;
 
     if (next && next.isContentEditable){
-      next.textContent = second;
-      focusCell(next);
-    }
 
+      next.textContent = second;
+
+      // kleine delay → cursor correct zetten
+      setTimeout(()=>{
+        focusCell(next);
+      }, 0);
+    }
   }
 
-  /* ===== Als 1 cijfer → gewoon laten ===== */
+  /* ===== 1 cijfer ===== */
   else if (t.length === 1){
     cell.textContent = t;
   }
 
-  /* ===== Leeg ===== */
+  /* ===== leeg ===== */
   else{
     cell.textContent = '';
   }
@@ -682,19 +686,22 @@ function getCellPosition(cell){
 
 
 /* Ga naar cel */
-function focusCell(target){
+function focusCell(el){
 
-  if (!target) return;
+  if (!el) return;
 
-  target.focus();
+  el.focus();
 
+  // Cursor achteraan zetten
   const range = document.createRange();
-  range.selectNodeContents(target);
+  range.selectNodeContents(el);
+  range.collapse(false);
 
   const sel = window.getSelection();
   sel.removeAllRanges();
   sel.addRange(range);
 }
+
 
 
 /* Key navigation */
