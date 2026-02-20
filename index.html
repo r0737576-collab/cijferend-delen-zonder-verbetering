@@ -114,10 +114,20 @@ main{ padding:1rem; }
         <div id="quotGrid" class="gridrow"></div>
       </div>
 
+<label style="display:block; margin-top:20px;">
+  <input type="checkbox" id="controleToggle">
+  Controle
+</label>
+
+<div id="controleZone"></div>
+
+      
     </div>
   </section>
 </main>
 
+
+  
 <script>
 (function(){
   const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
@@ -840,6 +850,114 @@ document.addEventListener('keydown', function(e){
     
   newExercise();
 })();
+
+const controleToggle = document.getElementById('controleToggle');
+const controleZone   = document.getElementById('controleZone');
+
+controleToggle.addEventListener('change', function(){
+
+  if (this.checked){
+    toonControleInteractief();
+  } else {
+    controleZone.innerHTML = '';
+  }
+
+});
+
+  function toonControleInteractief(){
+
+  const quotient = document.getElementById('quotient')?.textContent.trim();
+  const divisor  = document.getElementById('divisor')?.textContent.trim();
+  const rest     = document.getElementById('rest')?.textContent.trim() || "0";
+
+  if (!quotient || !divisor){
+    controleZone.innerHTML = '';
+    return;
+  }
+
+  const rows  = divisor.length;
+  const width = quotient.length + rows + 1;
+
+  let html = `<div style="margin-top:25px; font-family:monospace;">`;
+
+  html += `<div style="text-align:right; width:${width}ch;">${quotient}</div>`;
+  html += `<div style="text-align:right; width:${width}ch;">× ${divisor}</div>`;
+  html += `<div style="border-top:1px solid black; width:${width}ch;"></div>`;
+
+  for(let r = 0; r < rows; r++){
+    html += `<div class="productRow" style="text-align:right; width:${width}ch;">`;
+    for(let c = 0; c < width; c++){
+      html += `<span contenteditable="true" class="controleCell"></span>`;
+    }
+    html += `</div>`;
+  }
+
+  html += `<div style="border-top:1px solid black; width:${width}ch; margin-top:5px;"></div>`;
+
+  html += `<div id="controleProductTotaal" style="text-align:right; width:${width}ch;">`;
+  for(let c = 0; c < width; c++){
+    html += `<span contenteditable="true" class="controleCell"></span>`;
+  }
+  html += `</div>`;
+
+  html += `<div style="margin-top:15px; text-align:right; width:${width}ch;">+ ${rest}</div>`;
+  html += `<div style="border-top:1px solid black; width:${width}ch;"></div>`;
+
+  html += `<div id="controleEindTotaal" style="text-align:right; width:${width}ch;">`;
+  for(let c = 0; c < width; c++){
+    html += `<span contenteditable="true" class="controleCell"></span>`;
+  }
+  html += `</div>`;
+
+  html += `<div id="controleFeedback" style="margin-top:10px;"></div>`;
+  html += `</div>`;
+
+  controleZone.innerHTML = html;
+
+  activeControleListenersKolom();
+}
+
+  function activeControleListenersKolom(){
+
+  const feedback = document.getElementById('controleFeedback');
+  const cells = document.querySelectorAll('.controleCell');
+
+  cells.forEach(cell=>{
+    cell.addEventListener('input', checkControleKolom);
+  });
+
+  function getNumberFromRow(id){
+    const row = document.querySelector(id);
+    if(!row) return 0;
+    let num = '';
+    row.querySelectorAll('span').forEach(c=>{
+      num += c.textContent.replace(/\D/g,'');
+    });
+    return parseInt(num) || 0;
+  }
+
+  function checkControleKolom(){
+
+    const q = parseInt(document.getElementById('quotient').textContent);
+    const d = parseInt(document.getElementById('divisor').textContent);
+    const r = parseInt(document.getElementById('rest')?.textContent || "0");
+    const dividend = parseInt(document.getElementById('dividend').textContent);
+
+    const expectedProduct = q * d;
+    const expectedTotal   = expectedProduct + r;
+
+    const productUser = getNumberFromRow('#controleProductTotaal');
+    const totalUser   = getNumberFromRow('#controleEindTotaal');
+
+    if (productUser === expectedProduct && totalUser === expectedTotal){
+      feedback.innerHTML = '<span style="color:green;">✔ Controle correct</span>';
+    } else {
+      feedback.innerHTML = '';
+    }
+  }
+}
+
+  
 </script>
 
 </body>
