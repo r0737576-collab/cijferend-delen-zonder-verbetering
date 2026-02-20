@@ -866,17 +866,45 @@ controleToggle.addEventListener('change', function(){
 
   function toonControleInteractief(){
 
-  const quotient = document.getElementById('quotient')?.textContent.trim();
-  const divisor  = document.getElementById('divisor')?.textContent.trim();
-  const rest     = document.getElementById('rest')?.textContent.trim() || "0";
+  const controleZone = document.getElementById('controleZone');
+
+  /* ===== Lees quotient uit quotGrid ===== */
+  const qCells = document.querySelectorAll('#quotGrid .gridcell');
+  let quotient = '';
+  qCells.forEach(c=>{
+    const t = c.textContent.trim();
+    if (t !== '' && t !== ','){
+      quotient += t;
+    }
+  });
+
+  /* ===== Lees divisor uit divGrid ===== */
+  const dCells = document.querySelectorAll('#divGrid .gridcell');
+  let divisor = '';
+  dCells.forEach(c=>{
+    divisor += c.textContent.trim();
+  });
+
+  /* ===== Lees deeltal uit grid ===== */
+  const dividendCells = document.querySelectorAll('#grid .gridcell');
+  let dividend = '';
+  dividendCells.forEach(c=>{
+    const t = c.textContent.trim();
+    if (t !== ','){
+      dividend += t;
+    }
+  });
 
   if (!quotient || !divisor){
     controleZone.innerHTML = '';
     return;
   }
 
-  const rows  = divisor.length;
-  const width = quotient.length + rows + 1;
+  const q = parseInt(quotient);
+  const d = parseInt(divisor);
+  const expectedProduct = q * d;
+
+  const width = quotient.length + divisor.length + 1;
 
   let html = `<div style="margin-top:25px; font-family:monospace;">`;
 
@@ -884,47 +912,57 @@ controleToggle.addEventListener('change', function(){
   html += `<div style="text-align:right; width:${width}ch;">× ${divisor}</div>`;
   html += `<div style="border-top:1px solid black; width:${width}ch;"></div>`;
 
-  for(let r = 0; r < rows; r++){
-    html += `<div class="productRow" style="text-align:right; width:${width}ch;">`;
-    for(let c = 0; c < width; c++){
-      html += `<span contenteditable="true" class="controleCell"></span>`;
-    }
-    html += `</div>`;
-  }
-
-  html += `<div style="border-top:1px solid black; width:${width}ch; margin-top:5px;"></div>`;
-
+  /* ===== 1 productrij (leerling vult zelf in) ===== */
   html += `<div id="controleProductTotaal" style="text-align:right; width:${width}ch;">`;
   for(let c = 0; c < width; c++){
     html += `<span contenteditable="true" class="controleCell"></span>`;
   }
   html += `</div>`;
 
-  html += `<div style="margin-top:15px; text-align:right; width:${width}ch;">+ ${rest}</div>`;
-  html += `<div style="border-top:1px solid black; width:${width}ch;"></div>`;
-
-  html += `<div id="controleEindTotaal" style="text-align:right; width:${width}ch;">`;
-  for(let c = 0; c < width; c++){
-    html += `<span contenteditable="true" class="controleCell"></span>`;
-  }
-  html += `</div>`;
-
+  html += `<div style="border-top:1px solid black; width:${width}ch; margin-top:10px;"></div>`;
   html += `<div id="controleFeedback" style="margin-top:10px;"></div>`;
   html += `</div>`;
 
   controleZone.innerHTML = html;
 
-  activeControleListenersKolom();
+  activeControleListenersKolom(q, d, expectedProduct, parseInt(dividend));
 }
 
-  function activeControleListenersKolom(){
+
+  function activeControleListenersKolom(q, d, expectedProduct, dividend){
 
   const feedback = document.getElementById('controleFeedback');
-  const cells = document.querySelectorAll('.controleCell');
+  const row = document.getElementById('controleProductTotaal');
 
-  cells.forEach(cell=>{
-    cell.addEventListener('input', checkControleKolom);
+  row.querySelectorAll('.controleCell').forEach(cell=>{
+    cell.addEventListener('input', check);
   });
+
+  function check(){
+
+    let user = '';
+    row.querySelectorAll('.controleCell').forEach(c=>{
+      user += c.textContent.replace(/\D/g,'');
+    });
+
+    const userNumber = parseInt(user) || 0;
+
+    if (userNumber === expectedProduct){
+
+      if (userNumber === dividend){
+        feedback.innerHTML =
+          '<span style="color:green;">✔ Controle volledig correct</span>';
+      } else {
+        feedback.innerHTML =
+          '<span style="color:orange;">Product juist — maar vergeet de rest?</span>';
+      }
+
+    } else {
+      feedback.innerHTML = '';
+    }
+  }
+}
+
 
   function getNumberFromRow(id){
     const row = document.querySelector(id);
