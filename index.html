@@ -114,100 +114,10 @@ main{ padding:1rem; }
         <div id="quotGrid" class="gridrow"></div>
       </div>
 
-document.addEventListener("DOMContentLoaded", function(){
-
-  const controleToggle = document.getElementById('controle'); // ← pas aan indien nodig
-  const controleZone = document.getElementById('controleZone');
-
-  controleToggle.addEventListener('change', function(){
-
-    if (!this.checked){
-      controleZone.innerHTML = '';
-      return;
-    }
-
-    maakControle();
-  });
-
-  function maakControle(){
-
-    /* ===== Lees quotient ===== */
-    const qCells = document.querySelectorAll('#quotGrid .gridcell');
-    let quotient = '';
-    qCells.forEach(c=>{
-      const t = c.textContent.trim();
-      if (t !== '' && t !== ','){
-        quotient += t;
-      }
-    });
-
-    /* ===== Lees divisor ===== */
-    const dCells = document.querySelectorAll('#divGrid .gridcell');
-    let divisor = '';
-    dCells.forEach(c=>{
-      divisor += c.textContent.trim();
-    });
-
-    if (!quotient || !divisor){
-      controleZone.innerHTML = '';
-      return;
-    }
-
-    const q = parseInt(quotient);
-    const d = parseInt(divisor);
-    const expectedProduct = q * d;
-
-    let html = `
-      <div style="margin-top:25px;font-family:monospace;">
-        <div>${quotient}</div>
-        <div>× ${divisor}</div>
-        <div style="border-top:1px solid black;width:120px;margin:4px 0;"></div>
-        <div id="controleProduct"></div>
-        <div id="controleFeedback" style="margin-top:10px;"></div>
-      </div>
-    `;
-
-    controleZone.innerHTML = html;
-
-    const productDiv = document.getElementById('controleProduct');
-
-    for(let i=0;i<10;i++){
-      const span = document.createElement('span');
-      span.contentEditable = true;
-      span.style.display = "inline-block";
-      span.style.width = "20px";
-      span.style.textAlign = "center";
-      span.style.borderBottom = "1px solid black";
-      span.style.marginRight = "2px";
-      productDiv.appendChild(span);
-
-      span.addEventListener('input', check);
-    }
-
-    function check(){
-      let user = '';
-      productDiv.querySelectorAll('span').forEach(s=>{
-        user += s.textContent.replace(/\D/g,'');
-      });
-
-      const userNumber = parseInt(user) || 0;
-
-      if (userNumber === expectedProduct){
-        document.getElementById('controleFeedback').innerHTML =
-          '<span style="color:green;">✔ Product correct</span>';
-      } else {
-        document.getElementById('controleFeedback').innerHTML = '';
-      }
-    }
-  }
-
-});
-
-
-<div id="controleZone"></div>
 
       
-    </div>
+    <div id="controleZone"></div>
+      
   </section>
 </main>
 
@@ -931,6 +841,105 @@ document.addEventListener('keydown', function(e){
   }
 
 });
+
+  /* ===============================
+   CONTROLE (quotient × deler)
+================================= */
+
+document.getElementById('enableCheck')
+  .addEventListener('change', function(){
+
+  const controleZone =
+    document.getElementById('controleZone');
+
+  if (!this.checked){
+    controleZone.innerHTML = '';
+    return;
+  }
+
+  maakControle();
+});
+
+function maakControle(){
+
+  const controleZone =
+    document.getElementById('controleZone');
+
+  const qCells =
+    document.querySelectorAll('#quotGrid .gridcell');
+
+  let quotient = '';
+  qCells.forEach(c=>{
+    const t = c.textContent.trim();
+    if (t !== '' && t !== ','){
+      quotient += t;
+    }
+  });
+
+  const dCells =
+    document.querySelectorAll('#divGrid .gridcell');
+
+  let divisor = '';
+  dCells.forEach(c=>{
+    divisor += c.textContent.trim();
+  });
+
+  if (!quotient || !divisor){
+    controleZone.innerHTML = '';
+    return;
+  }
+
+  const expectedProduct =
+    parseInt(quotient) * parseInt(divisor);
+
+  controleZone.innerHTML = `
+    <div style="margin-top:25px;font-family:monospace;">
+      <div>${quotient}</div>
+      <div>× ${divisor}</div>
+      <div style="border-top:1px solid black;width:120px;margin:4px 0;"></div>
+      <div id="controleProduct"></div>
+      <div id="controleFeedback" style="margin-top:10px;"></div>
+    </div>
+  `;
+
+  const productDiv =
+    document.getElementById('controleProduct');
+
+  for(let i=0;i<10;i++){
+
+    const span = document.createElement('span');
+    span.contentEditable = true;
+    span.style.display = "inline-block";
+    span.style.width = "20px";
+    span.style.textAlign = "center";
+    span.style.borderBottom = "1px solid black";
+    span.style.marginRight = "2px";
+
+    productDiv.appendChild(span);
+
+    span.addEventListener('input', function(){
+
+      let user = '';
+
+      productDiv.querySelectorAll('span')
+        .forEach(s=>{
+          user += s.textContent.replace(/\D/g,'');
+        });
+
+      if (parseInt(user) === expectedProduct){
+
+        document.getElementById('controleFeedback')
+          .innerHTML =
+          '<span style="color:green;">✔ Product correct</span>';
+
+      } else {
+
+        document.getElementById('controleFeedback')
+          .innerHTML = '';
+      }
+    });
+  }
+}
 
     
   newExercise();
