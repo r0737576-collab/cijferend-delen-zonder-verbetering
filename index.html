@@ -126,7 +126,7 @@ main{ padding:1rem; }
 <script>
 (function(){
   const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-  const $  = s => .querySelector(s);
+  const $  = s => document.querySelector(s);
 
   const settings = { dividendMax: 10000, divisorMax: 20 };
 
@@ -197,7 +197,7 @@ main{ padding:1rem; }
   }
 
   function makeQuotCell(idx){
-    const c = .createElement('div');
+    const c=document.createElement('div');
     c.className = 'gridcell';
     c.setAttribute('contenteditable','true');
 
@@ -294,7 +294,7 @@ main{ padding:1rem; }
     const rows = baseRowRule(dividend, divisor) + 6;
 
     for (let r=0;r<rows;r++){
-      const row = .createElement('div');
+      const row = document.createElement('div');
       row.className = 'workRow';
       row.style.gridTemplateColumns = buildColumns(totalColsLeft, useDecimals ? commaIndexLeft : -1);
 
@@ -377,7 +377,7 @@ main{ padding:1rem; }
   let current = { dividend:0, divisor:0 };
 
   function newExercise(){
-    const wantNoRemainder = (.querySelector('input[name="rest"]:checked').value === 'zonder');
+    const wantNoRemainder = (document.querySelector('input[name="rest"]:checked').value === 'zonder');
     const useDecimals = document.getElementById('toDecimals').checked;
 
     current = generateProblem(wantNoRemainder);
