@@ -896,7 +896,11 @@ function maakControle(){
     parseInt(quotient) * parseInt(divisor);
 
   controleZone.innerHTML = `
-    <div style="margin-top:25px;font-family:monospace;">
+    <div style="
+    margin-top:40px;
+    font-family:monospace;
+    text-align:right;
+  ">
       <div>${quotient}</div>
       <div>× ${divisor}</div>
       <div style="border-top:1px solid black;width:120px;margin:4px 0;"></div>
@@ -908,7 +912,9 @@ function maakControle(){
   const productDiv =
     document.getElementById('controleProduct');
 
-  for(let i=0;i<10;i++){
+  const productLength = expectedProduct.toString().length;
+
+for(let i=0;i<productLength;i++){
 
     const span = document.createElement('span');
     span.contentEditable = true;
@@ -920,27 +926,33 @@ function maakControle(){
 
     productDiv.appendChild(span);
 
-    span.addEventListener('input', function(){
+span.addEventListener('input', function(){
 
-      let user = '';
+  let user = '';
+  productDiv.querySelectorAll('span').forEach(s=>{
+    user += s.textContent.replace(/\D/g,'');
+  });
 
-      productDiv.querySelectorAll('span')
-        .forEach(s=>{
-          user += s.textContent.replace(/\D/g,'');
-        });
+  const productLength = expectedProduct.toString().length;
 
-      if (parseInt(user) === expectedProduct){
+  // Nog niet alles ingevuld → geen feedback tonen
+  if (user.length !== productLength){
+    document.getElementById('controleFeedback').innerHTML = '';
+    return;
+  }
 
-        document.getElementById('controleFeedback')
-          .innerHTML =
-          '<span style="color:green;">✔ Product correct</span>';
+  const userNumber = parseInt(user);
 
-      } else {
+  if (userNumber === expectedProduct){
+    document.getElementById('controleFeedback').innerHTML =
+      '<span style="color:green;">✔ Vermenigvuldiging correct</span>';
+  } else {
+    document.getElementById('controleFeedback').innerHTML =
+      '<span style="color:red;">✘ Vermenigvuldiging fout</span>';
+  }
 
-        document.getElementById('controleFeedback')
-          .innerHTML = '';
-      }
-    });
+});
+   
   }
 }
 
