@@ -95,30 +95,19 @@ main{ padding:1rem; }
 </div>
 
 <main>
-  <section class="board">
-    <div id="gridWrapper">
 
-      <!-- Links: deeltal + werk -->
-      <div id="leftSide">
-        <div id="grid" class="gridrow"></div>
-        <div id="workArea"></div>
-      </div>
+<section class="board"
+         style="display:flex; align-items:flex-start; gap:80px;">
 
-      <!-- Midden: verticale dikke lijn -->
-      <div id="vline"></div>
+  <div id="gridWrapper">
+    ...
+  </div>
 
-      <!-- Rechts: deler + balk + quotient -->
-      <div id="rightSide">
-        <div id="divGrid" class="gridrow"></div>
-        <div id="hbar"></div>
-        <div id="quotGrid" class="gridrow"></div>
-      </div>
+  <div id="controleZone"></div>
 
-    </div>
-      
-    <div id="controleZone"></div>
-      
-  </section>
+</section>
+
+  
 </main>
 
 
@@ -899,12 +888,12 @@ function maakControle(){
   const divisorString = divisor.toString();
 
   controleZone.innerHTML = `
-    <div style="
-      margin-top:50px;
-      font-family:monospace;
-      text-align:right;
-      min-width:250px;
-    ">
+  <div style="
+    font-family:monospace;
+    text-align:right;
+    display:inline-block;
+  ">
+
       <div>${quotient}</div>
       <div>× ${divisor}</div>
       <div style="border-top:1px solid black;margin:6px 0;"></div>
