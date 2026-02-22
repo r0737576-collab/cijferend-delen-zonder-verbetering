@@ -952,9 +952,9 @@ function maakControle(){
     const correctProduct =
       (q * cijfer * Math.pow(10, i)).toString();
 
-    if (ingevoerd !== correctProduct){
-      tussenstappenCorrect = false;
-    }
+    if (parseInt(ingevoerd || "0") !== parseInt(correctProduct)){
+  tussenstappenCorrect = false;
+}
 
   });
 
