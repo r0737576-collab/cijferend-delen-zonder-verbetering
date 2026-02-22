@@ -860,9 +860,6 @@ document.getElementById('enableCheck')
     return;
   }
 
-  maakControle();
-});
-
 function maakControle(){
 
   const controleZone =
@@ -892,69 +889,103 @@ function maakControle(){
     return;
   }
 
-  const expectedProduct =
-    parseInt(quotient) * parseInt(divisor);
+  const q = parseInt(quotient);
+  const d = parseInt(divisor);
+  const expectedProduct = q * d;
+
+  const divisorString = divisor.toString();
 
   controleZone.innerHTML = `
     <div style="
-    margin-top:40px;
-    font-family:monospace;
-    text-align:right;
-  ">
+      margin-top:50px;
+      font-family:monospace;
+      text-align:right;
+      min-width:250px;
+    ">
       <div>${quotient}</div>
       <div>× ${divisor}</div>
-      <div style="border-top:1px solid black;width:120px;margin:4px 0;"></div>
-      <div id="controleProduct"></div>
-      <div id="controleFeedback" style="margin-top:10px;"></div>
+      <div style="border-top:1px solid black;margin:6px 0;"></div>
+      <div id="controleRijen"></div>
+      <div style="border-top:1px solid black;margin:6px 0;"></div>
+      <div id="controleSom"></div>
+      <div id="controleFeedback" style="margin-top:12px;"></div>
     </div>
   `;
 
-  const productDiv =
-    document.getElementById('controleProduct');
+  const rijenDiv = document.getElementById('controleRijen');
+  const somDiv = document.getElementById('controleSom');
 
-  const productLength = expectedProduct.toString().length;
+  /* ===== Deelproducten ===== */
 
-for(let i=0;i<productLength;i++){
+  for (let i = 0; i < divisorString.length; i++) {
+
+    const rij = document.createElement('div');
+    rij.style.marginBottom = "4px";
+
+    const shift = i;
+
+    for (let s = 0; s < shift; s++) {
+      const spacer = document.createElement('span');
+      spacer.style.display = "inline-block";
+      spacer.style.width = "20px";
+      rij.appendChild(spacer);
+    }
+
+    for (let j = 0; j < quotient.length; j++) {
+      const span = document.createElement('span');
+      span.contentEditable = true;
+      span.style.display = "inline-block";
+      span.style.width = "20px";
+      span.style.textAlign = "center";
+      span.style.borderBottom = "1px solid black";
+      span.style.marginRight = "2px";
+      rij.appendChild(span);
+    }
+
+    rijenDiv.appendChild(rij);
+  }
+
+  /* ===== Somrij ===== */
+
+  const somLength = expectedProduct.toString().length;
+
+  for (let i = 0; i < somLength; i++) {
 
     const span = document.createElement('span');
     span.contentEditable = true;
     span.style.display = "inline-block";
     span.style.width = "20px";
     span.style.textAlign = "center";
-    span.style.borderBottom = "1px solid black";
+    span.style.borderBottom = "2px solid black";
     span.style.marginRight = "2px";
 
-    productDiv.appendChild(span);
+    span.addEventListener('input', controleerSom);
 
-span.addEventListener('input', function(){
-
-  let user = '';
-  productDiv.querySelectorAll('span').forEach(s=>{
-    user += s.textContent.replace(/\D/g,'');
-  });
-
-  const productLength = expectedProduct.toString().length;
-
-  // Nog niet alles ingevuld → geen feedback tonen
-  if (user.length !== productLength){
-    document.getElementById('controleFeedback').innerHTML = '';
-    return;
+    somDiv.appendChild(span);
   }
 
-  const userNumber = parseInt(user);
+  function controleerSom(){
 
-  if (userNumber === expectedProduct){
-    document.getElementById('controleFeedback').innerHTML =
-      '<span style="color:green;">✔ Vermenigvuldiging correct</span>';
-  } else {
-    document.getElementById('controleFeedback').innerHTML =
-      '<span style="color:red;">✘ Vermenigvuldiging fout</span>';
-  }
+    let user = '';
+    somDiv.querySelectorAll('span').forEach(s=>{
+      user += s.textContent.replace(/\D/g,'');
+    });
 
-});
-   
+    if (user.length !== somLength){
+      document.getElementById('controleFeedback').innerHTML = '';
+      return;
+    }
+
+    if (parseInt(user) === expectedProduct){
+      document.getElementById('controleFeedback').innerHTML =
+        '<span style="color:green;">✔ Volledige controle correct</span>';
+    } else {
+      document.getElementById('controleFeedback').innerHTML =
+        '<span style="color:red;">✘ Eindresultaat fout</span>';
+    }
   }
 }
+
 
 /* Controle automatisch vernieuwen wanneer nodig */
 function updateControleIfNeeded(){
