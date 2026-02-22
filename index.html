@@ -845,7 +845,7 @@ document.addEventListener('keydown', function(e){
 
 });
 
-  /* ===============================
+/* ===============================
    CONTROLE (quotient × deler)
 ================================= */
 
@@ -857,8 +857,11 @@ document.getElementById('enableCheck')
 
   if (!this.checked){
     controleZone.innerHTML = '';
-    return;
+  } else {
+    maakControle();
   }
+});
+
 
 function maakControle(){
 
@@ -915,16 +918,12 @@ function maakControle(){
   const rijenDiv = document.getElementById('controleRijen');
   const somDiv = document.getElementById('controleSom');
 
-  /* ===== Deelproducten ===== */
-
   for (let i = 0; i < divisorString.length; i++) {
 
     const rij = document.createElement('div');
     rij.style.marginBottom = "4px";
 
-    const shift = i;
-
-    for (let s = 0; s < shift; s++) {
+    for (let s = 0; s < i; s++) {
       const spacer = document.createElement('span');
       spacer.style.display = "inline-block";
       spacer.style.width = "20px";
@@ -945,8 +944,6 @@ function maakControle(){
     rijenDiv.appendChild(rij);
   }
 
-  /* ===== Somrij ===== */
-
   const somLength = expectedProduct.toString().length;
 
   for (let i = 0; i < somLength; i++) {
@@ -959,41 +956,40 @@ function maakControle(){
     span.style.borderBottom = "2px solid black";
     span.style.marginRight = "2px";
 
-    span.addEventListener('input', controleerSom);
+    span.addEventListener('input', function(){
 
-    somDiv.appendChild(span);
-  }
+      let user = '';
+      somDiv.querySelectorAll('span').forEach(s=>{
+        user += s.textContent.replace(/\D/g,'');
+      });
 
-  function controleerSom(){
+      if (user.length !== somLength){
+        document.getElementById('controleFeedback').innerHTML = '';
+        return;
+      }
 
-    let user = '';
-    somDiv.querySelectorAll('span').forEach(s=>{
-      user += s.textContent.replace(/\D/g,'');
+      if (parseInt(user) === expectedProduct){
+        document.getElementById('controleFeedback').innerHTML =
+          '<span style="color:green;">✔ Volledige controle correct</span>';
+      } else {
+        document.getElementById('controleFeedback').innerHTML =
+          '<span style="color:red;">✘ Eindresultaat fout</span>';
+      }
+
     });
 
-    if (user.length !== somLength){
-      document.getElementById('controleFeedback').innerHTML = '';
-      return;
-    }
-
-    if (parseInt(user) === expectedProduct){
-      document.getElementById('controleFeedback').innerHTML =
-        '<span style="color:green;">✔ Volledige controle correct</span>';
-    } else {
-      document.getElementById('controleFeedback').innerHTML =
-        '<span style="color:red;">✘ Eindresultaat fout</span>';
-    }
+    somDiv.appendChild(span);
   }
 }
 
 
-/* Controle automatisch vernieuwen wanneer nodig */
 function updateControleIfNeeded(){
   const toggle = document.getElementById('enableCheck');
   if (toggle.checked){
     maakControle();
   }
 }
+
     
   newExercise();
 })();
