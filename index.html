@@ -950,7 +950,7 @@ function maakControle(){
       parseInt(divisorString[divisorString.length - 1 - i]);
 
     const correctProduct =
-      (q * cijfer).toString();
+      (q * cijfer * Math.pow(10, i)).toString();
 
     if (ingevoerd !== correctProduct){
       tussenstappenCorrect = false;
