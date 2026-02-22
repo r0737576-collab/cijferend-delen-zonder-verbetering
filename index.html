@@ -918,7 +918,7 @@ function maakControle(){
   const rijenDiv = document.getElementById('controleRijen');
   const somDiv = document.getElementById('controleSom');
 
-  for (let i = 0; i < divisorString.length; i++) {
+  for (let i = 0; i < divisorString.length ; i++) {
 
     const rij = document.createElement('div');
     rij.style.marginBottom = "4px";
@@ -930,7 +930,7 @@ function maakControle(){
       rij.appendChild(spacer);
     }
 
-    for (let j = 0; j < quotient.length; j++) {
+    for (let j = 0; j < quotient.length + 1; j++) {
       const span = document.createElement('span');
       span.contentEditable = true;
       span.style.display = "inline-block";
@@ -958,23 +958,62 @@ function maakControle(){
 
     span.addEventListener('input', function(){
 
-      let user = '';
-      somDiv.querySelectorAll('span').forEach(s=>{
-        user += s.textContent.replace(/\D/g,'');
-      });
+     function controleerSom(){
 
-      if (user.length !== somLength){
-        document.getElementById('controleFeedback').innerHTML = '';
-        return;
-      }
+  let user = '';
+  somDiv.querySelectorAll('span').forEach(s=>{
+    user += s.textContent.replace(/\D/g,'');
+  });
 
-      if (parseInt(user) === expectedProduct){
-        document.getElementById('controleFeedback').innerHTML =
-          '<span style="color:green;">✔ Volledige controle correct</span>';
-      } else {
-        document.getElementById('controleFeedback').innerHTML =
-          '<span style="color:red;">✘ Eindresultaat fout</span>';
-      }
+  if (user.length !== somLength){
+    document.getElementById('controleFeedback').innerHTML = '';
+    return;
+  }
+
+  const eindCorrect =
+    parseInt(user) === expectedProduct;
+
+  /* ===== Deelproducten controleren ===== */
+
+  let tussenstappenCorrect = true;
+
+  const rijen = rijenDiv.querySelectorAll('div');
+
+  rijen.forEach((rij, i)=>{
+
+    const spans = Array.from(rij.querySelectorAll('span'));
+
+    let ingevoerd = '';
+    spans.forEach(s=>{
+      ingevoerd += s.textContent.replace(/\D/g,'');
+    });
+
+    const cijfer = parseInt(divisorString[divisorString.length - 1 - i]);
+    const correctProduct = (q * cijfer).toString();
+
+    if (ingevoerd !== correctProduct){
+      tussenstappenCorrect = false;
+    }
+
+  });
+
+  const feedback =
+    document.getElementById('controleFeedback');
+
+  if (eindCorrect && tussenstappenCorrect){
+    feedback.innerHTML =
+      '<span style="color:green;">✔ Alles correct</span>';
+  } 
+  else if (!tussenstappenCorrect){
+    feedback.innerHTML =
+      '<span style="color:red;">✘ Fout in tussenstappen</span>';
+  }
+  else {
+    feedback.innerHTML =
+      '<span style="color:red;">✘ Eindresultaat fout</span>';
+  }
+}
+
 
     });
 
