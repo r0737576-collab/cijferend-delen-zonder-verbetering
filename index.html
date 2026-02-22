@@ -918,6 +918,64 @@ function maakControle(){
   const rijenDiv = document.getElementById('controleRijen');
   const somDiv = document.getElementById('controleSom');
 
+  function controleerSom(){
+
+  let user = '';
+  somDiv.querySelectorAll('span').forEach(s=>{
+    user += s.textContent.replace(/\D/g,'');
+  });
+
+  if (user.length !== somLength){
+    document.getElementById('controleFeedback').innerHTML = '';
+    return;
+  }
+
+  const eindCorrect =
+    parseInt(user) === expectedProduct;
+
+  let tussenstappenCorrect = true;
+
+  const rijen = rijenDiv.querySelectorAll('div');
+
+  rijen.forEach((rij, i)=>{
+
+    const spans = Array.from(rij.querySelectorAll('span'));
+
+    let ingevoerd = '';
+    spans.forEach(s=>{
+      ingevoerd += s.textContent.replace(/\D/g,'');
+    });
+
+    const cijfer =
+      parseInt(divisorString[divisorString.length - 1 - i]);
+
+    const correctProduct =
+      (q * cijfer).toString();
+
+    if (ingevoerd !== correctProduct){
+      tussenstappenCorrect = false;
+    }
+
+  });
+
+  const feedback =
+    document.getElementById('controleFeedback');
+
+  if (eindCorrect && tussenstappenCorrect){
+    feedback.innerHTML =
+      '<span style="color:green;">✔ Alles correct</span>';
+  } 
+  else if (!tussenstappenCorrect){
+    feedback.innerHTML =
+      '<span style="color:red;">✘ Fout in tussenstappen</span>';
+  }
+  else {
+    feedback.innerHTML =
+      '<span style="color:red;">✘ Eindresultaat fout</span>';
+  }
+}
+
+
   for (let i = 0; i < divisorString.length ; i++) {
 
     const rij = document.createElement('div');
@@ -956,67 +1014,9 @@ function maakControle(){
     span.style.borderBottom = "2px solid black";
     span.style.marginRight = "2px";
 
-    span.addEventListener('input', function(){
+    span.addEventListener('input', controleerSom);
 
-     function controleerSom(){
-
-  let user = '';
-  somDiv.querySelectorAll('span').forEach(s=>{
-    user += s.textContent.replace(/\D/g,'');
-  });
-
-  if (user.length !== somLength){
-    document.getElementById('controleFeedback').innerHTML = '';
-    return;
-  }
-
-  const eindCorrect =
-    parseInt(user) === expectedProduct;
-
-  /* ===== Deelproducten controleren ===== */
-
-  let tussenstappenCorrect = true;
-
-  const rijen = rijenDiv.querySelectorAll('div');
-
-  rijen.forEach((rij, i)=>{
-
-    const spans = Array.from(rij.querySelectorAll('span'));
-
-    let ingevoerd = '';
-    spans.forEach(s=>{
-      ingevoerd += s.textContent.replace(/\D/g,'');
-    });
-
-    const cijfer = parseInt(divisorString[divisorString.length - 1 - i]);
-    const correctProduct = (q * cijfer).toString();
-
-    if (ingevoerd !== correctProduct){
-      tussenstappenCorrect = false;
-    }
-
-  });
-
-  const feedback =
-    document.getElementById('controleFeedback');
-
-  if (eindCorrect && tussenstappenCorrect){
-    feedback.innerHTML =
-      '<span style="color:green;">✔ Alles correct</span>';
-  } 
-  else if (!tussenstappenCorrect){
-    feedback.innerHTML =
-      '<span style="color:red;">✘ Fout in tussenstappen</span>';
-  }
-  else {
-    feedback.innerHTML =
-      '<span style="color:red;">✘ Eindresultaat fout</span>';
-  }
-}
-
-
-    });
-
+   
     somDiv.appendChild(span);
   }
 }
