@@ -401,7 +401,11 @@ main{ padding:1rem; }
    updateControleIfNeeded();
 
     setTimeout(syncHBar, 0);
-    updateControleIfNeeded();
+   
+/ ALTIJD nieuwe controle bouwen als de checkbox aan staat
+    if (document.getElementById('enableCheck').checked) {
+        maakControle();
+    }
   }
 
   /* ===== Events ===== */
