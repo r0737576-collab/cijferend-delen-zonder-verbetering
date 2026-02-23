@@ -858,7 +858,7 @@ document.addEventListener('keydown', function(e){
 ================================= */
 
 document.getElementById('enableCheck')
-  .addEventListener('change', function(){
+.addEventListener('change', function(){
 
   const controleZone =
     document.getElementById('controleZone');
@@ -868,8 +868,8 @@ document.getElementById('enableCheck')
   } else {
     maakControle();
   }
-});
 
+});
 
 function maakControle(){
 
@@ -906,151 +906,157 @@ function maakControle(){
 
   const divisorString = divisor.toString();
   const divisorLength = divisorString.length;
-const singleDigit = divisorLength === 1;
-const somLength = expectedProduct.toString().length;
 
-
+  const singleDigit = divisorLength === 1;
+  const somLength = expectedProduct.toString().length;
 
   controleZone.innerHTML = `
-  <div style="
-    font-family:monospace;
-    text-align:right;
-    display:inline-block;
-  ">
+    <div style="
+      font-family:monospace;
+      text-align:right;
+      display:inline-block;
+    ">
 
       <div>${quotient}</div>
       <div>× ${divisor}</div>
+
       <div style="border-top:1px solid black;margin:6px 0;"></div>
+
       <div id="controleRijen"></div>
-     ${!singleDigit ? `
-  <div style="border-top:1px solid black;margin:6px 0;"></div>
-  <div id="controleSom"></div>
-` : ''}
+
+      ${!singleDigit ? `
+        <div style="border-top:1px solid black;margin:6px 0;"></div>
+        <div id="controleSom"></div>
+      ` : ''}
+
       <div id="controleFeedback" style="margin-top:12px;"></div>
+
     </div>
   `;
 
   const rijenDiv = document.getElementById('controleRijen');
   const somDiv = document.getElementById('controleSom');
+  const feedbackDiv = document.getElementById('controleFeedback');
 
   function controleerSom(){
 
-  let user = '';
-  somDiv.querySelectorAll('span').forEach(s=>{
-    user += s.textContent.replace(/\D/g,'');
-  });
+    if (!somDiv) return;
 
-  if (user.length !== somLength){
-    document.getElementById('controleFeedback').innerHTML = '';
-    return;
-  }
-
-  const eindCorrect =
-    parseInt(user) === expectedProduct;
-
-  let tussenstappenCorrect = true;
-
-  const rijen = rijenDiv.querySelectorAll('div');
-
-  rijen.forEach((rij, i)=>{
-
-    const spans = Array.from(rij.querySelectorAll('span'));
-
-    let ingevoerd = '';
-    spans.forEach(s=>{
-      ingevoerd += s.textContent.replace(/\D/g,'');
+    let user = '';
+    somDiv.querySelectorAll('span').forEach(s=>{
+      user += s.textContent.replace(/\D/g,'');
     });
 
-    const cijfer =
-      parseInt(divisorString[divisorString.length - 1 - i]);
+    if (user.length !== somLength){
+      feedbackDiv.innerHTML = '';
+      return;
+    }
 
-    const correctProduct =
-      (q * cijfer * Math.pow(10, i)).toString();
+    const eindCorrect =
+      parseInt(user) === expectedProduct;
 
-    if (parseInt(ingevoerd || "0") !== parseInt(correctProduct)){
-  tussenstappenCorrect = false;
-}
+    let tussenstappenCorrect = true;
 
-  });
+    const rijen = rijenDiv.querySelectorAll('div');
 
-  const feedback =
-    document.getElementById('controleFeedback');
+    rijen.forEach((rij,i)=>{
 
-  if (eindCorrect && tussenstappenCorrect){
-    feedback.innerHTML =
-      '<span style="color:green;">✔ Alles correct</span>';
-  } 
-  else if (!tussenstappenCorrect){
-    feedback.innerHTML =
-      '<span style="color:red;">✘ Fout in tussenstappen</span>';
+      const spans = Array.from(rij.querySelectorAll('span'));
+
+      let ingevoerd = '';
+      spans.forEach(s=>{
+        ingevoerd += s.textContent.replace(/\D/g,'');
+      });
+
+      const cijfer =
+        parseInt(divisorString[divisorString.length-1-i]);
+
+      const correctProduct =
+        (q * cijfer * Math.pow(10,i)).toString();
+
+      if (parseInt(ingevoerd || "0") !== parseInt(correctProduct)){
+        tussenstappenCorrect = false;
+      }
+
+    });
+
+    if (eindCorrect && tussenstappenCorrect){
+      feedbackDiv.innerHTML =
+        '<span style="color:green;">✔ Alles correct</span>';
+    }
+    else if (!tussenstappenCorrect){
+      feedbackDiv.innerHTML =
+        '<span style="color:red;">✘ Fout in tussenstappen</span>';
+    }
+    else {
+      feedbackDiv.innerHTML =
+        '<span style="color:red;">✘ Eindresultaat fout</span>';
+    }
   }
-  else {
-    feedback.innerHTML =
-      '<span style="color:red;">✘ Eindresultaat fout</span>';
-  }
-}
 
+  /* === invoervelden bouwen === */
 
-  for (let i = 0; i < (singleDigit ? 1 : divisorLength); i++) {
-
+  for (let i=0;i<(singleDigit ? 1 : divisorLength);i++){
 
     const rij = document.createElement('div');
     rij.style.marginBottom = "4px";
 
-    for (let s = 0; s < i; s++) {
+    for (let s=0;s<i;s++){
       const spacer = document.createElement('span');
-      spacer.style.display = "inline-block";
-      spacer.style.width = "20px";
+      spacer.style.display="inline-block";
+      spacer.style.width="20px";
       rij.appendChild(spacer);
     }
 
-    for (let j = 0; j < quotient.length + 1; j++) {
-      const span = document.createElement('span');
-      span.contentEditable = true;
-      span.style.display = "inline-block";
-      span.style.width = "20px";
-      span.style.textAlign = "center";
-      span.style.borderBottom = "1px solid black";
-      span.style.marginRight = "2px";
+    for (let j=0;j<quotient.length+1;j++){
+      const span=document.createElement('span');
+
+      span.contentEditable=true;
+      span.style.display="inline-block";
+      span.style.width="20px";
+      span.style.textAlign="center";
+      span.style.borderBottom="1px solid black";
+      span.style.marginRight="2px";
+
       rij.appendChild(span);
     }
 
     rijenDiv.appendChild(rij);
   }
 
-  if (!singleDigit) {
+  if (!singleDigit){
 
-  for (let i = 0; i < somLength; i++) {
+    for (let i=0;i<somLength;i++){
 
-    const span = document.createElement('span');
-    span.contentEditable = true;
-    span.style.display = "inline-block";
-    span.style.width = "20px";
-    span.style.textAlign = "center";
-    span.style.borderBottom = "2px solid black";
-    span.style.marginRight = "2px";
+      const span=document.createElement('span');
 
-    span.addEventListener('input', controleerSom);
+      span.contentEditable=true;
+      span.style.display="inline-block";
+      span.style.width="20px";
+      span.style.textAlign="center";
+      span.style.borderBottom="2px solid black";
+      span.style.marginRight="2px";
 
-    somDiv.appendChild(span);
+      span.addEventListener('input', controleerSom);
+
+      somDiv.appendChild(span);
+    }
   }
+
 }
 
-}   // ← HIER stopt maakControle
+/* ===== controle update ===== */
 
 function updateControleIfNeeded(){
-  const toggle = document.getElementById('enableCheck');
-  if (toggle.checked){
+  const toggle=document.getElementById('enableCheck');
+  if (toggle && toggle.checked){
     maakControle();
   }
 }
-}
-})();
+
+/* ===== start ===== */
 
 newExercise();
 updateControleIfNeeded();
-  
-</script>
 
-</body>
 </html>
