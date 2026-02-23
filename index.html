@@ -398,8 +398,6 @@ main{ padding:1rem; }
     // Werkveld (kolommen volgen links)
     buildWorkArea($('#workArea'), current.dividend, current.divisor, useDecimals, totalCols, commaIndex);
 
-   updateControleIfNeeded();
-
     setTimeout(syncHBar, 0);
    
 // ALTIJD nieuwe controle bouwen als de checkbox aan staat
@@ -1026,19 +1024,9 @@ function maakControle(){
   }
 }  // ⬅️ BELANGRIJK: sluit maakControle() HIER af
 
-function updateControleIfNeeded(){
-  const toggle = document.getElementById('enableCheck');
-  if (toggle && toggle.checked){
-    maakControle();
-  } else {
-    const cz = document.getElementById('controleZone');
-    if (cz) cz.innerHTML = '';
-  }
-}
 
 /* ===== start ===== */
 newExercise();            // bouw meteen een oefening op bij laden
-updateControleIfNeeded(); // optioneel; bouw controle als toggle al aanstond
 
 })();  // sluit je IIFE
 </script>
