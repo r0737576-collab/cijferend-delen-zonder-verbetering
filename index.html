@@ -903,6 +903,9 @@ function maakControle(){
   const expectedProduct = q * d;
 
   const divisorString = divisor.toString();
+  const divisorLength = divisorString.length;
+
+
 
   controleZone.innerHTML = `
   <div style="
@@ -915,8 +918,10 @@ function maakControle(){
       <div>× ${divisor}</div>
       <div style="border-top:1px solid black;margin:6px 0;"></div>
       <div id="controleRijen"></div>
-      <div style="border-top:1px solid black;margin:6px 0;"></div>
-      <div id="controleSom"></div>
+     ${!singleDigit ? `
+  <div style="border-top:1px solid black;margin:6px 0;"></div>
+  <div id="controleSom"></div>
+` : ''}
       <div id="controleFeedback" style="margin-top:12px;"></div>
     </div>
   `;
@@ -982,7 +987,8 @@ function maakControle(){
 }
 
 
-  for (let i = 0; i < divisorString.length ; i++) {
+  for (let i = 0; i < (singleDigit ? 1 : divisorLength); i++) {
+
 
     const rij = document.createElement('div');
     rij.style.marginBottom = "4px";
@@ -1008,6 +1014,8 @@ function maakControle(){
     rijenDiv.appendChild(rij);
   }
 
+  if (!singleDigit) {
+
   const somLength = expectedProduct.toString().length;
 
   for (let i = 0; i < somLength; i++) {
@@ -1022,10 +1030,10 @@ function maakControle(){
 
     span.addEventListener('input', controleerSom);
 
-   
     somDiv.appendChild(span);
   }
 }
+
 
 
 function updateControleIfNeeded(){
