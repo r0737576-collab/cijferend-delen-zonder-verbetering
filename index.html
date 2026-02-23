@@ -853,71 +853,54 @@ document.addEventListener('keydown', function(e){
 
 });
 
+
 /* ===============================
    CONTROLE (quotient × deler)
 ================================= */
 
 document.getElementById('enableCheck')
 .addEventListener('change', function(){
-
-  const controleZone =
-    document.getElementById('controleZone');
-
+  const controleZone = document.getElementById('controleZone');
   if (!this.checked){
     controleZone.innerHTML = '';
   } else {
     maakControle();
   }
-
 });
 
 function maakControle(){
+  const controleZone = document.getElementById('controleZone');
 
-  const controleZone =
-    document.getElementById('controleZone');
-
-  const qCells =
-    document.querySelectorAll('#quotGrid .gridcell');
-
+  // Lees quotient (zonder komma) en deler
+  const qCells = document.querySelectorAll('#quotGrid .gridcell');
   let quotient = '';
   qCells.forEach(c=>{
-    const t = c.textContent.trim();
-    if (t !== '' && t !== ','){
-      quotient += t;
-    }
+    const t = (c.textContent || '').trim();
+    if (t !== '' && t !== ',') quotient += t;
   });
 
-  const dCells =
-    document.querySelectorAll('#divGrid .gridcell');
-
+  const dCells = document.querySelectorAll('#divGrid .gridcell');
   let divisor = '';
-  dCells.forEach(c=>{
-    divisor += c.textContent.trim();
-  });
+  dCells.forEach(c=>{ divisor += (c.textContent || '').trim(); });
 
   if (!quotient || !divisor){
-  controleZone.innerHTML =
-    '<div style="font-family:monospace">Controle wordt opgebouwd...</div>';
-}
-
+    controleZone.innerHTML =
+      '<div style="font-family:monospace">Controle wordt opgebouwd...</div>';
+  }
 
   const q = parseInt(quotient);
   const d = parseInt(divisor);
   const expectedProduct = q * d;
 
-  const divisorString = divisor.toString();
+  const divisorString = d.toString();
   const divisorLength = divisorString.length;
 
-  const singleDigit = divisorLength === 1;
+  const singleDigit = (divisorLength === 1);
   const somLength = expectedProduct.toString().length;
 
+  // UI opbouwen
   controleZone.innerHTML = `
-    <div style="
-      font-family:monospace;
-      text-align:right;
-      display:inline-block;
-    ">
-
+    <div style="font-family:monospace; text-align:right; display:inline-block;">
       <div>${quotient}</div>
       <div>× ${divisor}</div>
 
@@ -931,7 +914,6 @@ function maakControle(){
       ` : ''}
 
       <div id="controleFeedback" style="margin-top:12px;"></div>
-
     </div>
   `;
 
@@ -939,126 +921,121 @@ function maakControle(){
   const somDiv = document.getElementById('controleSom');
   const feedbackDiv = document.getElementById('controleFeedback');
 
+  // --- controlefunctie (lokale scope) ---
   function controleerSom(){
+    if (!rijenDiv) return;
 
-    if (!somDiv) return;
-
+    // Eindsom uitlezen (indien aanwezig)
     let user = '';
-    somDiv.querySelectorAll('span').forEach(s=>{
-      user += s.textContent.replace(/\D/g,'');
-    });
+    if (somDiv){
+      somDiv.querySelectorAll('span').forEach(s=>{
+        user += (s.textContent || '').replace(/\D/g,'');
+      });
+    }
 
-    if (user.length !== somLength){
+    // Als er een somDiv is, maar (nog) niet volledig ingevuld → geen feedback
+    if (somDiv && user.length !== somLength){
       feedbackDiv.innerHTML = '';
       return;
     }
 
-    const eindCorrect =
-      parseInt(user) === expectedProduct;
+    const eindCorrect = somDiv
+      ? (parseInt(user || '0') === expectedProduct)
+      : true; // geen somDiv bij enkelvoudige deler → eindCorrect irrelevant
 
+    // Tussenstappen controleren
     let tussenstappenCorrect = true;
-
     const rijen = rijenDiv.querySelectorAll('div');
 
     rijen.forEach((rij,i)=>{
-
       const spans = Array.from(rij.querySelectorAll('span'));
-
       let ingevoerd = '';
       spans.forEach(s=>{
-        ingevoerd += s.textContent.replace(/\D/g,'');
+        ingevoerd += (s.textContent || '').replace(/\D/g,'');
       });
 
-      const cijfer =
-        parseInt(divisorString[divisorString.length-1-i]);
+      const cijfer = parseInt(divisorString[divisorString.length - 1 - i], 10);
+      const correctProduct = (q * cijfer * Math.pow(10, i)).toString();
 
-      const correctProduct =
-        (q * cijfer * Math.pow(10,i)).toString();
-
-      if (parseInt(ingevoerd || "0") !== parseInt(correctProduct)){
+      if (parseInt(ingevoerd || '0', 10) !== parseInt(correctProduct, 10)){
         tussenstappenCorrect = false;
       }
-
     });
 
     if (eindCorrect && tussenstappenCorrect){
-      feedbackDiv.innerHTML =
-        '<span style="color:green;">✔ Alles correct</span>';
-    }
-    else if (!tussenstappenCorrect){
-      feedbackDiv.innerHTML =
-        '<span style="color:red;">✘ Fout in tussenstappen</span>';
-    }
-    else {
-      feedbackDiv.innerHTML =
-        '<span style="color:red;">✘ Eindresultaat fout</span>';
+      feedbackDiv.innerHTML = '<span style="color:green;">✔ Alles correct</span>';
+    } else if (!tussenstappenCorrect){
+      feedbackDiv.innerHTML = '<span style="color:red;">✘ Fout in tussenstappen</span>';
+    } else {
+      feedbackDiv.innerHTML = '<span style="color:red;">✘ Eindresultaat fout</span>';
     }
   }
 
   /* === invoervelden bouwen === */
 
-  for (let i=0;i<(singleDigit ? 1 : divisorLength);i++){
-
+  // Tussenrijen (per cijfer van deler)
+  for (let i=0; i<(singleDigit ? 1 : divisorLength); i++){
     const rij = document.createElement('div');
-    rij.style.marginBottom = "4px";
+    rij.style.marginBottom = '4px';
 
-    for (let s=0;s<i;s++){
+    // Leading spacers (kolomsgewijs naar rechts)
+    for (let s=0; s<i; s++){
       const spacer = document.createElement('span');
-      spacer.style.display="inline-block";
-      spacer.style.width="20px";
+      spacer.style.display = 'inline-block';
+      spacer.style.width = '20px';
       rij.appendChild(spacer);
     }
 
-    for (let j=0;j<quotient.length+1;j++){
-      const span=document.createElement('span');
-      span.contentEditable=true;
-      span.style.display="inline-block";
-      span.style.width="20px";
-      span.style.textAlign="center";
-      span.style.borderBottom="1px solid black";
-      span.style.marginRight="2px";
-
+    // Invoervakken
+    for (let j=0; j<quotient.length+1; j++){
+      const span = document.createElement('span');
+      span.contentEditable = 'true';
+      span.style.display = 'inline-block';
+      span.style.width = '20px';
+      span.style.textAlign = 'center';
+      span.style.borderBottom = '1px solid black';
+      span.style.marginRight = '2px';
       rij.appendChild(span);
     }
 
     rijenDiv.appendChild(rij);
   }
 
+  // Eindsom-rij (alleen bij meervoudige deler)
   if (!singleDigit){
-    for (let i=0;i<somLength;i++){
-      const span=document.createElement('span');
-      span.contentEditable=true;
-      span.style.display="inline-block";
-      span.style.width="20px";
-      span.style.textAlign="center";
-      span.style.borderBottom="2px solid black";
-      span.style.marginRight="2px";
-
+    for (let i=0; i<somLength; i++){
+      const span = document.createElement('span');
+      span.contentEditable = 'true';
+      span.style.display = 'inline-block';
+      span.style.width = '20px';
+      span.style.textAlign = 'center';
+      span.style.borderBottom = '2px solid black';
+      span.style.marginRight = '2px';
       somDiv.appendChild(span);
     }
-// ⬇️ DIRECT NA de “rijbouw” + DOM-insert
-  setTimeout(() => {
-    const spans = somDiv.querySelectorAll('span[contenteditable]');
-    spans.forEach(sp => {
-      sp.addEventListener('input', controleerSom);
-    });
-  }, 50);
   }
 
-/* ===== controle update ===== */
+  // === LISTENERS: event delegation (geen setTimeout nodig) ===
+  rijenDiv.addEventListener('input', controleerSom);
+  if (!singleDigit){
+    somDiv.addEventListener('input', controleerSom);
+  }
+}  // ⬅️ BELANGRIJK: sluit maakControle() HIER af
 
 function updateControleIfNeeded(){
-  const toggle=document.getElementById('enableCheck');
+  const toggle = document.getElementById('enableCheck');
   if (toggle && toggle.checked){
     maakControle();
+  } else {
+    const cz = document.getElementById('controleZone');
+    if (cz) cz.innerHTML = '';
   }
 }
 
 /* ===== start ===== */
+newExercise();            // bouw meteen een oefening op bij laden
+updateControleIfNeeded(); // optioneel; bouw controle als toggle al aanstond
 
-newExercise();
-updateControleIfNeeded();
+})();  // sluit je IIFE
+</script>
 
-})();
-
-</html>
