@@ -896,9 +896,10 @@ function maakControle(){
   });
 
   if (!quotient || !divisor){
-    controleZone.innerHTML = '';
-    return;
-  }
+  controleZone.innerHTML =
+    '<div style="font-family:monospace">Controle wordt opgebouwd...</div>';
+}
+
 
   const q = parseInt(quotient);
   const d = parseInt(divisor);
@@ -1010,7 +1011,6 @@ function maakControle(){
 
     for (let j=0;j<quotient.length+1;j++){
       const span=document.createElement('span');
-
       span.contentEditable=true;
       span.style.display="inline-block";
       span.style.width="20px";
@@ -1025,11 +1025,8 @@ function maakControle(){
   }
 
   if (!singleDigit){
-
     for (let i=0;i<somLength;i++){
-
       const span=document.createElement('span');
-
       span.contentEditable=true;
       span.style.display="inline-block";
       span.style.width="20px";
@@ -1037,13 +1034,16 @@ function maakControle(){
       span.style.borderBottom="2px solid black";
       span.style.marginRight="2px";
 
-      span.addEventListener('input', controleerSom);
-
       somDiv.appendChild(span);
     }
+// ⬇️ DIRECT NA de “rijbouw” + DOM-insert
+  setTimeout(() => {
+    const spans = somDiv.querySelectorAll('span[contenteditable]');
+    spans.forEach(sp => {
+      sp.addEventListener('input', controleerSom);
+    });
+  }, 50);
   }
-
-}
 
 /* ===== controle update ===== */
 
@@ -1058,5 +1058,7 @@ function updateControleIfNeeded(){
 
 newExercise();
 updateControleIfNeeded();
+
+})();
 
 </html>
