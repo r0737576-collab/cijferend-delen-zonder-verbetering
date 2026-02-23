@@ -904,6 +904,8 @@ function maakControle(){
 
   const divisorString = divisor.toString();
   const divisorLength = divisorString.length;
+const singleDigit = divisorLength === 1;
+const somLength = expectedProduct.toString().length;
 
 
 
@@ -1015,8 +1017,6 @@ function maakControle(){
   }
 
   if (!singleDigit) {
-
-  const somLength = expectedProduct.toString().length;
 
   for (let i = 0; i < somLength; i++) {
 
