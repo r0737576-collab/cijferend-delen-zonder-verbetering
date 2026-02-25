@@ -1,1033 +1,124 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Staartdeling — quotient max. 3 decimalen</title>
-
-<style>
-:root{
-  --ink:#000;
-  --grid:#c8c8c8;
-  --cell:38px;      /* standaard celbreedte */
-  --commaW:10px;    /* smalle komma-kolom wanneer actief */
-  --vline:4px;
-  --bar:4px;
-  --accent:#1f6feb;
-}
-
-*{box-sizing:border-box}
-body{ margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial; background:#f3f3f3; color:#000; }
-
-header, .toolbar{ background:#fff; border-bottom:1px solid #ddd; padding:.8rem 1rem; }
-.toolbar{ display:flex; flex-wrap:wrap; gap:.6rem; align-items:center; }
-.group{
-  display:flex; gap:.4rem; align-items:center;
-  background:#f1f1f1; border:1px solid #ddd; border-radius:.4rem; padding:.3rem .5rem;
-}
-button{ padding:.45rem .7rem; border:1px solid #bbb; border-radius:.4rem; background:#fff; cursor:pointer; }
-button:hover{ border-color:#000; }
-
-main{ padding:1rem; }
-.board{ background:#fff; border:1px solid #ddd; border-radius:.6rem; padding:1rem; max-width:980px; margin:auto; }
-
-/* Raster (kolommen worden via JS gezet) */
-.gridrow, .workRow{ display:grid; }
-.gridcell, .wcell{
-  height:var(--cell);
-  border-right:1px solid var(--grid);
-  border-bottom:1px solid var(--grid);
-  display:flex; align-items:center; justify-content:center;
-  font-weight:600; font-size:1.2rem;
-}
-.gridrow{ border:1px solid var(--grid); border-right:none; border-bottom:none; }
-.gridcell:last-child, .wcell:last-child{ border-right:none; }
-.gray{ color:#888; }
-
-/* Layout */
-#gridWrapper{ display:flex; align-items:flex-start; gap:.2rem; }
-#leftSide{ display:flex; flex-direction:column; gap:.6rem; }
-#vline{ width:var(--vline); background:#000; margin-left:.15rem; margin-right:.35rem; border-radius:2px; align-self:stretch; }
-#rightSide{ display:flex; flex-direction:column; gap:.5rem; padding-top:.05rem; }
-#hbar{ height:var(--bar); background:#000; border-radius:2px; }
-
-/* Werkveld */
-#workArea{ display:flex; flex-direction:column; gap:.15rem; }
-.workRow{ border-left:1px solid var(--grid); }
-#workArea .workRow:first-child .wcell{ border-top:1px solid var(--grid); }
-
-.wcell[contenteditable="true"], .gridcell[contenteditable="true"]{ outline:none; caret-color: var(--ink); }
-.wcell[contenteditable="true"]:focus, .gridcell[contenteditable="true"]:focus{
-  box-shadow: inset 0 0 0 2px var(--accent); background:#f7fbff;
-}
-
-/* Trekstreep: enkel in REST-rij (onder product-rij) en enkel onder gebruikte productkolommen */
-.wcell.topline{ position:relative; }
-.wcell.topline::before{ content:""; position:absolute; left:-1px; right:-1px; top:-2px; border-top:3px solid #000; }
-
-@media print{
-  header,.toolbar{ display:none !important; }
-  main{ padding:0 }
-  .board{ border:none }
-}
-</style>
-</head>
-
-<body>
-
-<header>
-  <h1>Staartdeling</h1>
-</header>
-
-<!-- Knoppen (laten staan zoals afgesproken) -->
-<div class="toolbar">
-  <div class="group">
-    <label><input type="radio" name="rest" value="zonder" checked> uitkomst</label>
-    <label><input type="radio" name="rest" value="met"> met rest</label>
-  </div>
-  <div class="group"><label><input type="checkbox" id="toDecimals"> tot 0,001</label></div>
-  <div class="group"><label><input type="checkbox" id="enableCheck"> controle</label></div>
-
-  <button id="btnNew">Nieuwe oefening</button>
-  <button id="btnCheck">Nakijken</button>
-  <button id="btnSolution">Oplossing</button>
-  <button id="btnReset">Wissen</button>
-</div>
-
-<main>
-
-<section class="board"
-         style="display:flex; align-items:flex-start; gap:80px;">
-
- <div id="gridWrapper">
-
-  <!-- Links: deeltal + werk -->
-  <div id="leftSide">
-    <div id="grid" class="gridrow"></div>
-    <div id="workArea"></div>
-  </div>
-
-  <!-- Midden: verticale dikke lijn -->
-  <div id="vline"></div>
-
-  <!-- Rechts: deler + balk + quotient -->
-  <div id="rightSide">
-    <div id="divGrid" class="gridrow"></div>
-    <div id="hbar"></div>
-    <div id="quotGrid" class="gridrow"></div>
-  </div>
-
-</div>
-
-
-  <div id="controleZone"></div>
-
-</section>
-
-  
-</main>
-
-
-  
 <script>
-(function(){
-  const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
-  const $  = s => document.querySelector(s);
+"use strict";
 
-  const settings = { dividendMax: 10000, divisorMax: 20 };
+/* =========================================
+   CONFIGURATIE
+========================================= */
 
-  /* ===== Helpers ===== */
-  const buildColumns = (count, commaIdx = -1) =>
-    new Array(count).fill(0).map((_,i)=> i===commaIdx ? 'var(--commaW)' : 'var(--cell)').join(' ');
-  function clear(n){ n.innerHTML=''; }
+const CONFIG = {
+    maxDecimalen: 3,
+    maxDivisor: 20,
+    maxQuotient: 50
+};
 
-  /* ===== Opgave ===== */
-  function generateProblem(wantNoRemainder){
-    let divisor = rnd(2, settings.divisorMax);
-    let dividend;
-    if (wantNoRemainder){
-      const q = rnd(2, Math.max(2, Math.floor(settings.dividendMax/divisor)));
-      dividend = divisor*q;
-    } else {
-      dividend = rnd(2, settings.dividendMax);
-      if (dividend % divisor === 0) dividend += 1;
+
+/* =========================================
+   STATE (huidige oefening)
+========================================= */
+
+const state = {
+    dividend: 0,
+    divisor: 0,
+    stappen: [],
+    instellingen: {
+        decimalen: false,
+        controle: false
     }
+};
+
+
+/* =========================================
+   WISKUNDE MODULE
+   → Hier staat ENKEL rekenlogica
+   → Geen HTML, geen kleuren
+========================================= */
+
+function genereerOefening(){
+    const divisor = random(2, CONFIG.maxDivisor);
+    const quotient = random(2, CONFIG.maxQuotient);
+    const dividend = divisor * quotient;
+
     return { dividend, divisor };
-  }
+}
 
-  /* ===== Links: deeltal (met smalle komma-kolom als dec aan staat) ===== */
-  function buildDividendGrid(node, dividend, useDecimals){
-    clear(node);
-    const s = String(dividend);
-    const intLen = s.length;
-    const totalCols = intLen + (useDecimals ? 1+3 : 0);
 
-    // smalle komma-kolom op index intLen wanneer decimaalmodus actief
-    node.style.gridTemplateColumns = buildColumns(totalCols, useDecimals ? intLen : -1);
+function berekenStappen(deeltal, deler, maxDecimalen){
+    let stappen = [];
+    let cijfers = String(deeltal).split("");
 
-    for (const ch of s){ const c=document.createElement('div'); c.className='gridcell'; c.textContent=ch; node.appendChild(c); }
-    if (useDecimals){
-      const comma=document.createElement('div'); comma.className='gridcell'; comma.textContent=','; node.appendChild(comma);
-      for (let i=0;i<3;i++){ const z=document.createElement('div'); z.className='gridcell gray'; z.textContent='0'; node.appendChild(z); }
+    let rest = 0;
+    let i = 0;
+
+    let huidig = parseInt(cijfers[0],10);
+    if (huidig < deler && cijfers.length > 1){
+        huidig = parseInt(cijfers[0] + cijfers[1],10);
+        i = 2;
+    } else {
+        i = 1;
     }
-    return { intLen, totalCols, commaIndex: useDecimals ? intLen : -1 };
-  }
 
-  /* ===== Rechts: deler ===== */
-  function buildDivisorGrid(node, divisor){
-    clear(node);
-    const s = String(divisor);
-    node.style.gridTemplateColumns = buildColumns(s.length);
-    for (const ch of s){ const c=document.createElement('div'); c.className='gridcell'; c.textContent=ch; node.appendChild(c); }
-  }
-
-  /* ===== Rechts: quotient =====
-     - vaste celbreedte (Excel-look)
-     - initieel: #cellen = intLen (aantal cijfers van deeltal)
-     - komma kan in ELK vakje; de komma-kolom wordt smal
-     - na komma: +1 decimaalvak
-     - vervolgens groeit telkens nog 1 vakje wanneer het laatste decimaalvakje gevuld is
-     - MAXIMAAL 3 decimaalvakken (ongeacht “tot 0,001”)
-  */
-  let qState = { cols: 0, base: 0, commaIdx: -1, maxExtraDec: 3 };
-
-  function buildQuotGrid(node, intLen){
-    clear(node);
-    qState = { cols: intLen, base: intLen, commaIdx: -1, maxExtraDec: 3 };
-    node.dataset.intlen = String(intLen);
-
-    node.style.gridTemplateColumns = buildColumns(qState.cols, qState.commaIdx);
-    for (let i=0;i<qState.cols;i++){ node.appendChild(makeQuotCell(i)); }
-
-    setupHBarAutoWidth(node);
-  }
-
-  function makeQuotCell(idx){
-    const c=document.createElement('div');
-    c.className = 'gridcell';
-    c.setAttribute('contenteditable','true');
-
-    c.addEventListener('input', ()=>{
-      let t = (c.textContent || '').trim();
-      const grid = $('#quotGrid');
-
-      // Komma (of punt) → normaliseer en maak deze kolom de smalle komma-kolom
-      if (/[.,]/.test(t)){
-        c.textContent = ','; // normaliseer
-        // verwijder bestaande komma elders
-        if (qState.commaIdx !== -1 && qState.commaIdx !== idx){
-          const old = grid.children[qState.commaIdx];
-          if (old) old.textContent = '';
-        }
-        qState.commaIdx = idx;
-        grid.style.gridTemplateColumns = buildColumns(qState.cols, qState.commaIdx);
-
-        // na eerste komma: minimaal 1 decimaalvak (als er nog geen extra is)
-        ensureOneExtraAfterComma();
-
-        syncHBar();
-        return;
-      }
-
-      // Anders: enkel laatste cijfer bewaren
-      t = t.replace(/\D+/g,'');
-      if (t.length>1) t = t.slice(-1);
-      c.textContent = t;
-
-      // indien dit de komma-kolom wás maar nu geen komma meer bevat → komma weg en alle extra decimalen verwijderen
-      if (qState.commaIdx === idx && c.textContent !== ','){
-        qState.commaIdx = -1;
-        trimToBase();
-      }
-
-      // als er een komma is: eventueel uitbreiden tot max. 3 decimalen
-      if (qState.commaIdx !== -1){ growDecimalsIfNeeded(); }
-
-      syncHBar();
-    });
-
-    return c;
-  }
-
-  function ensureOneExtraAfterComma(){
-    const extra = qState.cols - qState.base;
-    if (extra < 1 && qState.maxExtraDec > 0) addQuotColumn();
-  }
-
-  function growDecimalsIfNeeded(){
-    const grid = $('#quotGrid');
-    const extra = qState.cols - qState.base;
-    if (extra >= qState.maxExtraDec) return;   // MAX = 3
-    const last = grid.children[grid.children.length - 1];
-    if (!last) return;
-    const filled = (last.textContent || '').trim() !== '';
-    if (filled) addQuotColumn();
-  }
-
-  function addQuotColumn(){
-    const grid = $('#quotGrid');
-    const extra = qState.cols - qState.base;
-    if (extra >= qState.maxExtraDec) return;   // respecteer limiet (3)
-    qState.cols += 1;
-    grid.style.gridTemplateColumns = buildColumns(qState.cols, qState.commaIdx);
-    grid.appendChild(makeQuotCell(qState.cols - 1));
-  }
-
-  function trimToBase(){
-    const grid = $('#quotGrid');
-    while (grid.children.length > qState.base){ grid.removeChild(grid.lastElementChild); }
-    qState.cols = qState.base;
-    grid.style.gridTemplateColumns = buildColumns(qState.cols, qState.commaIdx);
-  }
-
-  function setupHBarAutoWidth(quotNode){
-    const hbar = $('#hbar');
-    const ro = new ResizeObserver(()=>{ hbar.style.width = quotNode.getBoundingClientRect().width + 'px'; });
-    ro.observe(quotNode);
-  }
-  function syncHBar(){ $('#hbar').style.width = $('#quotGrid').getBoundingClientRect().width + 'px'; }
-
-  /* ===== Werkveld (links): kolommen volgen links; komma-kolom smal als “tot 0,001” aanstaat ===== */
-  function baseRowRule(dividend, divisor){
-    const s = String(dividend);
-    const n = s.length;
-    const first = parseInt(s[0],10);
-    return (first >= divisor) ? (2*n) : (2*n - 2);
-  }
-
-  function buildWorkArea(node, dividend, divisor, useDecimals, totalColsLeft, commaIndexLeft){
-    clear(node);
-    const rows = baseRowRule(dividend, divisor) + 6;
-
-    for (let r=0;r<rows;r++){
-      const row = document.createElement('div');
-      row.className = 'workRow';
-      row.style.gridTemplateColumns = buildColumns(totalColsLeft, useDecimals ? commaIndexLeft : -1);
-
-      for (let c=0;c<totalColsLeft;c++){
-        const cell = document.createElement('div');
-        cell.className = 'wcell';
-        cell.setAttribute('contenteditable','true');
-
-        // Alleen product-rijen (even r) → rest-rij eronder krijgt topline onder de gebruikte productkolommen
-        cell.addEventListener('input', function(){
-
-  let t = (cell.textContent || '');
-
-  /* Alleen cijfers houden */
-  t = t.replace(/\D+/g,'');
-
-  /* ===== 2 cijfers → splitsen ===== */
-  if (t.length >= 2){
-
-    const first  = t[0];
-    const second = t[1];
-
-    cell.textContent = first;
-
-    const next = cell.nextElementSibling;
-
-    if (next && next.isContentEditable){
-
-      next.textContent = second;
-
-      // kleine delay → cursor correct zetten
-      setTimeout(()=>{
-        focusCell(next);
-      }, 0);
-    }
-  }
-
-  /* ===== 1 cijfer ===== */
-  else if (t.length === 1){
-    cell.textContent = t;
-  }
-
-  /* ===== leeg ===== */
-  else{
-    cell.textContent = '';
-  }
-
-  handleRowInput(node, row);
-
-});
-
-        cell.addEventListener('blur',  ()=> handleRowInput(node, row));
-
-        row.appendChild(cell);
-      }
-      node.appendChild(row);
-    }
-  }
-
-  function handleRowInput(workArea, productRow){
-    const rows = Array.from(workArea.querySelectorAll('.workRow'));
-    const rIdx = rows.indexOf(productRow);
-    if (rIdx === -1 || rIdx % 2 !== 0) return;
-    const restRow = rows[rIdx+1];
-    if (!restRow) return;
-
-    restRow.querySelectorAll('.wcell').forEach(c=> c.classList.remove('topline'));
-
-    const prodCells = Array.from(productRow.querySelectorAll('.wcell'));
-    const usedIdxs = prodCells.map((c,i)=>({i, t:(c.textContent||'').trim()})).filter(x=> x.t!=='').map(x=> x.i);
-    if (usedIdxs.length===0) return;
-
-    const first = Math.min(...usedIdxs);
-    const last  = Math.max(...usedIdxs);
-    const restCells = Array.from(restRow.querySelectorAll('.wcell'));
-    for (let i=first;i<=last;i++){ if (restCells[i]) restCells[i].classList.add('topline'); }
-  }
-
-  /* ===== Samenstellen ===== */
-  let current = { dividend:0, divisor:0 };
-
-  function newExercise(){
-    const wantNoRemainder = (document.querySelector('input[name="rest"]:checked').value === 'zonder');
-    const useDecimals = document.getElementById('toDecimals').checked;
-
-    current = generateProblem(wantNoRemainder);
-
-    // Links
-    const { intLen, totalCols, commaIndex } = buildDividendGrid($('#grid'), current.dividend, useDecimals);
-
-    // Rechts
-    buildDivisorGrid($('#divGrid'), current.divisor);
-    buildQuotGrid($('#quotGrid'), intLen);
-
-    // Werkveld (kolommen volgen links)
-    buildWorkArea($('#workArea'), current.dividend, current.divisor, useDecimals, totalCols, commaIndex);
-
-    setTimeout(syncHBar, 0);
-   
-// ALTIJD nieuwe controle bouwen als de checkbox aan staat
-    if (document.getElementById('enableCheck').checked) {
-        maakControle();
-    }
-  }
-
-  /* ===== Events ===== */
-  $('#btnNew').addEventListener('click', newExercise);
-  $('#toDecimals').addEventListener('change', newExercise);
-
-  $('#btnReset').addEventListener('click', ()=>{
-    document.querySelectorAll('#workArea .wcell').forEach(c=>{ c.textContent=''; c.classList.remove('topline'); });
-    const q = $('#quotGrid'); const intLen = parseInt(q.dataset.intlen,10) || 1;
-    buildQuotGrid(q, intLen); // reset quotient naar basis; max 3 decimalen blijft actief bij nieuwe komma
-  });
-
-/* ===============================
-   AUTOMATISCHE VERBETERING
-   (werkt met jouw raster)
-================================= */
-
-function berekenStappen(deeltal, deler, maxDecimalen = 3){
-
-  let stappen = [];
-  let cijfers = String(deeltal).split("");
-
-  let rest = 0;
-  let i = 0;
-
-  /* ===== Eerste stap bepalen ===== */
-
-  let huidig = parseInt(cijfers[0],10);
-
-  if (huidig < deler && cijfers.length > 1){
-    huidig = parseInt(cijfers[0] + cijfers[1],10);
-    i = 2;
-  } else {
-    i = 1;
-  }
-
-  let q = Math.floor(huidig / deler);
-  let product = q * deler;
-  let aftrek = huidig - product;
-
-  stappen.push({ huidig, q, product, aftrek });
-
-  rest = aftrek;
-
-  /* ===== Rest integer stappen ===== */
-
-  for (; i < cijfers.length; i++){
-
-    huidig = rest * 10 + parseInt(cijfers[i],10);
-    q = Math.floor(huidig / deler);
-    product = q * deler;
-    aftrek = huidig - product;
+    let q = Math.floor(huidig / deler);
+    let product = q * deler;
+    let aftrek = huidig - product;
 
     stappen.push({ huidig, q, product, aftrek });
-
     rest = aftrek;
-  }
 
-  /* ===== Decimalen ===== */
+    for (; i < cijfers.length; i++){
+        huidig = rest * 10 + parseInt(cijfers[i],10);
+        q = Math.floor(huidig / deler);
+        product = q * deler;
+        aftrek = huidig - product;
 
-  let dec = 0;
-  while (rest !== 0 && dec < maxDecimalen){
-
-    huidig = rest * 10;
-    q = Math.floor(huidig / deler);
-    product = q * deler;
-    aftrek = huidig - product;
-
-    stappen.push({ huidig, q, product, aftrek });
-
-    rest = aftrek;
-    dec++;
-  }
-
-  return stappen;
-}
-
-
-/* ===== Helper ===== */
-function kleurCel(cel, juist, uitleg, extraFout = null){
-
-  const txt = (cel.textContent || '').trim();
-
-  if (txt === ''){
-    cel.style.backgroundColor = '';
-    cel.title = '';
-    return;
-  }
-
-  const waarde = parseInt(txt);
-
-  if (waarde === juist){
-
-    cel.style.backgroundColor = 'lightgreen';
-    cel.title = 'Juist ✔';
-
-  } else {
-
-    cel.style.backgroundColor = 'lightcoral';
-
-    if (extraFout){
-      cel.title = extraFout;
-    } else {
-      cel.title = uitleg + ' (moet ' + juist + ')';
+        stappen.push({ huidig, q, product, aftrek });
+        rest = aftrek;
     }
-  }
+
+    let dec = 0;
+    while (rest !== 0 && dec < maxDecimalen){
+        huidig = rest * 10;
+        q = Math.floor(huidig / deler);
+        product = q * deler;
+        aftrek = huidig - product;
+
+        stappen.push({ huidig, q, product, aftrek });
+        rest = aftrek;
+        dec++;
+    }
+
+    return stappen;
 }
 
 
+/* =========================================
+   HULPFUNCTIES
+========================================= */
 
-/* ===== Quotient ===== */
-function verbeterQuotient(stappen){
+function random(a,b){
+    return Math.floor(Math.random()*(b-a+1))+a;
+}
 
-  const cells = Array.from(
-    document.querySelectorAll('#quotGrid .gridcell')
-  );
 
-  let stapIndex = 0;
+/* =========================================
+   START
+========================================= */
 
-  cells.forEach(cel => {
+function startNieuweOefening(){
 
-    const t = (cel.textContent || '').trim();
+    const oef = genereerOefening();
 
-    if (t === '' || t === ',') return;
+    state.dividend = oef.dividend;
+    state.divisor  = oef.divisor;
 
-    const stap = stappen[stapIndex];
-    if (!stap) return;
-
-    kleurCel(
-      cel,
-      stap.q,
-      'Fout quotiëntcijfer'
+    state.stappen = berekenStappen(
+        state.dividend,
+        state.divisor,
+        CONFIG.maxDecimalen
     );
 
-    stapIndex++;
-  });
+    console.log("Nieuwe oefening:", state);
 }
 
+startNieuweOefening();
 
-/* ===== Werkveld ===== */
-function verbeterWerkveld(stappen){
-
-  const rows = Array.from(
-    document.querySelectorAll('#workArea .workRow')
-  );
-
-  stappen.forEach((stap, i)=>{
-
-    const prodRow = rows[i*2];
-    const restRow = rows[i*2+1];
-
-    if (!prodRow || !restRow) return;
-
-  /* PRODUCT */
-
-const prodCells = Array.from(
-  prodRow.querySelectorAll('.wcell')
-);
-
-const ingevuldProd =
-  prodCells.filter(c => (c.textContent||'').trim() !== '');
-
-const juisteProd = String(stap.product).split('');
-const start = ingevuldProd.length - juisteProd.length;
-
-ingevuldProd.forEach((cel, idx)=>{
-
-  const juistCijfer = juisteProd[idx - start];
-
-  if (juistCijfer === undefined){
-    cel.style.backgroundColor = '';
-    cel.title = '';
-    return;
-  }
-
-  const leerlingWaarde =
-    parseInt((cel.textContent||'').trim());
-
-  /* ===== NIEUW: product te groot ===== */
-
-  if (stap.product > stap.huidig){
-
-    kleurCel(
-      cel,
-      parseInt(juistCijfer),
-      'Fout vermenigvuldiging',
-      'Product te groot gekozen'
-    );
-
-    return;
-  }
-
-  kleurCel(
-    cel,
-    parseInt(juistCijfer),
-    'Fout vermenigvuldiging'
-  );
-
-});
-
-/* ===== REST ===== */
-
-const restCells = Array.from(
-  restRow.querySelectorAll('.wcell')
-);
-
-const ingevuldRest =
-  restCells.filter(c => (c.textContent||'').trim() !== '');
-
-const juisteRest = String(stap.aftrek).split('');
-
-ingevuldRest.forEach((cel, idx)=>{
-
-  if (idx >= juisteRest.length){
-    cel.style.backgroundColor = '';
-    cel.title = 'Neergehaald cijfer';
-    return;
-  }
-
-  const leerlingWaarde =
-    parseInt((cel.textContent||'').trim());
-
-  /* ===== NIEUW: rest ≥ deler ===== */
-
-  if (leerlingWaarde >= current.divisor){
-
-    kleurCel(
-      cel,
-      parseInt(juisteRest[idx]),
-      'Foute aftrekking',
-      'Rest moet kleiner zijn dan de deler'
-    );
-
-    return;
-  }
-
-  kleurCel(
-    cel,
-    parseInt(juisteRest[idx]),
-    'Foute aftrekking'
-  );
-
-});
-
-  });   // sluit forEach
-
-}       // sluit verbeterWerkveld functie
-
-  
-/* ===== Alles ===== */
-function verbeterAlles(){
-
-  const stappen =
-    berekenStappen(current.dividend, current.divisor, 3);
-
-  verbeterQuotient(stappen);
-  verbeterWerkveld(stappen);
-
-  updateControleIfNeeded();
-}
-
-
-/* ===== Knop ===== */
-document
-  .getElementById('btnCheck')
-  .addEventListener('click', verbeterAlles);
-
-/* ===============================
-   PIJLTJESTOETS NAVIGATIE
-================================= */
-
-function getAllEditableCells(){
-
-  return Array.from(
-    document.querySelectorAll(
-      '#quotGrid .gridcell[contenteditable="true"], ' +
-      '#workArea .wcell[contenteditable="true"]'
-    )
-  );
-}
-
-
-/* Bepaal positie in raster */
-function getCellPosition(cell){
-
-  const row = cell.parentElement;
-  const allRows = Array.from(
-    row.parentElement.children
-  );
-
-  return {
-    rowIndex: allRows.indexOf(row),
-    colIndex: Array.from(row.children).indexOf(cell),
-    row,
-    allRows
-  };
-}
-
-
-/* Ga naar cel */
-function focusCell(el){
-
-  if (!el) return;
-
-  el.focus();
-
-  // Cursor achteraan zetten
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  range.collapse(false);
-
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-}
-
-
-
-/* Key navigation */
-document.addEventListener('keydown', function(e){
-
-  const active = document.activeElement;
-
-  if (
-    !active ||
-    !active.isContentEditable
-  ) return;
-
-  const { rowIndex, colIndex, row, allRows } =
-    getCellPosition(active);
-
-  let target = null;
-
-  switch(e.key){
-
-    case 'ArrowRight':
-      target = row.children[colIndex + 1];
-      break;
-
-    case 'ArrowLeft':
-      target = row.children[colIndex - 1];
-      break;
-
-    case 'ArrowDown':
-      if (allRows[rowIndex + 1]){
-        target =
-          allRows[rowIndex + 1]
-          .children[colIndex];
-      }
-      break;
-
-    case 'ArrowUp':
-      if (allRows[rowIndex - 1]){
-        target =
-          allRows[rowIndex - 1]
-          .children[colIndex];
-      }
-      break;
-
-    default:
-      return;
-  }
-
-  if (target){
-    e.preventDefault();
-    focusCell(target);
-  }
-});
-
-  /* ===============================
-   TAB WISSEL QUOTIENT ↔ WERKVELD
-================================= */
-
-document.addEventListener('keydown', function(e){
-
-  if (e.key !== 'Tab') return;
-
-  const active = document.activeElement;
-
-  if (!active || !active.isContentEditable) return;
-
-  e.preventDefault();
-
-  const inQuotient =
-    active.closest('#quotGrid');
-
-  const inWerkveld =
-    active.closest('#workArea');
-
-  const quotCells = Array.from(
-    document.querySelectorAll(
-      '#quotGrid .gridcell[contenteditable="true"]'
-    )
-  );
-
-  const werkCells = Array.from(
-    document.querySelectorAll(
-      '#workArea .wcell[contenteditable="true"]'
-    )
-  );
-
-  let target = null;
-
-  /* ===== VAN QUOTIENT → WERKVELD ===== */
-
-  if (inQuotient){
-
-    const idx = quotCells.indexOf(active);
-
-    target = werkCells[idx] || werkCells[0];
-  }
-
-  /* ===== VAN WERKVELD → QUOTIENT ===== */
-
-  else if (inWerkveld){
-
-    const row = active.parentElement;
-    const col = Array.from(row.children)
-      .indexOf(active);
-
-    target = quotCells[col] || quotCells[0];
-  }
-
-  /* ===== SHIFT+TAB = OMGEKEERD ===== */
-
-  if (e.shiftKey){
-
-    if (inWerkveld){
-
-      const row = active.parentElement;
-      const col = Array.from(row.children)
-        .indexOf(active);
-
-      target = quotCells[col] || quotCells[0];
-
-    } else if (inQuotient){
-
-      const idx = quotCells.indexOf(active);
-
-      target =
-        werkCells[idx] ||
-        werkCells[werkCells.length - 1];
-    }
-  }
-
-  if (target){
-    focusCell(target);
-  }
-
-});
-
-
-/* ===============================
-   CONTROLE (quotient × deler)
-================================= */
-
-document.getElementById('enableCheck')
-.addEventListener('change', function(){
-  const controleZone = document.getElementById('controleZone');
-  if (!this.checked){
-    controleZone.innerHTML = '';
-  } else {
-    maakControle();
-  }
-});
-
-function maakControle(){
-  const controleZone = document.getElementById('controleZone');
-
-  // Lees quotient (zonder komma) en deler
-  const qCells = document.querySelectorAll('#quotGrid .gridcell');
-  let quotient = '';
-  qCells.forEach(c=>{
-    const t = (c.textContent || '').trim();
-    if (t !== '' && t !== ',') quotient += t;
-  });
-
-  const dCells = document.querySelectorAll('#divGrid .gridcell');
-  let divisor = '';
-  dCells.forEach(c=>{ divisor += (c.textContent || '').trim(); });
-
-  if (!quotient || !divisor){
-    controleZone.innerHTML =
-      '<div style="font-family:monospace">Controle wordt opgebouwd...</div>';
-  }
-
-  const q = parseInt(quotient);
-  const d = parseInt(divisor);
-  const expectedProduct = q * d;
-
-  const divisorString = d.toString();
-  const divisorLength = divisorString.length;
-
-  const singleDigit = (divisorLength === 1);
-  const somLength = expectedProduct.toString().length;
-
-  // UI opbouwen
-  controleZone.innerHTML = `
-    <div style="font-family:monospace; text-align:right; display:inline-block;">
-      <div>${quotient}</div>
-      <div>× ${divisor}</div>
-
-      <div style="border-top:1px solid black;margin:6px 0;"></div>
-
-      <div id="controleRijen"></div>
-
-      ${!singleDigit ? `
-        <div style="border-top:1px solid black;margin:6px 0;"></div>
-        <div id="controleSom"></div>
-      ` : ''}
-
-      <div id="controleFeedback" style="margin-top:12px;"></div>
-    </div>
-  `;
-
-  const rijenDiv = document.getElementById('controleRijen');
-  const somDiv = document.getElementById('controleSom');
-  const feedbackDiv = document.getElementById('controleFeedback');
-
-  // --- controlefunctie (lokale scope) ---
-  function controleerSom(){
-    if (!rijenDiv) return;
-
-    // Eindsom uitlezen (indien aanwezig)
-    let user = '';
-    if (somDiv){
-      somDiv.querySelectorAll('span').forEach(s=>{
-        user += (s.textContent || '').replace(/\D/g,'');
-      });
-    }
-
-    // Als er een somDiv is, maar (nog) niet volledig ingevuld → geen feedback
-    if (somDiv && user.length !== somLength){
-      feedbackDiv.innerHTML = '';
-      return;
-    }
-
-    const eindCorrect = somDiv
-      ? (parseInt(user || '0') === expectedProduct)
-      : true; // geen somDiv bij enkelvoudige deler → eindCorrect irrelevant
-
-    // Tussenstappen controleren
-    let tussenstappenCorrect = true;
-    const rijen = rijenDiv.querySelectorAll('div');
-
-    rijen.forEach((rij,i)=>{
-      const spans = Array.from(rij.querySelectorAll('span'));
-      let ingevoerd = '';
-      spans.forEach(s=>{
-        ingevoerd += (s.textContent || '').replace(/\D/g,'');
-      });
-
-      const cijfer = parseInt(divisorString[divisorString.length - 1 - i], 10);
-      const correctProduct = (q * cijfer * Math.pow(10, i)).toString();
-
-      if (parseInt(ingevoerd || '0', 10) !== parseInt(correctProduct, 10)){
-        tussenstappenCorrect = false;
-      }
-    });
-
-    if (eindCorrect && tussenstappenCorrect){
-      feedbackDiv.innerHTML = '<span style="color:green;">✔ Alles correct</span>';
-    } else if (!tussenstappenCorrect){
-      feedbackDiv.innerHTML = '<span style="color:red;">✘ Fout in tussenstappen</span>';
-    } else {
-      feedbackDiv.innerHTML = '<span style="color:red;">✘ Eindresultaat fout</span>';
-    }
-  }
-
-  /* === invoervelden bouwen === */
-
-  // Tussenrijen (per cijfer van deler)
-  for (let i=0; i<(singleDigit ? 1 : divisorLength); i++){
-    const rij = document.createElement('div');
-    rij.style.marginBottom = '4px';
-
-    // Leading spacers (kolomsgewijs naar rechts)
-    for (let s=0; s<i; s++){
-      const spacer = document.createElement('span');
-      spacer.style.display = 'inline-block';
-      spacer.style.width = '20px';
-      rij.appendChild(spacer);
-    }
-
-    // Invoervakken
-    for (let j=0; j<quotient.length+1; j++){
-      const span = document.createElement('span');
-      span.contentEditable = 'true';
-      span.style.display = 'inline-block';
-      span.style.width = '20px';
-      span.style.textAlign = 'center';
-      span.style.borderBottom = '1px solid black';
-      span.style.marginRight = '2px';
-      rij.appendChild(span);
-    }
-
-    rijenDiv.appendChild(rij);
-  }
-
-  // Eindsom-rij (alleen bij meervoudige deler)
-  if (!singleDigit){
-    for (let i=0; i<somLength; i++){
-      const span = document.createElement('span');
-      span.contentEditable = 'true';
-      span.style.display = 'inline-block';
-      span.style.width = '20px';
-      span.style.textAlign = 'center';
-      span.style.borderBottom = '2px solid black';
-      span.style.marginRight = '2px';
-      somDiv.appendChild(span);
-    }
-  }
-
-  // === LISTENERS: event delegation (geen setTimeout nodig) ===
-  rijenDiv.addEventListener('input', controleerSom);
-  if (!singleDigit){
-    somDiv.addEventListener('input', controleerSom);
-  }
-}  // ⬅️ BELANGRIJK: sluit maakControle() HIER af
-
-
-/* ===== start ===== */
-newExercise();            // bouw meteen een oefening op bij laden
-
-})();  // sluit je IIFE
 </script>
-
