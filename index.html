@@ -66,6 +66,19 @@
     margin-top:10px;
 }
     
+#topRow{
+    display:flex;
+    align-items:flex-end;
+}
+
+#bar{
+    border-top:2px solid black;
+    width:100%;
+} 
+
+#grid{
+    border-right:2px solid black;
+}
 </style>
 
 </head>
@@ -74,28 +87,18 @@
 <h1>Staartdeling</h1>
 
 <div id="board">
-    <div id="gridWrapper">
-        <div id="grid"></div>
 
-        <div id="divisionLine"></div>
-
-        <div id="rightSide">
-            <div id="divGrid"></div>
-            <div id="hbar"></div>
-        </div>
+    <div id="topRow">
+        <div id="grid"></div>        <!-- deeltal -->
+        <div id="divGrid"></div>     <!-- deler -->
     </div>
-</div>
 
-<div id="board">
+    <div id="bar"></div>
+
     <div id="quotientRow"></div>
 
-    <div id="mainRow">
-        <div id="divGrid"></div>
-        <div id="divisionSymbol">)</div>
-        <div id="grid"></div>
-    </div>
-
     <div id="workArea"></div>
+
 </div>
     
 <script>
