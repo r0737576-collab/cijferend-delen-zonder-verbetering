@@ -182,9 +182,11 @@ function maakCel(waarde=""){
 const UI = {
 
     init(){
-        this.cacheDOM();
-        this.tekenLayout();
-    },
+    this.cacheDOM();
+
+    console.log("grid node:", this.dividendNode);
+    console.log("divGrid node:", this.divisorNode);
+}
 
     cacheDOM(){
         this.dividendNode = document.getElementById("grid");
@@ -217,7 +219,8 @@ const UI = {
     this.dividendNode.style.display="grid";
     this.dividendNode.style.gridTemplateColumns =
         `repeat(${cijfers.length},40px)`;
-
+    }
+    
     cijfers.forEach(cijfer=>{
         const cel = document.createElement("div");
         cel.className = "gridcell";
@@ -227,25 +230,23 @@ const UI = {
     });
 }
 
-    tekenDivisor(getal){
-        this.divisorNode.innerHTML="";
+   tekenDivisor(getal){
+    this.divisorNode.innerHTML="";
 
-        const cijfers = String(getal).split("");
+    const cijfers = String(getal).split("");
 
-        this.divisorNode.style.display="grid";
-        this.divisorNode.style.gridTemplateColumns =
-            `repeat(${cijfers.length},40px)`;
+    this.divisorNode.style.display="grid";
+    this.divisorNode.style.gridTemplateColumns =
+        `repeat(${cijfers.length},40px)`;
 
-        cijfers.forEach(cijfer=>{
-            const cel=document.createElement("div");
-            cel.textContent=cijfer;
-            const cel = document.createElement("div");
-            cel.className = "gridcell";
-            cel.textContent = cijfer;
+    cijfers.forEach(cijfer=>{
+        const cel = document.createElement("div");
+        cel.className = "gridcell";
+        cel.textContent = cijfer;
 
-            this.divisorNode.appendChild(cel);
-        });
-    }
+        this.divisorNode.appendChild(cel);
+    });
+}
 };
    
 /* =========================================
