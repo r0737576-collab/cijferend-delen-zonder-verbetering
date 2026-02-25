@@ -164,6 +164,14 @@ function random(a,b){
     return Math.floor(Math.random()*(b-a+1))+a;
 }
 
+function maakCel(waarde=""){
+    const cel = document.createElement("div");
+    cel.className = "gridcell";
+
+    cel.textContent = waarde;
+
+    return cel;
+}
    
 /* =========================================
    UI MODULE
@@ -202,24 +210,22 @@ const UI = {
     },
 
     tekenDividend(getal){
-        this.dividendNode.innerHTML = "";
+    this.dividendNode.innerHTML="";
 
-        const cijfers = String(getal).split("");
+    const cijfers = String(getal).split("");
 
-        this.dividendNode.style.display = "grid";
-        this.dividendNode.style.gridTemplateColumns =
-            `repeat(${cijfers.length}, 40px)`;
+    this.dividendNode.style.display="grid";
+    this.dividendNode.style.gridTemplateColumns =
+        `repeat(${cijfers.length},40px)`;
 
-        cijfers.forEach(cijfer=>{
-            const cel = document.createElement("div");
-            cel.textContent = cijfer;
-            const cel = document.createElement("div");
-            cel.className = "gridcell";
-            cel.textContent = cijfer;
-            
-            this.dividendNode.appendChild(cel);
-        });
-    },
+    cijfers.forEach(cijfer=>{
+        const cel = document.createElement("div");
+        cel.className = "gridcell";
+        cel.textContent = cijfer;
+
+        this.dividendNode.appendChild(cel);
+    });
+}
 
     tekenDivisor(getal){
         this.divisorNode.innerHTML="";
@@ -266,8 +272,10 @@ function startNieuweOefening(){
    START PROGRAMMA
 ========================================= */
 
-UI.init();
-startNieuweOefening();
+window.onload = () => {
+    UI.init();
+    startNieuweOefening();
+};
     
 </script>
 
