@@ -66,15 +66,37 @@
     margin-top:10px;
 }
     
+#board{
+    width:max-content;
+    margin:auto;
+}
+
 #topRow{
-    display:flex;
-    align-items:flex-end;
+    display:grid;
+    grid-template-columns:auto auto;
+    align-items:end;
+}
+
+#grid{
+    border-right:2px solid black;
+    padding-right:10px;
+}
+
+#divGrid{
+    padding-left:10px;
 }
 
 #bar{
     border-top:2px solid black;
-    width:100%;
-} 
+    grid-column:2;
+    margin-left:10px;
+}
+
+#quotientRow{
+    display:grid;
+    grid-column:2;
+    margin-left:10px;
+}
 
 #grid{
     border-right:2px solid black;
@@ -89,13 +111,12 @@
 <div id="board">
 
     <div id="topRow">
-        <div id="grid"></div>        <!-- deeltal -->
-        <div id="divGrid"></div>     <!-- deler -->
+        <div id="grid"></div>
+        <div id="divGrid"></div>
+
+        <div id="bar"></div>
+        <div id="quotientRow"></div>
     </div>
-
-    <div id="bar"></div>
-
-    <div id="quotientRow"></div>
 
     <div id="workArea"></div>
 
