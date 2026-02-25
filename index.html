@@ -1,8 +1,22 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <title>Staartdeling</title>
+</head>
+<body>
+
+<h1>Staartdeling</h1>
+
+<div id="grid"></div>
+<br>
+<div id="divGrid"></div>
+
 <script>
 "use strict";
 
 /* =========================================
-   CONFIGURATIE
+   CONFIGURATIE (instellingen - Alles wat didactisch instelbaar is)
 ========================================= */
 
 const CONFIG = {
@@ -33,6 +47,8 @@ const state = {
    → Geen HTML, geen kleuren
 ========================================= */
 
+
+//Deze functie maakt een nieuwe oefening.
 function genereerOefening(){
     const divisor = random(2, CONFIG.maxDivisor);
     const quotient = random(2, CONFIG.maxQuotient);
@@ -41,7 +57,7 @@ function genereerOefening(){
     return { dividend, divisor };
 }
 
-
+//Deze functie doet ALLES wat je leerlingen op papier doen
 function berekenStappen(deeltal, deler, maxDecimalen){
     let stappen = [];
     let cijfers = String(deeltal).split("");
@@ -98,7 +114,74 @@ function random(a,b){
     return Math.floor(Math.random()*(b-a+1))+a;
 }
 
+   
+/* =========================================
+   UI MODULE
+   → Alles wat met tekenen te maken heeft
+   → Geen berekeningen hier!
+========================================= */
 
+const UI = {
+
+    init(){
+        this.cacheDOM();
+    },
+
+    cacheDOM(){
+        this.dividendNode = document.getElementById("grid");
+        this.divisorNode  = document.getElementById("divGrid");
+    },
+
+    tekenOefening(state){
+        this.tekenDividend(state.dividend);
+        this.tekenDivisor(state.divisor);
+    },
+
+    tekenDividend(getal){
+        this.dividendNode.innerHTML = "";
+
+        const cijfers = String(getal).split("");
+
+        this.dividendNode.style.display = "grid";
+        this.dividendNode.style.gridTemplateColumns =
+            `repeat(${cijfers.length}, 40px)`;
+
+        cijfers.forEach(cijfer => {
+            const cel = document.createElement("div");
+            cel.textContent = cijfer;
+            cel.style.border = "1px solid #ccc";
+            cel.style.height = "40px";
+            cel.style.display = "flex";
+            cel.style.alignItems = "center";
+            cel.style.justifyContent = "center";
+            cel.style.fontWeight = "bold";
+            this.dividendNode.appendChild(cel);
+        });
+    },
+
+    tekenDivisor(getal){
+        this.divisorNode.innerHTML = "";
+
+        const cijfers = String(getal).split("");
+
+        this.divisorNode.style.display = "grid";
+        this.divisorNode.style.gridTemplateColumns =
+            `repeat(${cijfers.length}, 40px)`;
+
+        cijfers.forEach(cijfer => {
+            const cel = document.createElement("div");
+            cel.textContent = cijfer;
+            cel.style.border = "1px solid #ccc";
+            cel.style.height = "40px";
+            cel.style.display = "flex";
+            cel.style.alignItems = "center";
+            cel.style.justifyContent = "center";
+            cel.style.fontWeight = "bold";
+            this.divisorNode.appendChild(cel);
+        });
+    }
+};
+   
 /* =========================================
    START
 ========================================= */
@@ -116,9 +199,14 @@ function startNieuweOefening(){
         CONFIG.maxDecimalen
     );
 
-    console.log("Nieuwe oefening:", state);
+    UI.tekenOefening(state);
 }
 
+   </script>
+
+</body>
+</html>
+UI.init();
 startNieuweOefening();
 
 </script>
