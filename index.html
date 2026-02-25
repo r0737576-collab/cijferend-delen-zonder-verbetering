@@ -182,28 +182,15 @@ function maakCel(waarde=""){
 const UI = {
 
     init(){
-    this.cacheDOM();
+        this.cacheDOM();
 
-    console.log("grid node:", this.dividendNode);
-    console.log("divGrid node:", this.divisorNode);
-}
+        console.log("grid node:", this.dividendNode);
+        console.log("divGrid node:", this.divisorNode);
+    },
 
     cacheDOM(){
         this.dividendNode = document.getElementById("grid");
-        this.divisorNode  = document.getElementById("divGrid");
-        this.board = document.getElementById("board");
-    },
-
-    tekenLayout(){
-        this.board.style.maxWidth = "900px";
-        this.board.style.margin = "auto";
-
-        document.getElementById("gridWrapper").style.display = "flex";
-        document.getElementById("gridWrapper").style.alignItems = "flex-start";
-
-        document.getElementById("divisionLine").style.width = "4px";
-        document.getElementById("divisionLine").style.background = "black";
-        document.getElementById("divisionLine").style.margin = "0 20px";
+        this.divisorNode = document.getElementById("divGrid");
     },
 
     tekenOefening(state){
@@ -212,41 +199,46 @@ const UI = {
     },
 
     tekenDividend(getal){
-    this.dividendNode.innerHTML="";
 
-    const cijfers = String(getal).split("");
+        if(!this.dividendNode) return;
 
-    this.dividendNode.style.display="grid";
-    this.dividendNode.style.gridTemplateColumns =
-        `repeat(${cijfers.length},40px)`;
+        this.dividendNode.innerHTML = "";
+
+        const cijfers = String(getal).split("");
+
+        this.dividendNode.style.display = "grid";
+        this.dividendNode.style.gridTemplateColumns =
+            `repeat(${cijfers.length},40px)`;
+
+        cijfers.forEach(cijfer=>{
+            const cel = document.createElement("div");
+            cel.className = "gridcell";
+            cel.textContent = cijfer;
+
+            this.dividendNode.appendChild(cel);
+        });
+    },
+
+    tekenDivisor(getal){
+
+        if(!this.divisorNode) return;
+
+        this.divisorNode.innerHTML = "";
+
+        const cijfers = String(getal).split("");
+
+        this.divisorNode.style.display = "grid";
+        this.divisorNode.style.gridTemplateColumns =
+            `repeat(${cijfers.length},40px)`;
+
+        cijfers.forEach(cijfer=>{
+            const cel = document.createElement("div");
+            cel.className = "gridcell";
+            cel.textContent = cijfer;
+
+            this.divisorNode.appendChild(cel);
+        });
     }
-    
-    cijfers.forEach(cijfer=>{
-        const cel = document.createElement("div");
-        cel.className = "gridcell";
-        cel.textContent = cijfer;
-
-        this.dividendNode.appendChild(cel);
-    });
-}
-
-   tekenDivisor(getal){
-    this.divisorNode.innerHTML="";
-
-    const cijfers = String(getal).split("");
-
-    this.divisorNode.style.display="grid";
-    this.divisorNode.style.gridTemplateColumns =
-        `repeat(${cijfers.length},40px)`;
-
-    cijfers.forEach(cijfer=>{
-        const cel = document.createElement("div");
-        cel.className = "gridcell";
-        cel.textContent = cijfer;
-
-        this.divisorNode.appendChild(cel);
-    });
-}
 };
    
 /* =========================================
@@ -273,10 +265,10 @@ function startNieuweOefening(){
    START PROGRAMMA
 ========================================= */
 
-window.onload = () => {
+window.addEventListener("DOMContentLoaded", () => {
     UI.init();
     startNieuweOefening();
-};
+});
     
 </script>
 
