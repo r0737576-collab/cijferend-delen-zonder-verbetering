@@ -23,15 +23,13 @@
 
 #board{
     width:max-content;
-    margin-left:40px;
-    margin-top:20px;
 }
 
 /* BOVENSTE RIJ */
 
 #topRow{
     display:grid;
-    grid-template-columns:auto 2px auto;
+    grid-template-columns:max-content 3px max-content;
     align-items:end;
 }
 
@@ -40,15 +38,17 @@
 
 /* VERTICALE LIJN */
 #verticalLine{
-    background:solid black;
-    Width:3px;
+    background:black;
+    width:3px;
+    align-self:stretch;
 }
     
 /* RECHTERKANT = DELER */
 
 #divGrid{
     display:grid;
-    width:max-content;
+    grid-auto-columns:40px;
+    grid-auto-flow:column;
 }
 
 /* HORIZONTALE LIJN ONDER DELER */
