@@ -8,9 +8,18 @@
 
 <h1>Staartdeling</h1>
 
-<div id="grid"></div>
-<br>
-<div id="divGrid"></div>
+<div id="board">
+    <div id="gridWrapper">
+        <div id="grid"></div>
+
+        <div id="divisionLine"></div>
+
+        <div id="rightSide">
+            <div id="divGrid"></div>
+            <div id="hbar"></div>
+        </div>
+    </div>
+</div>
 
 <script>
 "use strict";
@@ -125,11 +134,25 @@ const UI = {
 
     init(){
         this.cacheDOM();
+        this.tekenLayout();
     },
 
     cacheDOM(){
         this.dividendNode = document.getElementById("grid");
         this.divisorNode  = document.getElementById("divGrid");
+        this.board = document.getElementById("board");
+    },
+
+    tekenLayout(){
+        this.board.style.maxWidth = "900px";
+        this.board.style.margin = "auto";
+
+        document.getElementById("gridWrapper").style.display = "flex";
+        document.getElementById("gridWrapper").style.alignItems = "flex-start";
+
+        document.getElementById("divisionLine").style.width = "4px";
+        document.getElementById("divisionLine").style.background = "black";
+        document.getElementById("divisionLine").style.margin = "0 20px";
     },
 
     tekenOefening(state){
@@ -146,37 +169,39 @@ const UI = {
         this.dividendNode.style.gridTemplateColumns =
             `repeat(${cijfers.length}, 40px)`;
 
-        cijfers.forEach(cijfer => {
+        cijfers.forEach(cijfer=>{
             const cel = document.createElement("div");
             cel.textContent = cijfer;
-            cel.style.border = "1px solid #ccc";
-            cel.style.height = "40px";
-            cel.style.display = "flex";
-            cel.style.alignItems = "center";
-            cel.style.justifyContent = "center";
-            cel.style.fontWeight = "bold";
+            cel.style.border="1px solid #ccc";
+            cel.style.height="40px";
+            cel.style.display="flex";
+            cel.style.alignItems="center";
+            cel.style.justifyContent="center";
+            cel.style.fontWeight="bold";
+
             this.dividendNode.appendChild(cel);
         });
     },
 
     tekenDivisor(getal){
-        this.divisorNode.innerHTML = "";
+        this.divisorNode.innerHTML="";
 
         const cijfers = String(getal).split("");
 
-        this.divisorNode.style.display = "grid";
+        this.divisorNode.style.display="grid";
         this.divisorNode.style.gridTemplateColumns =
-            `repeat(${cijfers.length}, 40px)`;
+            `repeat(${cijfers.length},40px)`;
 
-        cijfers.forEach(cijfer => {
-            const cel = document.createElement("div");
-            cel.textContent = cijfer;
-            cel.style.border = "1px solid #ccc";
-            cel.style.height = "40px";
-            cel.style.display = "flex";
-            cel.style.alignItems = "center";
-            cel.style.justifyContent = "center";
-            cel.style.fontWeight = "bold";
+        cijfers.forEach(cijfer=>{
+            const cel=document.createElement("div");
+            cel.textContent=cijfer;
+            cel.style.border="1px solid #ccc";
+            cel.style.height="40px";
+            cel.style.display="flex";
+            cel.style.alignItems="center";
+            cel.style.justifyContent="center";
+            cel.style.fontWeight="bold";
+
             this.divisorNode.appendChild(cel);
         });
     }
