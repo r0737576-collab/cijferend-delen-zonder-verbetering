@@ -9,67 +9,24 @@
 
 /* HIER komt jouw CSS */
 
-#gridWrapper{
-    display:flex;
-    align-items:flex-start;
-}
-
 .gridcell{
     border:1px solid #ccc;
+    width:40px;
     height:40px;
     display:flex;
     align-items:center;
     justify-content:center;
     font-weight:bold;
 }
-    
-#divisionLine{
-    width:4px;
-    background:black;
-    align-self:stretch;
-    margin:0 20px;
-    border-radius:2px;
-}
 
-#rightSide{
-    display:flex;
-    flex-direction:column;
-}
+/* BOARD */
 
-#hbar{
-    height:4px;
-    background:black;
-    margin-top:5px;
-}
-#board{
-    max-width:900px;
-    margin:auto;
-}
-
-#mainRow{
-    display:flex;
-    align-items:flex-start;
-}
-
-#divisionSymbol{
-    font-size:28px;
-    margin:0 10px;
-}
-
-#quotientRow{
-    display:grid;
-    margin-left:80px; /* voorlopig vaste offset */
-}
-
-#workArea{
-    margin-left:80px;
-    margin-top:10px;
-}
-    
 #board{
     width:max-content;
     margin:auto;
 }
+
+/* BOVENSTE RIJ */
 
 #topRow{
     display:grid;
@@ -77,29 +34,36 @@
     align-items:end;
 }
 
+/* LINKERKANT = DEELTAL */
+
 #grid{
     border-right:2px solid black;
     padding-right:10px;
 }
 
+/* RECHTERKANT = DELER */
+
 #divGrid{
+    display:grid;
+    width:max-content;
     padding-left:10px;
 }
+
+/* HORIZONTALE LIJN ONDER DELER */
 
 #bar{
     border-top:2px solid black;
     grid-column:2;
+    width:100%;
     margin-left:10px;
 }
+
+/* QUOTIENT */
 
 #quotientRow{
     display:grid;
     grid-column:2;
     margin-left:10px;
-}
-
-#grid{
-    border-right:2px solid black;
 }
 </style>
 
