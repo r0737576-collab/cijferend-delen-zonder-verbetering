@@ -31,7 +31,7 @@
 
 #topRow{
     display:grid;
-    grid-template-columns:auto auto;
+    grid-template-columns:auto 2px auto;
     align-items:end;
 }
 
@@ -39,32 +39,33 @@
 
 #grid{
     border-right:2px solid black;
-    padding-right:10px;
 }
 
+/* VERTICALE LIJN */
+#verticalLine{
+    background:black;
+}
+    
 /* RECHTERKANT = DELER */
 
 #divGrid{
     display:grid;
     width:max-content;
-    padding-left:10px;
 }
 
 /* HORIZONTALE LIJN ONDER DELER */
 
 #bar{
     border-top:2px solid black;
-    grid-column:2;
+    grid-column:3;
     width:100%;
-    margin-left:10px;
 }
 
 /* QUOTIENT */
 
 #quotientRow{
     display:grid;
-    grid-column:2;
-    margin-left:10px;
+    grid-column:3;
 }
 </style>
 
@@ -76,12 +77,14 @@
 <div id="board">
 
     <div id="topRow">
-        <div id="grid"></div>
-        <div id="divGrid"></div>
+    <div id="grid"></div>
+    <div id="verticalLine"></div>
+    <div id="divGrid"></div>
 
-        <div id="bar"></div>
-        <div id="quotientRow"></div>
-    </div>
+    <div id="bar"></div>
+    <div></div>
+    <div id="quotientRow"></div>
+</div>
 
     <div id="workArea"></div>
 
