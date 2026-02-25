@@ -41,7 +41,31 @@
     background:black;
     margin-top:5px;
 }
+#board{
+    max-width:900px;
+    margin:auto;
+}
 
+#mainRow{
+    display:flex;
+    align-items:flex-start;
+}
+
+#divisionSymbol{
+    font-size:28px;
+    margin:0 10px;
+}
+
+#quotientRow{
+    display:grid;
+    margin-left:80px; /* voorlopig vaste offset */
+}
+
+#workArea{
+    margin-left:80px;
+    margin-top:10px;
+}
+    
 </style>
 
 </head>
@@ -62,6 +86,18 @@
     </div>
 </div>
 
+<div id="board">
+    <div id="quotientRow"></div>
+
+    <div id="mainRow">
+        <div id="divGrid"></div>
+        <div id="divisionSymbol">)</div>
+        <div id="grid"></div>
+    </div>
+
+    <div id="workArea"></div>
+</div>
+    
 <script>
 "use strict";
 
@@ -191,11 +227,14 @@ const UI = {
     cacheDOM(){
         this.dividendNode = document.getElementById("grid");
         this.divisorNode = document.getElementById("divGrid");
+        this.quotientNode = document.getElementById("quotientRow");
+        this.workAreaNode = document.getElementById("workArea");
     },
 
     tekenOefening(state){
-        this.tekenDividend(state.dividend);
-        this.tekenDivisor(state.divisor);
+    this.tekenDividend(state.dividend);
+    this.tekenDivisor(state.divisor);
+    this.tekenQuotient(state.stappen);
     },
 
     tekenDividend(getal){
@@ -238,7 +277,27 @@ const UI = {
 
             this.divisorNode.appendChild(cel);
         });
-    }
+    },
+
+    tekenQuotient(stappen){
+
+    this.quotientNode.innerHTML="";
+
+    const kolommen = stappen.length;
+
+    this.quotientNode.style.display="grid";
+    this.quotientNode.style.gridTemplateColumns =
+        `repeat(${kolommen},40px)`;
+
+    stappen.forEach(stap=>{
+        const cel = document.createElement("div");
+        cel.className="gridcell";
+        cel.textContent = stap.q;
+
+        this.quotientNode.appendChild(cel);
+    });
+}
+    
 };
    
 /* =========================================
