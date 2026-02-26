@@ -183,7 +183,7 @@ function maakCel(waarde=""){
 }
    
 /* =========================================
-   UI MODULE
+   UI MODULE of JS
    → Alles wat met tekenen te maken heeft
    → Geen berekeningen hier!
 ========================================= */
@@ -277,8 +277,9 @@ const UI = {
     this.workAreaNode.innerHTML = "";
 
     const aantalKolommen = String(state.dividend).length;
-    const aantalRijen = state.stappen.length * 2;
+    const aantalRijen = state.stappen.length * 3;
 
+    this.workAreaNode.style.display = "grid";   // ⭐ DEZE ONTBREEKT
     this.workAreaNode.style.gridTemplateColumns =
         `repeat(${aantalKolommen}, 40px)`;
 
