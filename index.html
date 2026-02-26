@@ -21,12 +21,9 @@
 
 /* BOARD */
 
-#board{
-    display:grid;
-    grid-template-columns:max-content 3px max-content;
-    grid-auto-rows:min-content;
-    margin-left:40px;
-    margin-top:20px;
+#grid{
+    grid-column:1;
+    grid-row:1;
 }
 
 #verticalLine{
@@ -34,11 +31,6 @@
     grid-row:1 / span 3;
     background:black;
     width:3px;
-}
-
-#grid{
-    grid-column:1;
-    grid-row:1;
 }
 
 #divGrid{
@@ -58,12 +50,12 @@
 }
 
 #workArea{
+    grid-column:1 / span 3;
+    grid-row:4;
+
     display:grid;
     grid-auto-rows:40px;
     justify-content:start;
-
-    grid-column: 1 / span 3;
-    grid-row: 4;
 }
     
 </style>
@@ -79,12 +71,7 @@
     <div id="verticalLine"></div>
     <div id="divGrid"></div>
 
-    <div></div>
-    <div></div>
     <div id="bar"></div>
-
-    <div></div>
-    <div></div>
     <div id="quotientRow"></div>
 
     <div id="workArea"></div>
