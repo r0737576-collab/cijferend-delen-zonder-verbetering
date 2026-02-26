@@ -22,56 +22,26 @@
 /* BOARD */
 
 #board{
-    width:max-content;
-}
-
-/* BOVENSTE RIJ */
-
-#topRow{
     display:grid;
     grid-template-columns:max-content 3px max-content;
-    align-items:end;
+    grid-auto-rows:min-content;
+    margin-left:40px;
+    margin-top:20px;
 }
 
-/* LINKERKANT = DEELTAL */
-
-
-/* VERTICALE LIJN */
 #verticalLine{
     background:black;
     width:3px;
-    align-self:stretch;
+    grid-row:1 / span 3; /* voorlopig */
 }
-    
-/* RECHTERKANT = DELER */
-
-#divGrid{
-    display:grid;
-    grid-auto-columns:40px;
-    grid-auto-flow:column;
-}
-
-/* HORIZONTALE LIJN ONDER DELER */
 
 #bar{
     border-top:3px solid black;
-    grid-column:3;
-    width:100%;
 }
 
-/* QUOTIENT */
-
-#quotientRow{
-    display:grid;
-    grid-column:3;
-}
-
-/* WERKVELD */
-    
 #workArea{
-    display:grid;
-    grid-auto-rows:40px;
-    margin-top:10px;
+    grid-column:1;
+    margin-top:0;
 }
     
 </style>
