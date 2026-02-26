@@ -20,6 +20,15 @@
 }
 
 /* BOARD */
+#board{
+    display:grid;
+
+    grid-template-columns:max-content 3px max-content;
+    grid-template-rows:auto auto auto auto;
+
+    margin-left:40px;
+    margin-top:20px;
+} 
 
 #grid{
     grid-column:1;
@@ -28,7 +37,7 @@
 
 #verticalLine{
     grid-column:2;
-    grid-row:1 / span 3;
+    grid-row:1 / span 4;
     background:black;
     width:3px;
 }
