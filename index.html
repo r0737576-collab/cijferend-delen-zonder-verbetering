@@ -20,47 +20,30 @@
 }
 
 /* BOARD */
-#board{
-    display:grid;
-
-    grid-template-columns:max-content 3px max-content;
-
-    margin-left:40px;
-    margin-top:20px;
+#gridWrapper{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
 }
 
-#grid{
-    grid-column:1;
+#leftSide{
+    display:flex;
+    flex-direction:column;
+}
+
+#rightSide{
+    display:flex;
+    flex-direction:column;
 }
 
 #verticalLine{
-    grid-column:2;
-    grid-row:1 / -1;
-    
-    background:black;
     width:3px;
-}
-
-#divGrid{
-    grid-column:3;
+    background:black;
+    align-self:stretch;
 }
 
 #bar{
-    grid-column:3;
     border-top:3px solid black;
-}
-
-#quotientRow{
-    grid-column:3;
-}
-
-#workArea{
-    grid-column:1;
-    grid-row:auto;
-
-    display:grid;
-    grid-auto-rows:40px;
-    justify-content:start;
 }
     
 </style>
@@ -70,16 +53,20 @@
 
 <h1>Staartdeling</h1>
 
-<div id="board">
+<div id="gridWrapper">
 
+  <div id="leftSide">
     <div id="grid"></div>
-    <div id="verticalLine"></div>
-    <div id="divGrid"></div>
+    <div id="workArea"></div>
+  </div>
 
+  <div id="verticalLine"></div>
+
+  <div id="rightSide">
+    <div id="divGrid"></div>
     <div id="bar"></div>
     <div id="quotientRow"></div>
-
-    <div id="workArea"></div>
+  </div>
 
 </div>
     
