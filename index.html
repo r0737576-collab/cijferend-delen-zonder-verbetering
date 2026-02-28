@@ -42,6 +42,21 @@
     transition:all 0.15s ease;
 }
 
+#opgaveZone{
+    margin:10px 0 20px 40px;
+    font-size:18px;
+    display:flex;
+    align-items:center;
+    gap:20px;
+}
+
+#opgaveZone input{
+    width:60px;
+    padding:5px;
+    font-size:16px;
+    text-align:center;
+}
+
 #controls button:hover{
     background:#3a506b;
     color:white;
@@ -119,6 +134,20 @@
     </label>
 </div>
 
+<div id="opgaveZone">
+    <span id="opgaveTekst"></span>
+
+    <label>
+        Quotient:
+        <input type="number" id="inputQuotient">
+    </label>
+
+    <label>
+        Rest:
+        <input type="number" id="inputRest">
+    </label>
+</div>
+    
 <div id="gridWrapper">
 
   <div id="leftSide">
@@ -382,6 +411,9 @@ function startNieuweOefening(){
     );
 
     UI.tekenOefening(state);
+
+    document.getElementById("opgaveTekst").textContent =
+    `${dividend} ÷ ${divisor} =`;
 }
     
 /* =========================================
