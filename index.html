@@ -43,11 +43,9 @@
 }
 
 #opgaveZone{
-    margin:10px 0 20px 40px;
-    font-size:18px;
-    display:flex;
-    align-items:center;
-    gap:20px;
+    margin:15px 0 25px 40px;
+    font-size:20px;
+    font-family:monospace;
 }
 
 #opgaveZone input{
@@ -137,15 +135,15 @@
 <div id="opgaveZone">
     <span id="opgaveTekst"></span>
 
-    <label>
+    <div style="margin-top:10px">
         Quotient:
-        <input type="number" id="inputQuotient">
-    </label>
+        <input id="inputQuotient" type="number">
+    </div>
 
-    <label>
+    <div style="margin-top:10px">
         Rest:
-        <input type="number" id="inputRest">
-    </label>
+        <input id="inputRest" type="number">
+    </div>
 </div>
     
 <div id="gridWrapper">
@@ -399,21 +397,14 @@ const UI = {
 
 function startNieuweOefening(){
 
-    const oef = genereerOefening();
+    const opgave = document.getElementById("opgaveTekst");
 
-    state.dividend = oef.dividend;
-    state.divisor  = oef.divisor;
+if(opgave){
+    const quotient = state.dividend / state.divisor;
+    const rest = state.dividend % state.divisor;
 
-    state.stappen = berekenStappen(
-        state.dividend,
-        state.divisor,
-        CONFIG.maxDecimalen
-    );
-
-    UI.tekenOefening(state);
-
-    document.getElementById("opgaveTekst").textContent =
-    `${dividend} ÷ ${divisor} =`;
+    opgave.textContent =
+        `${state.dividend} ÷ ${state.divisor} = ${quotient} r ${rest}`;
 }
     
 /* =========================================
