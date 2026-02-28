@@ -258,6 +258,9 @@ const UI = {
     init(){
         this.cacheDOM();
 
+        document.getElementById("btnNew")
+            .addEventListener("click", startNieuweOefening);
+
         console.log("grid node:", this.dividendNode);
         console.log("divGrid node:", this.divisorNode);
     },
