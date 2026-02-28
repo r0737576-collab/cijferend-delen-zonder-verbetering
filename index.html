@@ -449,10 +449,12 @@ const UI = {
 
     this.workAreaNode.innerHTML = "";
 
-    const aantalKolommen = String(state.dividend).length;
-    const aantalRijen = 1 + state.stappen.length * 2;
+    const rooster = vulCorrectRooster(state);
 
-    this.workAreaNode.style.display = "grid";   // ⭐ DEZE ONTBREEKT
+    const aantalRijen = rooster.length;
+    const aantalKolommen = rooster[0].length;
+
+    this.workAreaNode.style.display = "grid";
     this.workAreaNode.style.gridTemplateColumns =
         `repeat(${aantalKolommen}, 40px)`;
 
@@ -461,6 +463,9 @@ const UI = {
 
             const cel = document.createElement("div");
             cel.className = "gridcell";
+
+            // DEBUG: toon juiste waarde
+            cel.textContent = rooster[r][c];
 
             this.workAreaNode.appendChild(cel);
         }
