@@ -233,13 +233,16 @@ function genereerOefening(){
 
 //Deze functie doet ALLES wat je leerlingen op papier doen
 function berekenStappen(deeltal, deler, maxDecimalen){
+
     let stappen = [];
     let cijfers = String(deeltal).split("");
 
     let rest = 0;
     let i = 0;
+    let startKolom = 0;
 
     let huidig = parseInt(cijfers[0],10);
+
     if (huidig < deler && cijfers.length > 1){
         huidig = parseInt(cijfers[0] + cijfers[1],10);
         i = 2;
@@ -251,34 +254,40 @@ function berekenStappen(deeltal, deler, maxDecimalen){
     let product = q * deler;
     let aftrek = huidig - product;
 
-    stappen.push({ huidig, q, product, aftrek });
+    stappen.push({
+        huidig,
+        q,
+        product,
+        aftrek,
+        startKolom,
+        breedte: String(huidig).length
+    });
+
     rest = aftrek;
+    startKolom++;
 
     for (; i < cijfers.length; i++){
+
         huidig = rest * 10 + parseInt(cijfers[i],10);
         q = Math.floor(huidig / deler);
         product = q * deler;
         aftrek = huidig - product;
 
-        stappen.push({ huidig, q, product, aftrek });
-        rest = aftrek;
-    }
+        stappen.push({
+            huidig,
+            q,
+            product,
+            aftrek,
+            startKolom,
+            breedte: String(huidig).length
+        });
 
-    let dec = 0;
-    while (rest !== 0 && dec < maxDecimalen){
-        huidig = rest * 10;
-        q = Math.floor(huidig / deler);
-        product = q * deler;
-        aftrek = huidig - product;
-
-        stappen.push({ huidig, q, product, aftrek });
         rest = aftrek;
-        dec++;
+        startKolom++;
     }
 
     return stappen;
 }
-
 
 /* =========================================
    HULPFUNCTIES
@@ -435,6 +444,8 @@ function startNieuweOefening(){
         CONFIG.maxDecimalen
     );
 
+    console.log("STAPPEN:", state.stappen);   // ← HIER
+    
     UI.tekenOefening(state);
 
     const opgave = document.getElementById("opgaveTekst");
