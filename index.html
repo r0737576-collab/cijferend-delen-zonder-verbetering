@@ -397,14 +397,28 @@ const UI = {
 
 function startNieuweOefening(){
 
+    const oef = genereerOefening();
+
+    state.dividend = oef.dividend;
+    state.divisor  = oef.divisor;
+
+    state.stappen = berekenStappen(
+        state.dividend,
+        state.divisor,
+        CONFIG.maxDecimalen
+    );
+
+    UI.tekenOefening(state);
+
     const opgave = document.getElementById("opgaveTekst");
 
-if(opgave){
-    const quotient = state.dividend / state.divisor;
-    const rest = state.dividend % state.divisor;
+    if(opgave){
+        const quotient = Math.floor(state.dividend / state.divisor);
+        const rest = state.dividend % state.divisor;
 
-    opgave.textContent =
-        `${state.dividend} ÷ ${state.divisor} = ${quotient} r ${rest}`;
+        opgave.textContent =
+            `${state.dividend} ÷ ${state.divisor} =`;
+    }
 }
     
 /* =========================================
