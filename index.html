@@ -412,6 +412,10 @@ function startNieuweOefening(){
 
     const oef = genereerOefening();
 
+    document.getElementById("inputQuotient").value = "";
+    document.getElementById("inputRest").value = "";
+    document.getElementById("inputQuotient").focus();
+
     state.dividend = oef.dividend;
     state.divisor  = oef.divisor;
 
