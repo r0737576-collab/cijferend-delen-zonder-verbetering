@@ -46,13 +46,30 @@
     margin:15px 0 25px 40px;
     font-size:20px;
     font-family:monospace;
+    display:flex;
+    align-items:center;
+    gap:10px;
 }
 
-#opgaveZone input{
-    width:60px;
-    padding:5px;
+.smallInput{
+    width:50px;
+    padding:6px 8px;
     font-size:16px;
+    font-weight:600;
+    border:1px solid #3a506b;
+    background:#f4f7fb;
+    color:#1c2541;
+    border-radius:6px;
     text-align:center;
+}
+
+.smallInput:focus{
+    outline:none;
+    border-color:#1c2541;
+}
+
+.rLabel{
+    font-weight:bold;
 }
 
 #controls button:hover{
@@ -135,15 +152,11 @@
 <div id="opgaveZone">
     <span id="opgaveTekst"></span>
 
-    <div style="margin-top:10px">
-        Quotient:
-        <input id="inputQuotient" type="number">
-    </div>
+    <input id="inputQuotient" type="number" class="smallInput">
 
-    <div style="margin-top:10px">
-        Rest:
-        <input id="inputRest" type="number">
-    </div>
+    <span class="rLabel">r</span>
+
+    <input id="inputRest" type="number" class="smallInput">
 </div>
     
 <div id="gridWrapper">
