@@ -305,6 +305,52 @@ function maakCel(waarde=""){
 
     return cel;
 }
+
+function maakLeegRooster(state){
+
+    const kolommen = String(state.dividend).length;
+    const rijen = 1 + state.stappen.length * 2;
+
+    let rooster = [];
+
+    for(let r = 0; r < rijen; r++){
+        let rij = [];
+        for(let k = 0; k < kolommen; k++){
+            rij.push("");
+        }
+        rooster.push(rij);
+    }
+
+    return rooster;
+}
+
+function vulCorrectRooster(state){
+
+    const rooster = maakLeegRooster(state);
+
+    // --- QUOTIENT (rij 0) ---
+    state.stappen.forEach((stap, index)=>{
+        rooster[0][stap.startKolom + stap.breedte - 1] = String(stap.q);
+    });
+
+    // --- PRODUCT + AFTREK ---
+    state.stappen.forEach((stap, index)=>{
+
+        const productRij = 1 + index*2;
+        const aftrekRij  = productRij + 1;
+
+        const productStr = String(stap.product).padStart(stap.breedte,"0");
+        const aftrekStr  = String(stap.aftrek).padStart(stap.breedte,"0");
+
+        for(let i = 0; i < stap.breedte; i++){
+            rooster[productRij][stap.startKolom + i] = productStr[i];
+            rooster[aftrekRij][stap.startKolom + i]  = aftrekStr[i];
+        }
+
+    });
+
+    return rooster;
+}
    
 /* =========================================
    UI MODULE of JS
@@ -404,7 +450,7 @@ const UI = {
     this.workAreaNode.innerHTML = "";
 
     const aantalKolommen = String(state.dividend).length;
-    const aantalRijen = state.stappen.length * 3;
+    const aantalRijen = 1 + state.stappen.length * 2;
 
     this.workAreaNode.style.display = "grid";   // ⭐ DEZE ONTBREEKT
     this.workAreaNode.style.gridTemplateColumns =
@@ -419,52 +465,6 @@ const UI = {
             this.workAreaNode.appendChild(cel);
         }
     }
-}
-
-function maakLeegRooster(state){
-
-    const kolommen = String(state.dividend).length;
-    const rijen = 1 + state.stappen.length * 2;
-
-    let rooster = [];
-
-    for(let r = 0; r < rijen; r++){
-        let rij = [];
-        for(let k = 0; k < kolommen; k++){
-            rij.push("");
-        }
-        rooster.push(rij);
-    }
-
-    return rooster;
-}
-
-function vulCorrectRooster(state){
-
-    const rooster = maakLeegRooster(state);
-
-    // --- QUOTIENT (rij 0) ---
-    state.stappen.forEach((stap, index)=>{
-        rooster[0][stap.startKolom + stap.breedte - 1] = String(stap.q);
-    });
-
-    // --- PRODUCT + AFTREK ---
-    state.stappen.forEach((stap, index)=>{
-
-        const productRij = 1 + index*2;
-        const aftrekRij  = productRij + 1;
-
-        const productStr = String(stap.product).padStart(stap.breedte,"0");
-        const aftrekStr  = String(stap.aftrek).padStart(stap.breedte,"0");
-
-        for(let i = 0; i < stap.breedte; i++){
-            rooster[productRij][stap.startKolom + i] = productStr[i];
-            rooster[aftrekRij][stap.startKolom + i]  = aftrekStr[i];
-        }
-
-    });
-
-    return rooster;
 }
     
 };
