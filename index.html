@@ -21,22 +21,38 @@
 
 /* BOARD */
 #controls{
-    margin:20px 0;
+    margin:25px 0 15px 40px; /* links uitlijnen met je board */
     display:flex;
-    gap:10px;
+    gap:12px;
     align-items:center;
+    flex-wrap:wrap;
 }
 
 #controls button{
-    padding:8px 14px;
+    padding:8px 16px;
     font-size:14px;
-    border:1px solid #333;
-    background:white;
+    font-weight:600;
+    border:1px solid #2c3e50;
+    background:#ffffff;
+    border-radius:6px;
     cursor:pointer;
+    transition:all 0.15s ease;
 }
 
 #controls button:hover{
-    background:#f0f0f0;
+    background:#2c3e50;
+    color:white;
+}
+
+#controls button:active{
+    transform:scale(0.97);
+}
+
+#controls select{
+    padding:6px 10px;
+    font-size:14px;
+    border-radius:6px;
+    border:1px solid #2c3e50;
 }
     
     #gridWrapper{
@@ -68,7 +84,7 @@
     
 </style>
 
-/* HIER komt jouw HTML */
+<!-- HIER komt jouw HTML -->
     
 </head>
 <body>
