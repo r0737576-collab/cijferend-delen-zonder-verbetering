@@ -21,26 +21,29 @@
 
 /* BOARD */
 #controls{
-    margin:25px 0 15px 40px; /* links uitlijnen met je board */
+    margin:25px 0 15px 40px;
     display:flex;
     gap:12px;
     align-items:center;
     flex-wrap:wrap;
 }
 
+/* Knoppen */
+
 #controls button{
     padding:8px 16px;
     font-size:14px;
     font-weight:600;
-    border:1px solid #2c3e50;
-    background:#ffffff;
+    border:1px solid #3a506b;
+    background:#f4f7fb;
+    color:#1c2541;
     border-radius:6px;
     cursor:pointer;
     transition:all 0.15s ease;
 }
 
 #controls button:hover{
-    background:#2c3e50;
+    background:#3a506b;
     color:white;
 }
 
@@ -48,11 +51,21 @@
     transform:scale(0.97);
 }
 
+/* Hoofdactie iets sterker */
+
+#controls .primary{
+    background:#3a506b;
+    color:white;
+}
+
+/* Select */
+
 #controls select{
     padding:6px 10px;
     font-size:14px;
     border-radius:6px;
-    border:1px solid #2c3e50;
+    border:1px solid #3a506b;
+    background:#ffffff;
 }
     
     #gridWrapper{
