@@ -373,6 +373,21 @@ function vulCorrectRooster(state){
             };
         }
 
+        // ===== CIJFER LATEN ZAKKEN (als er nog een volgende stap is) =====
+        if(index < state.stappen.length - 1){
+
+        const volgendeStap = state.stappen[index + 1];
+
+        // Het laatste cijfer van die volgende stap is het "gezakte" cijfer
+        const volgendHuidig = String(volgendeStap.huidig);
+        const gezaktCijfer = volgendHuidig[volgendHuidig.length - 1];
+
+        // Plaats het naast het verschil
+        rooster[aftrekRij][stap.startKolom + stap.breedte] = {
+            waarde: gezaktCijfer,
+            type: "gezakt"
+    };
+}
     });
 
     return rooster;
