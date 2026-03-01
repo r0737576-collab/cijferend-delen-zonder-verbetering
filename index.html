@@ -320,45 +320,45 @@ function vulCorrectRooster(state){
 
     const rooster = maakLeegRooster(state);
 
-    // --- QUOTIENT (rij 0) ---
-    
-    const lijnRij = 1 + index * 3;
-    const productRij = lijnRij + 1;
-    const aftrekRij = lijnRij + 2;
-    
     state.stappen.forEach((stap, index)=>{
+
+        // ===== QUOTIENT =====
         rooster[0][stap.startKolom + stap.breedte - 1] = {
             waarde: String(stap.q),
             type: "quotient",
             actief: true,
             verplicht: true
         };
-    });
 
-    // --- PRODUCT + AFTREK ---
-    state.stappen.forEach((stap, index)=>{
-
-        const productRij = 1 + index*2;
-        const aftrekRij  = productRij + 1;
+        // ===== RIJ STRUCTUUR =====
+        const lijnRij = 1 + index * 3;
+        const productRij = lijnRij + 1;
+        const aftrekRij = lijnRij + 2;
 
         const productStr = String(stap.product).padStart(stap.breedte,"0");
-        const aftrekStr  = String(stap.aftrek).padStart(stap.breedte,"0");
+        const aftrekStr = String(stap.aftrek).padStart(stap.breedte,"0");
 
+        // ===== HORIZONTALE LIJN =====
+        for(let i = 0; i < stap.breedte; i++){
+            rooster[lijnRij][stap.startKolom + i] = {
+                waarde: "—",
+                type: "lijn"
+            };
+        }
+
+        // ===== PRODUCT =====
         for(let i = 0; i < stap.breedte; i++){
             rooster[productRij][stap.startKolom + i] = {
                 waarde: productStr[i],
-                type: "product",
-                actief: true,
-                verplicht: true
+                type: "product"
             };
+        }
+
+        // ===== AFTREK =====
+        for(let i = 0; i < stap.breedte; i++){
             rooster[aftrekRij][stap.startKolom + i] = {
                 waarde: aftrekStr[i],
-                type: "aftrek",
-                actief: true,
-                verplicht: true
-            };
-        for(let i = 0; i < stap.breedte; i++){
-        rooster[lijnRij][stap.startKolom + i] = "—";
+                type: "aftrek"
             };
         }
 
