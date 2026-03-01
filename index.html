@@ -246,34 +246,31 @@ function berekenStappen(deeltal, deler){
     let huidig = "";
     let startIndex = 0;
 
-    let i = 0;
-
-    while(i < deeltalStr.length){
+    for(let i = 0; i < deeltalStr.length; i++){
 
         huidig += deeltalStr[i];
 
-        if(Number(huidig) >= deler){
-
-            const q = Math.floor(Number(huidig) / deler);
-            const product = q * deler;
-            const rest = Number(huidig) - product;
-
-            stappen.push({
-                huidig: Number(huidig),
-                q,
-                product,
-                aftrek: rest,
-                startKolom: startIndex,
-                breedte: huidig.length
-            });
-
-            huidig = String(rest);
-
-            startIndex = i - (huidig.length - 1);
-
+        if(Number(huidig) < deler){
+            continue;
         }
 
-        i++;
+        const q = Math.floor(Number(huidig) / deler);
+        const product = q * deler;
+        const rest = Number(huidig) - product;
+
+        stappen.push({
+            huidig: Number(huidig),
+            q,
+            product,
+            aftrek: rest,
+            startKolom: startIndex,
+            breedte: huidig.length
+        });
+
+        huidig = String(rest);
+
+        // volgende cijferpositie correct bepalen
+        startIndex = i - (huidig.length - 1);
     }
 
     return stappen;
