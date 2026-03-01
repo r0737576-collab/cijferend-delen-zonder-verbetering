@@ -18,7 +18,13 @@
     justify-content:center;
     font-weight:bold;
 }
-
+    
+.lijnCel{
+    height:4px;
+    border:none;
+    border-top:4px solid #000;
+}
+    
 /* BOARD */
 #controls{
     display:flex;
@@ -278,7 +284,12 @@ function maakCel(waarde=""){
     const cel = document.createElement("div");
     cel.className = "gridcell";
 
-    cel.textContent = waarde;
+    if(rooster[r][c].type === "lijn"){
+    cel.classList.add("lijnCel");
+    cel.textContent = "";
+    } else {
+    cel.textContent = rooster[r][c].waarde;
+    };
 
     return cel;
 }
