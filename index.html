@@ -311,6 +311,13 @@ function maakLeegRooster(state){
     return rooster;
 }
 
+function safeSet(rooster, r, c, data){
+    if(!rooster[r]) return;
+    if(!rooster[r][c]) return;
+
+    rooster[r][c] = data;
+}
+    
 function vulCorrectRooster(state){
 
     const rooster = maakLeegRooster(state);
@@ -328,26 +335,37 @@ function vulCorrectRooster(state){
             .padStart(stap.breedte,"0");
 
         // quotient
-        rooster[0][stap.startKolom + stap.breedte - 1] =
-        { waarde:String(stap.q) };
+            safeSet(rooster,
+            lijnRij,
+            stap.startKolom + i,
+            { waarde:"—", type:"lijn" }
+);
 
         // horizontale lijn
         for(let i=0;i<stap.breedte;i++){
-            rooster[lijnRij][stap.startKolom+i] =
-            { waarde:"—", type:"lijn" };
+            safeSet(rooster,
+            lijnRij,
+            stap.startKolom + i,
+            { waarde:"—", type:"lijn" }
+);
         }
 
         // product
         for(let i=0;i<stap.breedte;i++){
-            rooster[productRij][stap.startKolom+i] =
-            { waarde:productStr[i] };
+            safeSet(rooster,
+            lijnRij,
+            stap.startKolom + i,
+            { waarde:"—", type:"lijn" }
+);
         }
 
         // aftrek
         for(let i=0;i<stap.breedte;i++){
-            rooster[aftrekRij][stap.startKolom+i] =
-            { waarde:aftrekStr[i] };
-        }
+            safeSet(rooster,
+            lijnRij,
+            stap.startKolom + i,
+            { waarde:"—", type:"lijn" }
+);
 
         // cijfer laten zakken
         if(index < state.stappen.length-1){
@@ -356,8 +374,11 @@ function vulCorrectRooster(state){
 
             const gezakt = volgende[volgende.length-1];
 
-            rooster[aftrekRij][stap.startKolom + stap.breedte] =
-            { waarde:gezakt };
+            safeSet(rooster,
+        lijnRij,
+        stap.startKolom + i,
+        { waarde:"—", type:"lijn" }
+        );
         }
     });
 
