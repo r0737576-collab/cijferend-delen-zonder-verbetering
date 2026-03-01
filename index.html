@@ -331,9 +331,9 @@ function vulCorrectRooster(state){
         };
 
         // ===== RIJ STRUCTUUR =====
-        const lijnRij = 1 + index * 3;
-        const productRij = lijnRij + 1;
-        const aftrekRij = lijnRij + 2;
+        const productRij = 1 + index * 3;
+        const lijnRij    = productRij + 1;
+        const aftrekRij  = productRij + 2;
 
         const productStr = String(stap.product).padStart(stap.breedte,"0");
         const aftrekStr = String(stap.aftrek).padStart(stap.breedte,"0");
