@@ -321,6 +321,11 @@ function vulCorrectRooster(state){
     const rooster = maakLeegRooster(state);
 
     // --- QUOTIENT (rij 0) ---
+    
+    const lijnRij = 1 + index * 3;
+    const productRij = lijnRij + 1;
+    const aftrekRij = lijnRij + 2;
+    
     state.stappen.forEach((stap, index)=>{
         rooster[0][stap.startKolom + stap.breedte - 1] = {
             waarde: String(stap.q),
@@ -333,7 +338,7 @@ function vulCorrectRooster(state){
     // --- PRODUCT + AFTREK ---
     state.stappen.forEach((stap, index)=>{
 
-        const productRij = 1 + index*3;
+        const productRij = 1 + index*2;
         const aftrekRij  = productRij + 1;
 
         const productStr = String(stap.product).padStart(stap.breedte,"0");
@@ -351,6 +356,9 @@ function vulCorrectRooster(state){
                 type: "aftrek",
                 actief: true,
                 verplicht: true
+            };
+        for(let i = 0; i < stap.breedte; i++){
+        rooster[lijnRij][stap.startKolom + i] = "—";
             };
         }
 
