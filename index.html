@@ -263,32 +263,32 @@ function berekenStappen(deeltal, deler, maxDecimalen){
         breedte: String(huidig).length
     });
 
-    rest = aftrek;
-    startKolom++;
+    let huidig = "";
+let startIndex = 0;
 
-    for (; i < cijfers.length; i++){
+for (let i = 0; i < deeltalStr.length; i++) {
 
-        huidig = rest * 10 + parseInt(cijfers[i],10);
-        q = Math.floor(huidig / deler);
-        product = q * deler;
-        aftrek = huidig - product;
+    huidig += deeltalStr[i];
+
+    if (Number(huidig) >= deler) {
+
+        const q = Math.floor(Number(huidig) / deler);
+        const product = q * deler;
+        const rest = Number(huidig) - product;
 
         stappen.push({
-            huidig,
-            q,
-            product,
-            aftrek,
-            startKolom,
-            breedte: String(huidig).length
+            huidig: Number(huidig),
+            q: q,
+            product: product,
+            rest: rest,
+            startKolom: startIndex,
+            breedte: huidig.length
         });
 
-        rest = aftrek;
-        startKolom++;
+        huidig = String(rest);
+        startIndex = i - (huidig.length - 1);
     }
-
-    return stappen;
 }
-
 /* =========================================
    HULPFUNCTIES
 ========================================= */
@@ -314,7 +314,7 @@ function maakLeegRooster(state){
         kolommen = Math.max(kolommen, stap.startKolom + stap.breedte);
     });
 
-    const rijen = 1 + state.stappen.length * 2;
+    const rijen = 1 + state.stappen.length * 3;
 
     let rooster = [];
 
