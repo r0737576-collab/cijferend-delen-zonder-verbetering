@@ -268,8 +268,6 @@ function berekenStappen(deeltal, deler){
         });
 
         huidig = String(rest);
-
-        // volgende cijferpositie correct bepalen
         startIndex = i - (huidig.length - 1);
     }
 
@@ -288,26 +286,23 @@ function maakLeegRooster(state){
     let kolommen = 0;
 
     state.stappen.forEach(stap=>{
-        kolommen = Math.max(kolommen, stap.startKolom + stap.breedte);
+        kolommen = Math.max(kolommen,
+            stap.startKolom + stap.breedte + 1);
     });
 
     const rijen = Math.max(2, state.stappen.length * 3);
 
-    let rooster = [];
+    const rooster = [];
 
     for(let r = 0; r < rijen; r++){
 
-        let rij = [];
+        const rij = [];
 
         for(let k = 0; k < kolommen; k++){
-
             rij.push({
-                waarde: "",
-                type: "",
-                actief: false,
-                verplicht: false
+                waarde:"",
+                type:""
             });
-
         }
 
         rooster.push(rij);
@@ -320,69 +315,50 @@ function vulCorrectRooster(state){
 
     const rooster = maakLeegRooster(state);
 
-    state.stappen.forEach((stap, index)=>{
+    state.stappen.forEach((stap,index)=>{
 
-        // ===== QUOTIENT =====
-        rooster[0][stap.startKolom + stap.breedte - 1] = {
-            waarde: String(stap.q),
-            type: "quotient",
-            actief: true,
-            verplicht: true
-        };
-
-        // ===== RIJ STRUCTUUR =====
         const productRij = 1 + index * 3;
-        const lijnRij    = productRij + 1;
-        const aftrekRij  = productRij + 2;
+        const lijnRij = productRij + 1;
+        const aftrekRij = productRij + 2;
 
-        const productStr = String(stap.product).padStart(stap.breedte,"0");
-        const aftrekStr = String(stap.aftrek).padStart(stap.breedte,"0");
+        const productStr = String(stap.product)
+            .padStart(stap.breedte,"0");
 
-        // ===== HORIZONTALE LIJN =====
-        for(let i = 0; i < stap.breedte; i++){
-            rooster[lijnRij][stap.startKolom + i] = {
-                waarde: "—",
-                type: "lijn"
-            };
+        const aftrekStr = String(stap.aftrek)
+            .padStart(stap.breedte,"0");
+
+        // quotient
+        rooster[0][stap.startKolom + stap.breedte - 1] =
+        { waarde:String(stap.q) };
+
+        // horizontale lijn
+        for(let i=0;i<stap.breedte;i++){
+            rooster[lijnRij][stap.startKolom+i] =
+            { waarde:"—", type:"lijn" };
         }
 
-        // ===== PRODUCT =====
-        for(let i = 0; i < stap.breedte; i++){
-            rooster[productRij][stap.startKolom + i] = {
-                waarde: productStr[i],
-                type: "product"
-            };
+        // product
+        for(let i=0;i<stap.breedte;i++){
+            rooster[productRij][stap.startKolom+i] =
+            { waarde:productStr[i] };
         }
 
-        // ===== AFTREK =====
-        for(let i = 0; i < stap.breedte; i++){
-            rooster[aftrekRij][stap.startKolom + i] = {
-                waarde: aftrekStr[i],
-                type: "aftrek"
-            };
+        // aftrek
+        for(let i=0;i<stap.breedte;i++){
+            rooster[aftrekRij][stap.startKolom+i] =
+            { waarde:aftrekStr[i] };
         }
 
-        // ===== CIJFER LATEN ZAKKEN (als er nog een volgende stap is) =====
-        if(index < state.stappen.length - 1){
+        // cijfer laten zakken
+        if(index < state.stappen.length-1){
 
-        const volgendeStap = state.stappen[index + 1];
+            const volgende = String(state.stappen[index+1].huidig);
 
-        // Het laatste cijfer van die volgende stap is het "gezakte" cijfer
-        const volgendHuidig = String(volgendeStap.huidig);
-        const gezaktCijfer = volgendHuidig[volgendHuidig.length - 1];
+            const gezakt = volgende[volgende.length-1];
 
-        // Plaats het naast het verschil
-        rooster[aftrekRij][stap.startKolom + stap.breedte] = {
-            waarde: gezaktCijfer,
-            type: "gezakt"
-    };
-}
-        // Verwijder eventuele lege laatste rijen
-        while(rooster.length > 2 &&
-              rooster[rooster.length-1].every(c => c.waarde === "")){
-
-            rooster.pop();
-}
+            rooster[aftrekRij][stap.startKolom + stap.breedte] =
+            { waarde:gezakt };
+        }
     });
 
     return rooster;
@@ -483,43 +459,33 @@ const UI = {
 
    tekenWerkveld(state){
 
-    this.workAreaNode.innerHTML = "";
+    this.workAreaNode.innerHTML="";
 
     const rooster = vulCorrectRooster(state);
 
-    const aantalKolommen = rooster[0].length;
+    const cols = rooster[0].length;
+    const rows = rooster.length;
 
-    this.workAreaNode.style.display = "grid";
+    this.workAreaNode.style.display="grid";
     this.workAreaNode.style.gridTemplateColumns =
-        `repeat(${aantalKolommen}, 40px)`;
-
-    const rijAantal = rooster.length - 1;
-
-    let rowHeights = new Array(rijAantal);
-
-    for(let r = 1; r < rooster.length; r++){
-        const eersteCel = rooster[r][0];
-        rowHeights[r-1] =
-            eersteCel.type === "lijn" ? "4px" : "40px";
-    }
+        `repeat(${cols},40px)`;
 
     this.workAreaNode.style.gridTemplateRows =
-        rowHeights.join(" ");
+        `repeat(${rows-1},40px)`;
 
-    for(let r = 1; r < rooster.length; r++){
-
-        for(let c = 0; c < aantalKolommen; c++){
-
-            const celData = rooster[r][c];
+    for(let r=1;r<rows;r++){
+        for(let c=0;c<cols;c++){
 
             const cel = document.createElement("div");
-            cel.className = "gridcell";
+            cel.className="gridcell";
 
-            if(celData.type === "lijn"){
+            if(rooster[r][c]?.type === "lijn"){
                 cel.classList.add("lijnCel");
-                cel.textContent = "";
-            } else {
-                cel.textContent = celData.waarde;
+                cel.textContent="";
+            }
+            else{
+                cel.textContent =
+                    rooster[r][c]?.waarde || "";
             }
 
             this.workAreaNode.appendChild(cel);
