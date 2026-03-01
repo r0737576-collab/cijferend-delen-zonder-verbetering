@@ -265,7 +265,15 @@ function berekenStappen(deeltal, deler){
                 breedte: huidig.length
             });
 
-            huidig = String(rest);
+            if(i + 1 < deeltalStr.length){
+
+                huidig = String(rest) + deeltalStr[i + 1];
+                i++;
+
+            } else {
+                huidig = String(rest);
+}
+
             startIndex = i - (huidig.length - 1);
         }
     }
