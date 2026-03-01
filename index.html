@@ -308,7 +308,7 @@ function maakLeegRooster(state){
         kolommen = Math.max(kolommen, stap.startKolom + stap.breedte);
     });
 
-    const rijen = 1 + state.stappen.length * 3;
+    const rijen = Math.max(2, state.stappen.length * 3);
 
     let rooster = [];
 
@@ -393,6 +393,12 @@ function vulCorrectRooster(state){
             waarde: gezaktCijfer,
             type: "gezakt"
     };
+}
+        // Verwijder eventuele lege laatste rijen
+        while(rooster.length > 2 &&
+              rooster[rooster.length-1].every(c => c.waarde === "")){
+
+            rooster.pop();
 }
     });
 
