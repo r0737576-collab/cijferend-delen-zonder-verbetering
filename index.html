@@ -232,62 +232,39 @@ function genereerOefening(){
 }
 
 //Deze functie doet ALLES wat je leerlingen op papier doen
-function berekenStappen(deeltal, deler, maxDecimalen){
+function berekenStappen(deeltal, deler){
 
-    let stappen = [];
-    let cijfers = String(deeltal).split("");
-
-    let rest = 0;
-    let i = 0;
-    let startKolom = 0;
-
-    let huidig = parseInt(cijfers[0],10);
-
-    if (huidig < deler && cijfers.length > 1){
-        huidig = parseInt(cijfers[0] + cijfers[1],10);
-        i = 2;
-    } else {
-        i = 1;
-    }
-
-    let q = Math.floor(huidig / deler);
-    let product = q * deler;
-    let aftrek = huidig - product;
-
-    stappen.push({
-        huidig,
-        q,
-        product,
-        aftrek,
-        startKolom,
-        breedte: String(huidig).length
-    });
+    const stappen = [];
+    const deeltalStr = String(deeltal);
 
     let huidig = "";
-let startIndex = 0;
+    let startIndex = 0;
 
-for (let i = 0; i < deeltalStr.length; i++) {
+    for (let i = 0; i < deeltalStr.length; i++) {
 
-    huidig += deeltalStr[i];
+        huidig += deeltalStr[i];
 
-    if (Number(huidig) >= deler) {
+        if (Number(huidig) >= deler) {
 
-        const q = Math.floor(Number(huidig) / deler);
-        const product = q * deler;
-        const rest = Number(huidig) - product;
+            const q = Math.floor(Number(huidig) / deler);
+            const product = q * deler;
+            const rest = Number(huidig) - product;
 
-        stappen.push({
-            huidig: Number(huidig),
-            q: q,
-            product: product,
-            rest: rest,
-            startKolom: startIndex,
-            breedte: huidig.length
-        });
+            stappen.push({
+                huidig: Number(huidig),
+                q: q,
+                product: product,
+                aftrek: rest,
+                startKolom: startIndex,
+                breedte: huidig.length
+            });
 
-        huidig = String(rest);
-        startIndex = i - (huidig.length - 1);
+            huidig = String(rest);
+            startIndex = i - (huidig.length - 1);
+        }
     }
+
+    return stappen;
 }
 /* =========================================
    HULPFUNCTIES
@@ -356,7 +333,7 @@ function vulCorrectRooster(state){
     // --- PRODUCT + AFTREK ---
     state.stappen.forEach((stap, index)=>{
 
-        const productRij = 1 + index*2;
+        const productRij = 1 + index*3;
         const aftrekRij  = productRij + 1;
 
         const productStr = String(stap.product).padStart(stap.breedte,"0");
