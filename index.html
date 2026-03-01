@@ -475,22 +475,21 @@ const UI = {
     this.workAreaNode.style.gridTemplateRows =
         `repeat(${rows-1},40px)`;
 
-    // Start vanaf rij 1 (rij 0 is quotient)
     for(let r = 1; r < rows; r++){
 
         for(let c = 0; c < cols; c++){
 
-            const celData = rooster[r][c];
+            const celData = rooster[r][c] || {};
 
             const cel = document.createElement("div");
             cel.className = "gridcell";
 
-            if(celData && celData.type === "lijn"){
+            if(celData.type === "lijn"){
                 cel.classList.add("lijnCel");
                 cel.textContent = "";
             }
             else{
-                cel.textContent = celData?.waarde || "";
+                cel.textContent = celData.waarde || "";
             }
 
             this.workAreaNode.appendChild(cel);
