@@ -241,34 +241,35 @@ function genereerOefening(){
 function berekenStappen(deeltal, deler){
 
     const stappen = [];
+
+    let restantStr = "";
+    let startKolom = 0;
+
     const deeltalStr = String(deeltal);
 
-    let huidig = "";
-    let startIndex = 0;
+    for(let i=0;i<deeltalStr.length;i++){
 
-    for(let i = 0; i < deeltalStr.length; i++){
+        restantStr += deeltalStr[i];
 
-        huidig += deeltalStr[i];
+        if(Number(restantStr) < deler) continue;
 
-        if(Number(huidig) < deler){
-            continue;
-        }
+        const huidigNum = Number(restantStr);
 
-        const q = Math.floor(Number(huidig) / deler);
+        const q = Math.floor(huidigNum / deler);
         const product = q * deler;
-        const rest = Number(huidig) - product;
+        const rest = huidigNum - product;
 
         stappen.push({
-            huidig: Number(huidig),
+            huidig:huidigNum,
             q,
             product,
-            aftrek: rest,
-            startKolom: startIndex,
-            breedte: huidig.length
+            rest,
+            startKolom:startKolom,
+            breedte:restantStr.length
         });
 
-        huidig = String(rest);
-        startIndex = i - (huidig.length - 1);
+        restantStr = String(rest);
+        startKolom = i - (restantStr.length - 1);
     }
 
     return stappen;
@@ -281,36 +282,80 @@ function random(a,b){
     return Math.floor(Math.random()*(b-a+1))+a;
 }
 
-function maakLeegRooster(state){
+function bouwRooster(state){
 
-    let kolommen = 0;
+    const stappen = state.stappen;
 
-    state.stappen.forEach(stap=>{
-        kolommen = Math.max(kolommen,
-            stap.startKolom + stap.breedte + 1);
-    });
+    if(stappen.length === 0){
+        return [[{waarde:""}]];
+    }
 
-    const rijen = Math.max(2, state.stappen.length * 3);
+    const kolommen = Math.max(...stappen.map(s =>
+        s.startKolom + s.breedte + 1
+    ));
 
-    const rooster = [];
+    const rijen = Math.max(2, stappen.length * 3 + 1);
 
-    for(let r = 0; r < rijen; r++){
+    const rooster = Array.from(
+        {length:rijen},
+        ()=> Array.from(
+            {length:kolommen},
+            ()=>({waarde:"", type:""})
+        )
+    );
 
-        const rij = [];
+    stappen.forEach((stap,index)=>{
 
-        for(let k = 0; k < kolommen; k++){
-            rij.push({
-                waarde:"",
-                type:""
-            });
+        const productRij = 1 + index*3;
+        const lijnRij = productRij + 1;
+        const aftrekRij = productRij + 2;
+
+        const productStr =
+            String(stap.product).padStart(stap.breedte,"0");
+
+        const aftrekStr =
+            String(stap.rest).padStart(stap.breedte,"0");
+
+        // quotient
+        rooster[0][stap.startKolom + stap.breedte - 1] =
+            {waarde:stap.q,type:"quotient"};
+
+        // lijn
+        for(let i=0;i<stap.breedte;i++){
+            rooster[lijnRij][stap.startKolom+i]=
+                {waarde:"—",type:"lijn"};
         }
 
-        rooster.push(rij);
-    }
+        // product
+        for(let i=0;i<stap.breedte;i++){
+            rooster[productRij][stap.startKolom+i]=
+                {waarde:productStr[i],type:"product"};
+        }
+
+        // aftrek
+        for(let i=0;i<stap.breedte;i++){
+            rooster[aftrekRij][stap.startKolom+i]=
+                {waarde:aftrekStr[i],type:"aftrek"};
+        }
+
+        // cijfer laten zakken
+        if(index < stappen.length-1){
+
+            const volgende =
+                String(stappen[index+1].huidig);
+
+            const gezakt =
+                volgende[volgende.length-1];
+
+            rooster[aftrekRij][stap.startKolom + stap.breedte] =
+                {waarde:gezakt,type:"gezakt"};
+        }
+
+    });
 
     return rooster;
 }
-
+    
 function safeSet(rooster, r, c, data){
     if(!rooster[r]) return;
     if(!rooster[r][c]) return;
@@ -320,8 +365,8 @@ function safeSet(rooster, r, c, data){
     
 function vulCorrectRooster(state){
 
-    const rooster = maakLeegRooster(state);
-
+    const rooster = bouwRooster(state);
+    
     state.stappen.forEach((stap,index)=>{
 
         const productRij = 1 + index * 3;
@@ -475,46 +520,44 @@ const UI = {
     });
 },
 
-   tekenWerkveld(state){
+   function tekenWerkveld(state){
 
-    this.workAreaNode.innerHTML = "";
+    const workArea = document.getElementById("workArea");
 
-    const rooster = vulCorrectRooster(state);
+    workArea.innerHTML="";
 
-    if(!rooster || rooster.length === 0) return;
+    const rooster = bouwRooster(state);
 
     const rows = rooster.length;
     const cols = rooster[0].length;
 
-    this.workAreaNode.style.display = "grid";
-    this.workAreaNode.style.gridTemplateColumns =
+    workArea.style.display="grid";
+    workArea.style.gridTemplateColumns=
         `repeat(${cols},40px)`;
 
-    this.workAreaNode.style.gridTemplateRows =
+    workArea.style.gridTemplateRows=
         `repeat(${rows-1},40px)`;
 
-    for(let r = 1; r < rows; r++){
+    for(let r=1;r<rows;r++){
+        for(let c=0;c<cols;c++){
 
-        for(let c = 0; c < cols; c++){
-
-            const celData = rooster[r][c] || {};
+            const data = rooster[r][c];
 
             const cel = document.createElement("div");
-            cel.className = "gridcell";
+            cel.className="gridcell";
 
-            if(celData.type === "lijn"){
+            if(data.type==="lijn"){
                 cel.classList.add("lijnCel");
-                cel.textContent = "";
+                cel.textContent="";
             }
             else{
-                cel.textContent = celData.waarde || "";
+                cel.textContent=data.waarde || "";
             }
 
-            this.workAreaNode.appendChild(cel);
+            workArea.appendChild(cel);
         }
     }
 }
-    
 };
    
 /* =========================================
