@@ -328,58 +328,55 @@ function vulCorrectRooster(state){
         const lijnRij = productRij + 1;
         const aftrekRij = productRij + 2;
 
-        const productStr = String(stap.product)
-            .padStart(stap.breedte,"0");
+        const productStr =
+            String(stap.product).padStart(stap.breedte,"0");
 
-        const aftrekStr = String(stap.aftrek)
-            .padStart(stap.breedte,"0");
+        const aftrekStr =
+            String(stap.aftrek).padStart(stap.breedte,"0");
 
-        // quotient
-            safeSet(rooster,
-            lijnRij,
-            stap.startKolom + i,
-            { waarde:"—", type:"lijn" }
-);
-
-        // horizontale lijn
+        // Horizontale lijn
         for(let i=0;i<stap.breedte;i++){
             safeSet(rooster,
-            lijnRij,
-            stap.startKolom + i,
-            { waarde:"—", type:"lijn" }
-);
+                lijnRij,
+                stap.startKolom + i,
+                { waarde:"—", type:"lijn" }
+            );
         }
 
-        // product
+        // Product
         for(let i=0;i<stap.breedte;i++){
             safeSet(rooster,
-            lijnRij,
-            stap.startKolom + i,
-            { waarde:"—", type:"lijn" }
-);
+                productRij,
+                stap.startKolom + i,
+                { waarde: productStr[i], type:"product" }
+            );
         }
 
-        // aftrek
+        // Aftrek
         for(let i=0;i<stap.breedte;i++){
             safeSet(rooster,
-            lijnRij,
-            stap.startKolom + i,
-            { waarde:"—", type:"lijn" }
-);
+                aftrekRij,
+                stap.startKolom + i,
+                { waarde: aftrekStr[i], type:"aftrek" }
+            );
+        }
 
-        // cijfer laten zakken
+        // Cijfer laten zakken
         if(index < state.stappen.length-1){
 
-            const volgende = String(state.stappen[index+1].huidig);
+            const volgende =
+                String(state.stappen[index+1].huidig);
 
-            const gezakt = volgende[volgende.length-1];
+            const gezakt =
+                volgende[volgende.length-1];
 
             safeSet(rooster,
-        lijnRij,
-        stap.startKolom + i,
-        { waarde:"—", type:"lijn" }
-        );
+                aftrekRij,
+                stap.startKolom + stap.breedte,
+                { waarde: gezakt, type:"gezakt" }
+            );
         }
+
     });
 
     return rooster;
