@@ -308,16 +308,31 @@ function maakCel(waarde=""){
 
 function maakLeegRooster(state){
 
-    const kolommen = String(state.dividend).length;
+    let kolommen = 0;
+
+    state.stappen.forEach(stap=>{
+        kolommen = Math.max(kolommen, stap.startKolom + stap.breedte);
+    });
+
     const rijen = 1 + state.stappen.length * 2;
 
     let rooster = [];
 
     for(let r = 0; r < rijen; r++){
+
         let rij = [];
+
         for(let k = 0; k < kolommen; k++){
-            rij.push("");
+
+            rij.push({
+                waarde: "",
+                type: "",
+                actief: false,
+                verplicht: false
+            });
+
         }
+
         rooster.push(rij);
     }
 
@@ -330,7 +345,12 @@ function vulCorrectRooster(state){
 
     // --- QUOTIENT (rij 0) ---
     state.stappen.forEach((stap, index)=>{
-        rooster[0][stap.startKolom + stap.breedte - 1] = String(stap.q);
+        rooster[0][stap.startKolom + stap.breedte - 1] = {
+            waarde: String(stap.q),
+            type: "quotient",
+            actief: true,
+            verplicht: true
+        };
     });
 
     // --- PRODUCT + AFTREK ---
@@ -343,8 +363,18 @@ function vulCorrectRooster(state){
         const aftrekStr  = String(stap.aftrek).padStart(stap.breedte,"0");
 
         for(let i = 0; i < stap.breedte; i++){
-            rooster[productRij][stap.startKolom + i] = productStr[i];
-            rooster[aftrekRij][stap.startKolom + i]  = aftrekStr[i];
+            rooster[productRij][stap.startKolom + i] = {
+                waarde: productStr[i],
+                type: "product",
+                actief: true,
+                verplicht: true
+            };
+            rooster[aftrekRij][stap.startKolom + i] = {
+                waarde: aftrekStr[i],
+                type: "aftrek",
+                actief: true,
+                verplicht: true
+            };
         }
 
     });
@@ -463,8 +493,7 @@ const UI = {
 
             const cel = document.createElement("div");
             cel.className = "gridcell";
-
-            cel.textContent = rooster[r][c];
+            cel.textContent = rooster[r][c].waarde;
 
             this.workAreaNode.appendChild(cel);
         }
