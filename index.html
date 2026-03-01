@@ -488,8 +488,14 @@ const UI = {
         for(let c = 0; c < aantalKolommen; c++){
 
             const cel = document.createElement("div");
-            cel.className = "gridcell";
-            cel.textContent = rooster[r][c].waarde;
+                        cel.className = "gridcell";
+
+    if(rooster[r][c].type === "lijn"){
+        cel.classList.add("lijnCel");
+        cel.textContent = "";
+    } else {
+    cel.textContent = rooster[r][c].waarde;
+}
 
             this.workAreaNode.appendChild(cel);
         }
