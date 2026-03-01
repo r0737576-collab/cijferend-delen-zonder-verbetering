@@ -283,20 +283,6 @@ function random(a,b){
     return Math.floor(Math.random()*(b-a+1))+a;
 }
 
-function maakCel(waarde=""){
-    const cel = document.createElement("div");
-    cel.className = "gridcell";
-
-    if(rooster[r][c].type === "lijn"){
-    cel.classList.add("lijnCel");
-    cel.textContent = "";
-    } else {
-    cel.textContent = rooster[r][c].waarde;
-    };
-
-    return cel;
-}
-
 function maakLeegRooster(state){
 
     let kolommen = 0;
@@ -507,19 +493,38 @@ const UI = {
     this.workAreaNode.style.gridTemplateColumns =
         `repeat(${aantalKolommen}, 40px)`;
     // Dynamische rijhoogtes instellen
-        let rowHeights = [];
+        const rijAantal = rooster.length - 1;
+
+        let rowHeights = new Array(rijAantal);
 
         for(let r = 1; r < rooster.length; r++){
         const eersteCel = rooster[r][0];
 
-        if(eersteCel.type === "lijn"){
-        rowHeights.push("4px");
-        } else {
-        rowHeights.push("40px");
-    }
+        rowHeights[r-1] =
+        eersteCel.type === "lijn" ? "4px" : "40px";
 }
 
-this.workAreaNode.style.gridTemplateRows = rowHeights.join(" ");
+this.workAreaNode.style.gridTemplateRows =
+    rowHeights.join(" ");
+
+        for(let r = 1; r < rooster.length; r++){
+
+    for(let c = 0; c < aantalKolommen; c++){
+
+        const celData = rooster[r][c];
+
+        const cel = document.createElement("div");
+        cel.className = "gridcell";
+
+        if(celData.type === "lijn"){
+            cel.classList.add("lijnCel");
+        }
+
+        cel.textContent = celData.waarde;
+
+        this.workAreaNode.appendChild(cel);
+    }
+}
     
     // ⭐ START VANAF RIJ 1 (quotient wordt niet hier getekend)
     for(let r = 1; r < rooster.length; r++){
