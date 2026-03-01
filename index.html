@@ -246,11 +246,13 @@ function berekenStappen(deeltal, deler){
     let huidig = "";
     let startIndex = 0;
 
-    for (let i = 0; i < deeltalStr.length; i++) {
+    let i = 0;
+
+    while(i < deeltalStr.length){
 
         huidig += deeltalStr[i];
 
-        if (Number(huidig) >= deler) {
+        if(Number(huidig) >= deler){
 
             const q = Math.floor(Number(huidig) / deler);
             const product = q * deler;
@@ -258,24 +260,20 @@ function berekenStappen(deeltal, deler){
 
             stappen.push({
                 huidig: Number(huidig),
-                q: q,
-                product: product,
+                q,
+                product,
                 aftrek: rest,
                 startKolom: startIndex,
                 breedte: huidig.length
             });
 
-            if(i + 1 < deeltalStr.length){
-
-                huidig = String(rest) + deeltalStr[i + 1];
-                i++;
-
-            } else {
-                huidig = String(rest);
-}
+            huidig = String(rest);
 
             startIndex = i - (huidig.length - 1);
+
         }
+
+        i++;
     }
 
     return stappen;
