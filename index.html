@@ -459,33 +459,38 @@ const UI = {
 
    tekenWerkveld(state){
 
-    this.workAreaNode.innerHTML="";
+    this.workAreaNode.innerHTML = "";
 
     const rooster = vulCorrectRooster(state);
 
-    const cols = rooster[0].length;
-    const rows = rooster.length;
+    if(!rooster || rooster.length === 0) return;
 
-    this.workAreaNode.style.display="grid";
+    const rows = rooster.length;
+    const cols = rooster[0].length;
+
+    this.workAreaNode.style.display = "grid";
     this.workAreaNode.style.gridTemplateColumns =
         `repeat(${cols},40px)`;
 
     this.workAreaNode.style.gridTemplateRows =
         `repeat(${rows-1},40px)`;
 
-    for(let r=1;r<rows;r++){
-        for(let c=0;c<cols;c++){
+    // Start vanaf rij 1 (rij 0 is quotient)
+    for(let r = 1; r < rows; r++){
+
+        for(let c = 0; c < cols; c++){
+
+            const celData = rooster[r][c];
 
             const cel = document.createElement("div");
-            cel.className="gridcell";
+            cel.className = "gridcell";
 
-            if(rooster[r][c]?.type === "lijn"){
+            if(celData && celData.type === "lijn"){
                 cel.classList.add("lijnCel");
-                cel.textContent="";
+                cel.textContent = "";
             }
             else{
-                cel.textContent =
-                    rooster[r][c]?.waarde || "";
+                cel.textContent = celData?.waarde || "";
             }
 
             this.workAreaNode.appendChild(cel);
