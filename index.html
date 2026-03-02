@@ -498,9 +498,15 @@ function startNieuweOefening(){
     const deeltal = 192;
     const deler = 4;
 
-    const state = berekenDelen(deeltal, deler);
+    state.dividend = deeltal;
+    state.divisor = deler;
 
-    UI.tekenworkArea(state);
+    state.stappen = berekenDelen(deeltal, deler).stappen;
+
+    document.getElementById("opgaveTekst").textContent =
+        `${deeltal} : ${deler} =`;
+
+    UI.tekenOefening(state);
 }
     
 /* =========================================
