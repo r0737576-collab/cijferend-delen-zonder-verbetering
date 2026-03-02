@@ -318,10 +318,6 @@ function vulRooster(state){
         const aftrekStr =
             String(stap.rest).padStart(stap.breedte,"0");
 
-        // quotiënt bovenaan
-        rooster[0][stap.startKolom + stap.breedte - 1] =
-            {waarde:stap.q, type:"quotient"};
-
         // product
         for(let i=0;i<stap.breedte;i++){
             rooster[productRij][stap.startKolom+i] =
@@ -464,7 +460,7 @@ const UI = {
         rij.forEach(cel=>{
 
             const td = document.createElement("td");
-
+            td.className = "gridcell";
             td.textContent = cel.waarde;
 
             if(cel.type === "lijn"){
