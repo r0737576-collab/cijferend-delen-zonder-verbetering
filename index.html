@@ -238,41 +238,40 @@ function genereerOefening(){
 }
 
 //Deze functie doet ALLES wat je leerlingen op papier doen
-function berekenStappen(deeltal, deler){
+function berekenDelen(deeltal, deler){
 
     const stappen = [];
+    const cijfers = String(deeltal).split("");
 
-    let restantStr = "";
-    let startKolom = 0;
+    let rest = 0;
+    let positie = 0;
 
-    const deeltalStr = String(deeltal);
+    while(positie < cijfers.length){
 
-    for(let i=0;i<deeltalStr.length;i++){
+        rest = rest * 10 + Number(cijfers[positie]);
 
-        restantStr += deeltalStr[i];
+        if(rest >= deler){
 
-        if(Number(restantStr) < deler) continue;
+            const q = Math.floor(rest / deler);
+            const product = q * deler;
+            const nieuweRest = rest - product;
 
-        const huidigNum = Number(restantStr);
+            stappen.push({
+                huidig: rest,
+                product: product,
+                rest: nieuweRest,
+                q: q,
+                startKolom: positie,
+                breedte: String(rest).length
+            });
 
-        const q = Math.floor(huidigNum / deler);
-        const product = q * deler;
-        const rest = huidigNum - product;
+            rest = nieuweRest;
+        }
 
-        stappen.push({
-            huidig:huidigNum,
-            q,
-            product,
-            rest,
-            startKolom:startKolom,
-            breedte:restantStr.length
-        });
-
-        restantStr = String(rest);
-        startKolom = i - (restantStr.length - 1);
+        positie++;
     }
 
-    return stappen;
+    return { stappen };
 }
 /* =========================================
    HULPFUNCTIES
@@ -282,7 +281,22 @@ function random(a,b){
     return Math.floor(Math.random()*(b-a+1))+a;
 }
 
-function bouwRooster(state){
+function maakLeegRooster(aantalRijen, aantalKolommen){
+
+    return Array.from({length:aantalRijen}, () =>
+        Array.from({length:aantalKolommen}, () =>
+            ({waarde:"", type:""})
+        )
+    );
+}
+function safeSet(rooster, r, c, data){
+    if(!rooster[r]) return;
+    if(!rooster[r][c]) return;
+
+    rooster[r][c] = data;
+}
+    
+function vulRooster(state){
 
     const stappen = state.stappen;
 
@@ -294,17 +308,11 @@ function bouwRooster(state){
         s.startKolom + s.breedte + 1
     ));
 
-    const rijen = Math.max(2, stappen.length * 3 + 1);
+    const rijen = stappen.length * 3 + 2;
 
-    const rooster = Array.from(
-        {length:rijen},
-        ()=> Array.from(
-            {length:kolommen},
-            ()=>({waarde:"", type:""})
-        )
-    );
+    const rooster = maakLeegRooster(rijen, kolommen);
 
-    stappen.forEach((stap,index)=>{
+    stappen.forEach((stap, index)=>{
 
         const productRij = 1 + index*3;
         const lijnRij = productRij + 1;
@@ -316,26 +324,26 @@ function bouwRooster(state){
         const aftrekStr =
             String(stap.rest).padStart(stap.breedte,"0");
 
-        // quotient
+        // quotiënt bovenaan
         rooster[0][stap.startKolom + stap.breedte - 1] =
-            {waarde:stap.q,type:"quotient"};
-
-        // lijn
-        for(let i=0;i<stap.breedte;i++){
-            rooster[lijnRij][stap.startKolom+i]=
-                {waarde:"—",type:"lijn"};
-        }
+            {waarde:stap.q, type:"quotient"};
 
         // product
         for(let i=0;i<stap.breedte;i++){
-            rooster[productRij][stap.startKolom+i]=
-                {waarde:productStr[i],type:"product"};
+            rooster[productRij][stap.startKolom+i] =
+                {waarde:productStr[i], type:"product"};
         }
 
-        // aftrek
+        // horizontale lijn
         for(let i=0;i<stap.breedte;i++){
-            rooster[aftrekRij][stap.startKolom+i]=
-                {waarde:aftrekStr[i],type:"aftrek"};
+            rooster[lijnRij][stap.startKolom+i] =
+                {waarde:"", type:"lijn"};
+        }
+
+        // verschil (rest)
+        for(let i=0;i<stap.breedte;i++){
+            rooster[aftrekRij][stap.startKolom+i] =
+                {waarde:aftrekStr[i], type:"aftrek"};
         }
 
         // cijfer laten zakken
@@ -348,78 +356,7 @@ function bouwRooster(state){
                 volgende[volgende.length-1];
 
             rooster[aftrekRij][stap.startKolom + stap.breedte] =
-                {waarde:gezakt,type:"gezakt"};
-        }
-
-    });
-
-    return rooster;
-}
-    
-function safeSet(rooster, r, c, data){
-    if(!rooster[r]) return;
-    if(!rooster[r][c]) return;
-
-    rooster[r][c] = data;
-}
-    
-function vulCorrectRooster(state){
-
-    const rooster = bouwRooster(state);
-    
-    state.stappen.forEach((stap,index)=>{
-
-        const productRij = 1 + index * 3;
-        const lijnRij = productRij + 1;
-        const aftrekRij = productRij + 2;
-
-        const productStr =
-            String(stap.product).padStart(stap.breedte,"0");
-
-        const aftrekStr =
-            String(stap.aftrek).padStart(stap.breedte,"0");
-
-        // Horizontale lijn
-        for(let i=0;i<stap.breedte;i++){
-            safeSet(rooster,
-                lijnRij,
-                stap.startKolom + i,
-                { waarde:"—", type:"lijn" }
-            );
-        }
-
-        // Product
-        for(let i=0;i<stap.breedte;i++){
-            safeSet(rooster,
-                productRij,
-                stap.startKolom + i,
-                { waarde: productStr[i], type:"product" }
-            );
-        }
-
-        // Aftrek
-        for(let i=0;i<stap.breedte;i++){
-            safeSet(rooster,
-                aftrekRij,
-                stap.startKolom + i,
-                { waarde: aftrekStr[i], type:"aftrek" }
-            );
-        }
-
-        // Cijfer laten zakken
-        if(index < state.stappen.length-1){
-
-            const volgende =
-                String(state.stappen[index+1].huidig);
-
-            const gezakt =
-                volgende[volgende.length-1];
-
-            safeSet(rooster,
-                aftrekRij,
-                stap.startKolom + stap.breedte,
-                { waarde: gezakt, type:"gezakt" }
-            );
+                {waarde:gezakt, type:"gezakt"};
         }
 
     });
@@ -522,43 +459,39 @@ const UI = {
 
    function tekenWerkveld(state){
 
-    const workArea = document.getElementById("workArea");
+    const rooster = vulRooster(state);
 
-    workArea.innerHTML="";
+    const tabel = document.createElement("table");
 
-    const rooster = bouwRooster(state);
+    rooster.forEach(rij=>{
 
-    const rows = rooster.length;
-    const cols = rooster[0].length;
+        const tr = document.createElement("tr");
 
-    workArea.style.display="grid";
-    workArea.style.gridTemplateColumns=
-        `repeat(${cols},40px)`;
+        rij.forEach(cel=>{
 
-    workArea.style.gridTemplateRows=
-        `repeat(${rows-1},40px)`;
+            const td = document.createElement("td");
 
-    for(let r=1;r<rows;r++){
-        for(let c=0;c<cols;c++){
+            td.textContent = cel.waarde;
 
-            const data = rooster[r][c];
-
-            const cel = document.createElement("div");
-            cel.className="gridcell";
-
-            if(data.type==="lijn"){
-                cel.classList.add("lijnCel");
-                cel.textContent="";
-            }
-            else{
-                cel.textContent=data.waarde || "";
+            if(cel.type === "lijn"){
+                td.style.borderBottom = "3px solid black";
+                td.style.height = "8px";
             }
 
-            workArea.appendChild(cel);
-        }
-    }
+            if(cel.type === "gezakt"){
+                td.style.color = "blue";
+            }
+
+            tr.appendChild(td);
+        });
+
+        tabel.appendChild(tr);
+    });
+
+    const werkveld = document.getElementById("werkveld");
+    werkveld.innerHTML = "";
+    werkveld.appendChild(tabel);
 }
-};
    
 /* =========================================
    START
@@ -566,36 +499,12 @@ const UI = {
 
 function startNieuweOefening(){
 
-    const oef = genereerOefening();
+    const deeltal = 192;
+    const deler = 4;
 
-    document.getElementById("inputQuotient").value = "";
-    document.getElementById("inputRest").value = "";
-    document.getElementById("inputQuotient").focus();
+    const state = berekenDelen(deeltal, deler);
 
-    state.dividend = oef.dividend;
-    state.divisor  = oef.divisor;
-
-    state.stappen = berekenStappen(
-        state.dividend,
-        state.divisor,
-        CONFIG.maxDecimalen
-    );
-
-    console.log("STAPPEN:", state.stappen);   // ← HIER
-    
-    UI.tekenOefening(state);
-
-    const opgave = document.getElementById("opgaveTekst");
-    const correctRooster = vulCorrectRooster(state);
-    console.log(correctRooster);
-
-    if(opgave){
-        const quotient = Math.floor(state.dividend / state.divisor);
-        const rest = state.dividend % state.divisor;
-
-        opgave.textContent =
-            `${state.dividend} ÷ ${state.divisor} =`;
-    }
+    tekenWerkveld(state);
 }
     
 /* =========================================
