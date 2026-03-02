@@ -289,12 +289,6 @@ function maakLeegRooster(aantalRijen, aantalKolommen){
         )
     );
 }
-function safeSet(rooster, r, c, data){
-    if(!rooster[r]) return;
-    if(!rooster[r][c]) return;
-
-    rooster[r][c] = data;
-}
     
 function vulRooster(state){
 
@@ -457,7 +451,7 @@ const UI = {
     });
 },
 
-   function tekenWerkveld(state){
+   tekenWerkveld(state){
 
     const rooster = vulRooster(state);
 
@@ -504,7 +498,7 @@ function startNieuweOefening(){
 
     const state = berekenDelen(deeltal, deler);
 
-    tekenWerkveld(state);
+    UI.tekenWerkveld(state);
 }
     
 /* =========================================
