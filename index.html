@@ -256,14 +256,16 @@ function berekenDelen(deeltal, deler){
             const product = q * deler;
             const nieuweRest = rest - product;
 
+            const huidigGetal = rest;
+
             stappen.push({
-                huidig: rest,
+                huidig: huidigGetal,
                 product: product,
                 rest: nieuweRest,
                 q: q,
-                startKolom: positie,
-                breedte: String(rest).length
-            });
+                startKolom: positie - String(huidigGetal).length + 1,
+                breedte: String(huidigGetal).length
+});
 
             rest = nieuweRest;
         }
