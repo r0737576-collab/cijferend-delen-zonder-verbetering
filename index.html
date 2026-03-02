@@ -387,7 +387,7 @@ const UI = {
         this.tekenDividend(state.dividend);
         this.tekenDivisor(state.divisor);
         this.tekenQuotient(state.stappen);
-        this.tekenWerkveld(state);
+        this.tekenworkArea(state);
     },
 
     tekenDividend(getal){
@@ -451,7 +451,7 @@ const UI = {
     });
 },
 
-   tekenWerkveld(state){
+   tekenworkArea(state){
 
     const rooster = vulRooster(state);
 
@@ -482,9 +482,9 @@ const UI = {
         tabel.appendChild(tr);
     });
 
-    const werkveld = document.getElementById("werkveld");
-    werkveld.innerHTML = "";
-    werkveld.appendChild(tabel);
+    const workArea = document.getElementById("workArea");
+    workArea.innerHTML = "";
+    workArea.appendChild(tabel);
 }
    
 /* =========================================
@@ -498,7 +498,7 @@ function startNieuweOefening(){
 
     const state = berekenDelen(deeltal, deler);
 
-    UI.tekenWerkveld(state);
+    UI.tekenworkArea(state);
 }
     
 /* =========================================
