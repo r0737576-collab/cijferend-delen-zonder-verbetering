@@ -460,44 +460,45 @@ const UI = {
 
    tekenworkArea(state){
 
-    this.workAreaNode.innerHTML = "";
+```
+if(!this.workAreaNode) return;
 
-    const rooster = vulRooster(state);
+this.workAreaNode.innerHTML = "";
 
-    if(!rooster || rooster.length === 0) return;
+const rooster = vulRooster(state);
 
-    const rows = rooster.length;
-    const cols = rooster[0].length;
+if(!rooster || rooster.length === 0) return;
 
-    this.workAreaNode.style.display = "grid";
-    this.workAreaNode.style.gridTemplateColumns =
-        `repeat(${cols},40px)`;
+const rows = rooster.length;
+const cols = rooster[0].length;
 
-    this.workAreaNode.style.gridTemplateRows =
+this.workAreaNode.style.display = "grid";
+this.workAreaNode.style.gridTemplateColumns =
+    `repeat(${cols},40px)`;
+
+this.workAreaNode.style.gridTemplateRows =
     `repeat(${rows},40px)`;
 
-    console.log("ROWS:", rows, "COLS:", cols);
-    console.log("Rooster:", rooster);
-       
-    for(let r=0;r<rows;r++){
-        for(let c=0;c<cols;c++){
+for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
 
-            const celData = rooster[r][c] || {};
+        const celData = rooster[r][c] || {};
 
-            const cel = document.createElement("div");
-            cel.className = "gridcell";
+        const cel = document.createElement("div");
+        cel.className = "gridcell";
 
-            if(celData.type === "lijn"){
-                cel.classList.add("lijnCel");
-                cel.textContent = "";
-            }
-            else{
-                cel.textContent = celData.waarde || "";
-            }
-
-            this.workAreaNode.appendChild(cel);
+        if(celData.type === "lijn"){
+            cel.classList.add("lijnCel");
+            cel.textContent = "";
         }
+        else{
+            cel.textContent = celData.waarde || "";
+        }
+
+        this.workAreaNode.appendChild(cel);
     }
+}
+
 }
 
 };
