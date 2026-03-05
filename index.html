@@ -501,6 +501,8 @@ function startNieuweOefening(){
 
     state.stappen = berekenDelen(deeltal, deler).stappen;
 
+    console.log("STAPPEN:", state.stappen);
+
     document.getElementById("opgaveTekst").textContent =
         `${deeltal} : ${deler} =`;
 
