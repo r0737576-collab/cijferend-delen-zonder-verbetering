@@ -307,7 +307,10 @@ function vulRooster(state){
     const kolommen = Math.max(...stappen.map(s =>
         s.startKolom + s.breedte
     ))+1;
-
+    
+console.log("KOLOMMEN:", kolommen);
+console.log("STAPPEN:", stappen);
+    
     const rijen = stappen.length * 3 + 2;
 
     const rooster = maakLeegRooster(rijen, kolommen);
