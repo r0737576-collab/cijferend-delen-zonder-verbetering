@@ -270,6 +270,7 @@ function berekenDelen(deeltal, deler){
                 q: q,
                 startKolom: positie - String(huidigGetal).length + 1,
                 breedte: String(huidigGetal).length
+                laatsteCijfer: cijfers[positie+1] || ""
 });
 
             rest = nieuweRest;
@@ -301,13 +302,14 @@ function vulRooster(state){
 
     const stappen = state.stappen;
 
-    if(stappen.length === 0){
-        return [[{waarde:""}]];
-    }
+    if(!state.stappen || state.stappen.length === 0){
+    return [[{waarde:""}]];
+}
 
-    const kolommen = Math.max(...stappen.map(s =>
-        s.startKolom + s.breedte
-    ))+1;
+    const kolommen = Math.max(
+    ...stappen.map(s => s.startKolom + s.breedte + 1),
+    1
+);
     
 console.log("KOLOMMEN:", kolommen);
 console.log("STAPPEN:", stappen);
@@ -349,11 +351,7 @@ console.log("STAPPEN:", stappen);
         // cijfer laten zakken
         if(index < stappen.length-1){
 
-            const volgende =
-                String(stappen[index+1].huidig);
-
-            const gezakt =
-                volgende[volgende.length-1];
+            const gezakt = stap.laatsteCijfer || "";
 
             rooster[aftrekRij][stap.startKolom + stap.breedte] =
                 {waarde:gezakt, type:"gezakt"};
