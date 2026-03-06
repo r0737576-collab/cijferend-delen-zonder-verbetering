@@ -198,11 +198,121 @@ const state = {
 /* =========================================
    WISKUNDE rekenlogica
 ========================================= */
-function genereerOefening(){
-  const divisor = random(2, CONFIG.maxDivisor);
-  const quotient = random(2, CONFIG.maxQuotient);
-  const dividend = divisor * quotient;
-  return { dividend, divisor };
+/* =========================================
+   NIEUWE OEFENINGGENERATOR MET 5 NIVEAUS
+========================================= */
+
+function genereerOefening(level) {
+    switch(level) {
+        case "1":  return genereerBasis();
+        case "2":  return genereerMakkelijk();
+        case "3":  return genereerGemiddeld();
+        case "4":  return genereerMoeilijk();
+        case "5":  return genereerZeerMoeilijk();
+        default:   return genereerBasis();
+    }
+}
+
+/* ========== HELPERS ========== */
+
+function rondAf(getal, decimals) {
+    return Number(getal.toFixed(decimals));
+}
+
+function randomDecimal(min, max, dec) {
+    const factor = 10 ** dec;
+    return Math.round((Math.random() * (max - min) + min) * factor) / factor;
+}
+
+/* =========================================
+   1. BASIS — Deeltal 2–3 cijfers • Deler ≤9
+   → komt altijd uit
+========================================= */
+function genereerBasis() {
+    const deler = random(2, 9);
+
+    // Kies quotiënt zó dat deeltal 2–3 cijfers wordt
+    const quotient = random(2, 99);
+
+    const dividend = deler * quotient;
+
+    if (dividend < 10 || dividend > 999) {
+        return genereerBasis(); // herproberen
+    }
+
+    return { dividend, divisor: deler };
+}
+
+/* =========================================
+   2. MAKKELIJK — mag rest hebben
+   → deeltal 2–3 cijfers • deler ≤ 9
+========================================= */
+function genereerMakkelijk() {
+    const deler = random(2, 9);
+    const dividend = random(10, 999);
+
+    return { dividend, divisor: deler };
+}
+
+/* =========================================
+   3. GEMIDDELD — tot 2 decimalen
+   → Deeltal 3–4 cijfers • Deler ≤ 12
+   → komt altijd uit
+========================================= */
+function genereerGemiddeld() {
+
+    const deler = random(2, 12);
+    const quotient = randomDecimal(1, 200, 2); // 1–200, max 2 dec
+    let dividend = rondAf(deler * quotient, 2);
+
+    // moet 3–4 cijfers hebben (rekening houdend met decimalen)
+    if (String(Math.floor(dividend)).length < 3 ||
+        String(Math.floor(dividend)).length > 4) {
+        return genereerGemiddeld();
+    }
+
+    return { dividend, divisor: deler };
+}
+
+/* =========================================
+   4. MOEILIJK — tot 3 decimalen
+   → Deeltal 4–5 cijfers • deler ≤ 20
+   → komt altijd uit
+========================================= */
+function genereerMoeilijk() {
+
+    const deler = random(2, 20);
+    const quotient = randomDecimal(1, 500, 3);
+
+    let dividend = rondAf(deler * quotient, 3);
+
+    if (String(Math.floor(dividend)).length < 4 ||
+        String(Math.floor(dividend)).length > 5) {
+        return genereerMoeilijk();
+    }
+
+    return { dividend, divisor: deler };
+}
+
+/* =========================================
+   5. ZEER MOEILIJK
+   → DELER kan decimalen hebben (max 2)
+   → Deeltal 3–5 cijfers • tot 3 decimalen
+   → komt altijd uit
+========================================= */
+function genereerZeerMoeilijk() {
+
+    const deler = randomDecimal(0.2, 20, 2);  
+    const quotient = randomDecimal(1, 500, 3);
+
+    let dividend = rondAf(deler * quotient, 3);
+
+    if (String(Math.floor(dividend)).length < 3 ||
+        String(Math.floor(dividend)).length > 5) {
+        return genereerZeerMoeilijk();
+    }
+
+    return { dividend, divisor: deler };
 }
 
 function berekenDelen(deeltal, deler){
@@ -408,8 +518,11 @@ const UI = {
 ========================================= */
 function startNieuweOefening(){
   // Voor nu nog even vast voorbeeld
-  const deeltal = 192;
-  const deler   = 4;
+  const diff = document.getElementById("difficulty").value;
+const oef = genereerOefening(diff);
+
+const deeltal = oef.dividend;
+const deler = oef.divisor;
 
   state.dividend = deeltal;
   state.divisor  = deler;
