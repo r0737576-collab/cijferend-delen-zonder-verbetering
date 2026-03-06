@@ -264,16 +264,25 @@ function genereerMakkelijk() {
 function genereerGemiddeld() {
 
     const deler = random(2, 12);
-    const quotient = randomDecimal(1, 200, 2); // 1–200, max 2 dec
-    let dividend = rondAf(deler * quotient, 2);
 
-    // moet 3–4 cijfers hebben (rekening houdend met decimalen)
-    if (String(Math.floor(dividend)).length < 3 ||
-        String(Math.floor(dividend)).length > 4) {
-        return genereerGemiddeld();
+    while (true) {
+
+        // quotient met max 2 decimalen
+        const quotient = randomDecimal(1, 300, 2);
+
+        // dividend berekenen
+        let dividend = rondAf(deler * quotient, 2);
+
+        // lengte vóór de komma
+        const intLen = String(Math.floor(dividend)).length;
+
+        // MOET 3–4 cijfers zijn
+        if (intLen >= 3 && intLen <= 4) {
+            return { dividend, divisor: deler };
+        }
+
+        // anders opnieuw proberen
     }
-
-    return { dividend, divisor: deler };
 }
 
 /* =========================================
