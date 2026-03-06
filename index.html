@@ -121,6 +121,23 @@ table{ border-collapse:collapse; }
 .gridcell.aftrek{
     border-top:4px solid #000;
 }
+
+/* --- decimale punt links van quotiëntcijfer --- */
+
+.gridcell { 
+    position: relative;   /* nodig zodat de punt op de juiste plaats kan */
+}
+
+.gridcell.decLeft::before{
+    content: ".";
+    position:absolute;
+    left: 8px;       /* je mag dit later nog finetunen */
+    top: -4px;
+    font-weight:bold;
+    font-size:18px;
+    color:#1c2541;
+}
+
 </style>
 
 /* ==> HIER komt jouw HTML  */
@@ -327,50 +344,88 @@ function genereerZeerMoeilijk() {
 }
 
 function berekenDelen(deeltal, deler){
-  const stappen = [];
-  const cijfers = String(deeltal).split("");
-  let rest = 0;
-  let gestart = false;
 
-  for(let i=0;i<cijfers.length;i++){
-    rest = rest*10 + Number(cijfers[i]);
+    const chars = String(deeltal).replace(',', '.').split(''); // punt of komma → punt
+    const stappen = [];
 
-    if(rest >= deler){
-      gestart = true;
-      const q = Math.floor(rest/deler);
-      const product = q*deler;
-      const nieuweRest = rest-product;
-      const huidigGetal = rest;
+    let rest = 0;
+    let gestart = false;
+    let digitCol = 0;                // kolomteller over enkel de CIJFERS
+    let decimalQuotPos = null;       // positie waar de decimale punt in het quotiënt hoort
 
-      stappen.push({
-        huidig: huidigGetal,
-        product: product,
-        rest: nieuweRest,
-        q: q,
-        startKolom: i - String(huidigGetal).length + 1,
-        breedte: String(huidigGetal).length,
-        laatsteCijfer: cijfers[i+1] || ""
-      });
+    function isDigit(ch){ return ch >= '0' && ch <= '9'; }
 
-      rest = nieuweRest;
+    function nextDigitChar(fromIdx){
+        for(let j=fromIdx; j<chars.length; j++){
+            if(isDigit(chars[j])) return chars[j];
+        }
+        return "";
     }
-    else if(gestart){
-      // quotientcijfer 0
-      stappen.push({
-        huidig: rest,
-        product: 0,
-        rest: rest,
-        q: 0,
-        startKolom: i,
-        breedte: 1,
-        laatsteCijfer: cijfers[i+1] || ""
-      });
-    }
-  }
 
-  return {stappen};
+    for(let i=0; i<chars.length; i++){
+
+        const ch = chars[i];
+
+        // Punt/komma → niet delen, enkel positie quotiënt-komma bepalen
+        if(ch === '.'){
+            if(decimalQuotPos === null) decimalQuotPos = stappen.length;
+            continue;
+        }
+        if(!isDigit(ch)) continue; // eender ander niet-cijfer negeren
+
+        const cijfer = Number(ch);
+        rest = rest*10 + cijfer;
+
+        if(rest >= deler){
+            gestart = true;
+
+            const q = Math.floor(rest/deler);
+            const product = q * deler;
+            const nieuweRest = rest - product;
+
+            const huidigGetal = rest;
+            const breedte = String(huidigGetal).length;
+            const startKolom = digitCol - breedte + 1;
+
+            const gezaktVolgende = nextDigitChar(i+1); // sla punt/komma over
+
+            stappen.push({
+                huidig: huidigGetal,
+                product: product,
+                rest: nieuweRest,
+                q: q,
+                startKolom,
+                breedte,
+                laatsteCijfer: gezaktVolgende
+            });
+
+            rest = nieuweRest;
+        }
+        else if(gestart){
+            // quotientcijfer 0
+            const gezaktVolgende = nextDigitChar(i+1);
+
+            stappen.push({
+                huidig: rest,
+                product: 0,
+                rest: rest,
+                q: 0,
+                startKolom: digitCol,
+                breedte: 1,
+                laatsteCijfer: gezaktVolgende
+            });
+        }
+
+        digitCol++; // enkel optellen als we effectief een cijfer verwerkten
+    }
+
+    if(decimalQuotPos === null){
+        // geen decimaal punt in dividend → punt staat helemaal rechts van het quotiënt
+        decimalQuotPos = stappen.length;
+    }
+
+    return { stappen, decimalQuotPos };
 }
-
 /* =========================================
    HULPFUNCTIES
 ========================================= */
@@ -481,19 +536,34 @@ const UI = {
       this.divisorNode.appendChild(cel);
     });
   },
-  tekenQuotient(stappen){
+ tekenQuotient(stappen){
+
     this.quotientNode.innerHTML="";
+
     const kolommen = stappen.length;
+
     this.quotientNode.style.display="grid";
     this.quotientNode.style.gridTemplateColumns = `repeat(${kolommen},40px)`;
-    stappen.forEach(stap=>{
-      const cel = document.createElement("div");
-      cel.className="gridcell";
-      cel.textContent = stap.q;
-      this.quotientNode.appendChild(cel);
-    });
-  },
 
+    stappen.forEach((stap, idx) => {
+        const cel = document.createElement("div");
+        cel.className = "gridcell";
+        cel.textContent = stap.q;
+
+        // toon de door leerling geplaatste punt (links van deze cel)
+        if(state.userDecimalPos === idx){
+            cel.classList.add("decLeft");
+        }
+
+        // leerling klikt om de punt te plaatsen
+        cel.addEventListener("click", () => {
+            state.userDecimalPos = idx;   // zet punt links van dit quotiëntcijfer
+            this.tekenQuotient(state.stappen);
+        });
+
+        this.quotientNode.appendChild(cel);
+    });
+},
   /* === AANGEPAST === */
   tekenworkArea(state){
     if(!this.workAreaNode) return;
@@ -528,19 +598,27 @@ const UI = {
    START
 ========================================= */
 function startNieuweOefening(){
-  // Voor nu nog even vast voorbeeld
-  const diff = document.getElementById("difficulty").value;
-const oef = genereerOefening(diff);
 
-const deeltal = oef.dividend;
-const deler = oef.divisor;
+    // Huidig: haal deeltal/deler (of gebruik jouw generator per niveau)
+    const diff = document.getElementById("difficulty").value;
+    const oef = genereerOefening(diff);
+    const deeltal = oef.dividend;
+    const deler   = oef.divisor;
 
-  state.dividend = deeltal;
-  state.divisor  = deler;
-  state.stappen  = berekenDelen(deeltal, deler).stappen;
+    state.dividend = deeltal;
+    state.divisor  = deler;
 
-  document.getElementById("opgaveTekst").textContent = `${deeltal} : ${deler} =`;
-  UI.tekenOefening(state);
+    const res = berekenDelen(deeltal, deler);
+    state.stappen = res.stappen;
+
+    // NIEUW: waar hoort de komma in het quotiënt (leerling zet ze zelf)
+    state.decimalQuotPos = res.decimalQuotPos;
+    state.userDecimalPos = null; // leerling nog niet gezet
+
+    document.getElementById("opgaveTekst").textContent =
+        `${deeltal} : ${deler} =`;
+
+    UI.tekenOefening(state);
 }
 
 /* =========================================
