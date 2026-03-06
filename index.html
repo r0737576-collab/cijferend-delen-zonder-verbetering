@@ -2,13 +2,11 @@
 <html lang="nl">
 <head>
 <meta charset="UTF-8">
-    
 <title>Staartdeling</title>
-
 <style>
-
-/* HIER komt jouw CSS */
-
+    
+/* CSS is Basis opmaak */
+    
 .gridcell{
     border:1px solid #ccc;
     width:40px;
@@ -17,18 +15,18 @@
     align-items:center;
     justify-content:center;
     font-weight:bold;
+    box-sizing:border-box;
 }
-    
-table{
-    border-collapse:collapse;
-} 
-    
+
+table{ border-collapse:collapse; }
+
 .lijnCel{
+    /* Niet meer gebruikt, maar laten staan kan geen kwaad */
     height:4px;
     border:none;
     border-top:4px solid #000;
 }
-    
+
 /* BOARD */
 #controls{
     display:flex;
@@ -37,16 +35,16 @@ table{
     flex-wrap:wrap;
 }
 
-    #app{
+#app{
     margin-left:40px;
     margin-top:20px;
 }
-    #app > *{
+#app > *{
     margin-bottom:20px;
 }
-    
-/* Knoppen */
 
+/* Knoppen */
+    
 #controls button{
     padding:8px 16px;
     font-size:14px;
@@ -57,6 +55,24 @@ table{
     border-radius:6px;
     cursor:pointer;
     transition:all 0.15s ease;
+}
+#controls button:hover{
+    background:#3a506b;
+    color:white;
+}
+#controls button:active{
+    transform:scale(0.97);
+}
+#controls .primary{
+    background:#3a506b;
+    color:white;
+}
+#controls select{
+    padding:6px 10px;
+    font-size:14px;
+    border-radius:6px;
+    border:1px solid #3a506b;
+    background:#ffffff;
 }
 
 #opgaveZone{
@@ -78,475 +94,338 @@ table{
     border-radius:6px;
     text-align:center;
 }
-
 .smallInput:focus{
     outline:none;
     border-color:#1c2541;
 }
+.rLabel{ font-weight:bold; }
 
-.rLabel{
-    font-weight:bold;
-}
-
-#controls button:hover{
-    background:#3a506b;
-    color:white;
-}
-
-#controls button:active{
-    transform:scale(0.97);
-}
-
-/* Hoofdactie iets sterker */
-
-#controls .primary{
-    background:#3a506b;
-    color:white;
-}
-
-/* Select */
-
-#controls select{
-    padding:6px 10px;
-    font-size:14px;
-    border-radius:6px;
-    border:1px solid #3a506b;
-    background:#ffffff;
-}
-    
-    #gridWrapper{
+#gridWrapper{
     display:flex;
     align-items:flex-start;
     gap:0px;
 }
-
-#leftSide{
-    display:flex;
-    flex-direction:column;
-}
-
-#rightSide{
-    display:flex;
-    flex-direction:column;
-}
-
+#leftSide{ display:flex; flex-direction:column; }
+#rightSide{ display:flex; flex-direction:column; }
 #verticalLine{
     width:3px;
     background:black;
     align-self:stretch;
 }
-
 #bar{
     border-top:3px solid black;
     margin:0;
 }
-    
+
+/* ==> Nieuw: lijn als border op de aftrek-rij */
+.gridcell.aftrek{
+    border-top:4px solid #000;
+}
 </style>
 
-<!-- HIER komt jouw HTML -->
+/* ==> HIER komt jouw HTML  */
     
 </head>
 <body>
 
 <div id="app">
-    
-<h1>Staartdeling</h1>
+  <h1>Staartdeling</h1>
 
-<div id="controls">
-    <button id="btnNew">Nieuwe oefening</button>
+  <div id="controls">
+    <button id="btnNew" class="primary">Nieuwe oefening</button>
     <button id="btnCheck">Nakijken</button>
     <button id="btnSelf">Zelfcontrole</button>
 
     <label>
-        Moeilijkheid:
-        <select id="difficulty">
-            <option value="1">Makkelijk</option>
-            <option value="2">Gemiddeld</option>
-            <option value="3">Moeilijk</option>
-        </select>
+      Moeilijkheid:
+      <select id="difficulty">
+        <option value="1">Makkelijk</option>
+        <option value="2">Gemiddeld</option>
+        <option value="3">Moeilijk</option>
+      </select>
     </label>
-</div>
+  </div>
 
-<div id="opgaveZone">
+  <div id="opgaveZone">
     <span id="opgaveTekst"></span>
-
     <input id="inputQuotient" type="number" class="smallInput">
-
     <span class="rLabel">r</span>
-
     <input id="inputRest" type="number" class="smallInput">
-</div>
-    
-<div id="gridWrapper">
-
-  <div id="leftSide">
-    <div id="grid"></div>
-    <div id="workArea"></div>
   </div>
 
-  <div id="verticalLine"></div>
+  <div id="gridWrapper">
+    <div id="leftSide">
+      <div id="grid"></div>
+      <div id="workArea"></div>
+    </div>
 
-  <div id="rightSide">
-    <div id="divGrid"></div>
-    <div id="bar"></div>
-    <div id="quotientRow"></div>
+    <div id="verticalLine"></div>
+
+    <div id="rightSide">
+      <div id="divGrid"></div>
+      <div id="bar"></div>
+      <div id="quotientRow"></div>
+    </div>
   </div>
-
 </div>
 
-</div>
-    
 <script>
 "use strict";
 console.log("SCRIPT START");
 
 /* =========================================
-   CONFIGURATIE (instellingen - Alles wat didactisch instelbaar is)
+   CONFIG (instellingen - Alles wat didactisch instelbaar is)
 ========================================= */
-
 const CONFIG = {
-    maxDecimalen: 3,
-    maxDivisor: 20,
-    maxQuotient: 50
+  maxDecimalen: 3,
+  maxDivisor: 20,
+  maxQuotient: 50
 };
-
 
 /* =========================================
    STATE (huidige oefening)
 ========================================= */
-
 const state = {
-    dividend: 0,
-    divisor: 0,
-    stappen: [],
-    instellingen: {
-        decimalen: false,
-        controle: false
-    }
+  dividend: 0,
+  divisor: 0,
+  stappen: [],
+  instellingen: {
+    decimalen: false,
+    controle: false
+  }
 };
 
-
 /* =========================================
-   WISKUNDE MODULE
-   → Hier staat ENKEL rekenlogica
-   → Geen HTML, geen kleuren
+   WISKUNDE rekenlogica
 ========================================= */
-
-
-//Deze functie maakt een nieuwe oefening.
 function genereerOefening(){
-    const divisor = random(2, CONFIG.maxDivisor);
-    const quotient = random(2, CONFIG.maxQuotient);
-    const dividend = divisor * quotient;
-
-    return { dividend, divisor };
+  const divisor = random(2, CONFIG.maxDivisor);
+  const quotient = random(2, CONFIG.maxQuotient);
+  const dividend = divisor * quotient;
+  return { dividend, divisor };
 }
 
-//Deze functie doet ALLES wat je leerlingen op papier doen
 function berekenDelen(deeltal, deler){
+  const stappen = [];
+  const cijfers = String(deeltal).split("");
+  let rest = 0;
+  let gestart = false;
 
-    const stappen = [];
-    const cijfers = String(deeltal).split("");
+  for(let i=0;i<cijfers.length;i++){
+    rest = rest*10 + Number(cijfers[i]);
 
-    let rest = 0;
-    let gestart = false;
+    if(rest >= deler){
+      gestart = true;
+      const q = Math.floor(rest/deler);
+      const product = q*deler;
+      const nieuweRest = rest-product;
+      const huidigGetal = rest;
 
-    for(let i=0;i<cijfers.length;i++){
+      stappen.push({
+        huidig: huidigGetal,
+        product: product,
+        rest: nieuweRest,
+        q: q,
+        startKolom: i - String(huidigGetal).length + 1,
+        breedte: String(huidigGetal).length,
+        laatsteCijfer: cijfers[i+1] || ""
+      });
 
-        rest = rest*10 + Number(cijfers[i]);
-
-        if(rest >= deler){
-
-            gestart = true;
-
-            const q = Math.floor(rest/deler);
-            const product = q*deler;
-            const nieuweRest = rest-product;
-
-            const huidigGetal = rest;
-
-            stappen.push({
-                huidig: huidigGetal,
-                product: product,
-                rest: nieuweRest,
-                q: q,
-                startKolom: i - String(huidigGetal).length + 1,
-                breedte: String(huidigGetal).length,
-                laatsteCijfer: cijfers[i+1] || ""
-            });
-
-            rest = nieuweRest;
-        }
-
-        else if(gestart){
-
-            // quotientcijfer 0
-            stappen.push({
-                huidig: rest,
-                product: 0,
-                rest: rest,
-                q: 0,
-                startKolom: i,
-                breedte: 1,
-                laatsteCijfer: cijfers[i+1] || ""
-            });
-
-        }
-
+      rest = nieuweRest;
     }
+    else if(gestart){
+      // quotientcijfer 0
+      stappen.push({
+        huidig: rest,
+        product: 0,
+        rest: rest,
+        q: 0,
+        startKolom: i,
+        breedte: 1,
+        laatsteCijfer: cijfers[i+1] || ""
+      });
+    }
+  }
 
-    return {stappen};
+  return {stappen};
 }
+
 /* =========================================
    HULPFUNCTIES
 ========================================= */
-
 function random(a,b){
-    return Math.floor(Math.random()*(b-a+1))+a;
+  return Math.floor(Math.random()*(b-a+1))+a;
 }
 
 function maakLeegRooster(aantalRijen, aantalKolommen){
-
-    return Array.from({length:aantalRijen}, () =>
-        Array.from({length:aantalKolommen}, () =>
-            ({waarde:"", type:""})
-        )
-    );
+  return Array.from({length:aantalRijen}, () =>
+    Array.from({length:aantalKolommen}, () =>
+      ({waarde:"", type:""})
+    )
+  );
 }
-    
+
+/* === AANGEPAST === */
 function vulRooster(state){
-
-    const stappen = state.stappen;
-
-    if(!state.stappen || state.stappen.length === 0){
+  const stappen = state.stappen;
+  if(!stappen || stappen.length === 0){
     return [[{waarde:""}]];
-}
+  }
 
-    const kolommen = Math.max(
-    ...stappen.map(s => s.startKolom + s.breedte),
+  // Neem ook kolom mee waar het “gezakte” cijfer komt (behalve bij de laatste stap)
+  const kolommen = Math.max(
+    ...stappen.map((s, i) => s.startKolom + s.breedte + (i < stappen.length-1 ? 1 : 0)),
     1
-);
-    
-console.log("KOLOMMEN:", kolommen);
-console.log("STAPPEN:", stappen);
-    
-    const rijen = 1 + stappen.length * 2;
+  );
 
-    const rooster = maakLeegRooster(rijen, kolommen);
+  // 2 rijen per stap: product-rij en aftrek-rij (geen lege voorlooprij)
+  const rijen = stappen.length * 2;
 
-    stappen.forEach((stap, index)=>{
+  const rooster = maakLeegRooster(rijen, kolommen);
 
-        const productRij = 1 + index*2;
-        const aftrekRij  = productRij + 1;
+  stappen.forEach((stap, index) => {
+    const productRij = index * 2;
+    const aftrekRij  = productRij + 1;
 
-        const productStr =
-            String(stap.product).padStart(stap.breedte,"0");
+    const productStr = String(stap.product).padStart(stap.breedte,"0");
+    const aftrekStr  = String(stap.rest).padStart(stap.breedte,"0");
 
-        const aftrekStr =
-            String(stap.rest).padStart(stap.breedte,"0");
+    // product
+    for(let i=0;i<stap.breedte;i++){
+      rooster[productRij][stap.startKolom+i] =
+        {waarde:productStr[i], type:"product"};
+    }
 
-        // product
-        for(let i=0;i<stap.breedte;i++){
-            rooster[productRij][stap.startKolom+i] =
-                {waarde:productStr[i], type:"product"};
-        }
+    // verschil (rest) — met dikke bovenrand als scheidingslijn
+    for(let i=0;i<stap.breedte;i++){
+      rooster[aftrekRij][stap.startKolom+i] =
+        {waarde:aftrekStr[i], type:"aftrek"};
+    }
 
-        // horizontale lijn
-        for(let i=0;i<stap.breedte;i++){
-            rooster[lijnRij][stap.startKolom+i] =
-                {waarde:"", type:"lijn"};
-        }
+    // cijfer laten zakken (indien niet de laatste stap)
+    if(index < stappen.length-1){
+      const gezakt = stap.laatsteCijfer || "";
+      const col = stap.startKolom + stap.breedte;
+      rooster[aftrekRij][col] = {waarde:gezakt, type:"gezakt"};
+    }
+  });
 
-        // verschil (rest)
-        for(let i=0;i<stap.breedte;i++){
-            rooster[aftrekRij][stap.startKolom+i] =
-                {waarde:aftrekStr[i], type:"aftrek"};
-        }
-
-        // cijfer laten zakken
-        if(index < stappen.length-1){
-
-            const gezakt = stap.laatsteCijfer || "";
-
-            rooster[aftrekRij][stap.startKolom + stap.breedte] =
-                {waarde:gezakt, type:"gezakt"};
-        }
-
-    });
-
-    return rooster;
+  return rooster;
 }
-   
+
 /* =========================================
-   UI MODULE of JS
-   → Alles wat met tekenen te maken heeft
-   → Geen berekeningen hier!
+   UI of JS
 ========================================= */
-
 const UI = {
-
-    init(){
-        this.cacheDOM();
-
-        document.getElementById("btnNew")
-            .addEventListener("click", startNieuweOefening);
-
-        console.log("grid node:", this.dividendNode);
-        console.log("divGrid node:", this.divisorNode);
-    },
-
-    cacheDOM(){
-        this.dividendNode = document.getElementById("grid");
-        this.divisorNode = document.getElementById("divGrid");
-        this.quotientNode = document.getElementById("quotientRow");
-        this.workAreaNode = document.getElementById("workArea");
-
-        console.log("workAreaNode:", this.workAreaNode);
-    },
-
-    tekenOefening(state){
-        this.tekenDividend(state.dividend);
-        this.tekenDivisor(state.divisor);
-        this.tekenQuotient(state.stappen);
-        this.tekenworkArea(state);
-    },
-
-    tekenDividend(getal){
-
-        if(!this.dividendNode) return;
-
-        this.dividendNode.innerHTML = "";
-
-        const cijfers = String(getal).split("");
-
-        this.dividendNode.style.display = "grid";
-        this.dividendNode.style.gridTemplateColumns =
-            `repeat(${cijfers.length},40px)`;
-
-        cijfers.forEach(cijfer=>{
-            const cel = document.createElement("div");
-            cel.className = "gridcell";
-            cel.textContent = cijfer;
-
-            this.dividendNode.appendChild(cel);
-        });
-    },
-
-    tekenDivisor(getal){
-
-        if(!this.divisorNode) return;
-
-        this.divisorNode.innerHTML = "";
-
-        const cijfers = String(getal).split("");
-
-        this.divisorNode.style.display = "grid";
-        this.divisorNode.style.gridTemplateColumns =
-            `repeat(${cijfers.length},40px)`;
-
-        cijfers.forEach(cijfer=>{
-            const cel = document.createElement("div");
-            cel.className = "gridcell";
-            cel.textContent = cijfer;
-
-            this.divisorNode.appendChild(cel);
-        });
-    },
-
-    tekenQuotient(stappen){
-
-    this.quotientNode.innerHTML="";
-
-    const kolommen = stappen.length;
-
-    this.quotientNode.style.display="grid";
-    this.quotientNode.style.gridTemplateColumns =
-        `repeat(${kolommen},40px)`;
-
-    stappen.forEach(stap=>{
-        const cel = document.createElement("div");
-        cel.className="gridcell";
-        cel.textContent = stap.q;
-
-        this.quotientNode.appendChild(cel);
+  init(){
+    this.cacheDOM();
+    document.getElementById("btnNew")
+      .addEventListener("click", startNieuweOefening);
+  },
+  cacheDOM(){
+    this.dividendNode = document.getElementById("grid");
+    this.divisorNode  = document.getElementById("divGrid");
+    this.quotientNode = document.getElementById("quotientRow");
+    this.workAreaNode = document.getElementById("workArea");
+  },
+  tekenOefening(state){
+    this.tekenDividend(state.dividend);
+    this.tekenDivisor(state.divisor);
+    this.tekenQuotient(state.stappen);
+    this.tekenworkArea(state);
+  },
+  tekenDividend(getal){
+    if(!this.dividendNode) return;
+    this.dividendNode.innerHTML = "";
+    const cijfers = String(getal).split("");
+    this.dividendNode.style.display = "grid";
+    this.dividendNode.style.gridTemplateColumns = `repeat(${cijfers.length},40px)`;
+    cijfers.forEach(cijfer=>{
+      const cel = document.createElement("div");
+      cel.className = "gridcell";
+      cel.textContent = cijfer;
+      this.dividendNode.appendChild(cel);
     });
-},
+  },
+  tekenDivisor(getal){
+    if(!this.divisorNode) return;
+    this.divisorNode.innerHTML = "";
+    const cijfers = String(getal).split("");
+    this.divisorNode.style.display = "grid";
+    this.divisorNode.style.gridTemplateColumns = `repeat(${cijfers.length},40px)`;
+    cijfers.forEach(cijfer=>{
+      const cel = document.createElement("div");
+      cel.className = "gridcell";
+      cel.textContent = cijfer;
+      this.divisorNode.appendChild(cel);
+    });
+  },
+  tekenQuotient(stappen){
+    this.quotientNode.innerHTML="";
+    const kolommen = stappen.length;
+    this.quotientNode.style.display="grid";
+    this.quotientNode.style.gridTemplateColumns = `repeat(${kolommen},40px)`;
+    stappen.forEach(stap=>{
+      const cel = document.createElement("div");
+      cel.className="gridcell";
+      cel.textContent = stap.q;
+      this.quotientNode.appendChild(cel);
+    });
+  },
 
-   tekenworkArea(state){
+  /* === AANGEPAST === */
+  tekenworkArea(state){
+    if(!this.workAreaNode) return;
+    this.workAreaNode.innerHTML = "";
 
-if(!this.workAreaNode) return;
+    const rooster = vulRooster(state);
+    if(!rooster || rooster.length === 0) return;
 
-this.workAreaNode.innerHTML = "";
+    const rows = rooster.length;
+    const cols = Math.max(...rooster.map(r => r.length)); // neem de langste rij
 
-const rooster = vulRooster(state);
+    this.workAreaNode.style.display = "grid";
+    this.workAreaNode.style.gridTemplateColumns = `repeat(${cols},40px)`;
+    this.workAreaNode.style.gridTemplateRows = `repeat(${rows},40px)`;
 
-if(!rooster || rooster.length === 0) return;
-
-const rows = rooster.length;
-const cols = rooster[0].length;
-
-this.workAreaNode.style.display = "grid";
-this.workAreaNode.style.gridTemplateColumns =
-    `repeat(${cols},40px)`;
-
-this.workAreaNode.style.gridTemplateRows =
-    `repeat(${rows},40px)`;
-
-for(let r=0;r<rows;r++){
-    for(let c=0;c<cols;c++){
-
-        const celData = rooster[r][c] || {};
-
+    for(let r=0;r<rows;r++){
+      for(let c=0;c<cols;c++){
+        const celData = (rooster[r] && rooster[r][c]) ? rooster[r][c] : {waarde:"", type:""};
         const cel = document.createElement("div");
         cel.className = "gridcell";
-
-        if(celData.type === "lijn"){
-            cel.classList.add("lijnCel");
-            cel.textContent = "";
+        if(celData.type){
+          cel.classList.add(celData.type); // voegt .aftrek toe voor de lijn
         }
-        else{
-            cel.textContent = celData.waarde || "";
-        }
-
+        cel.textContent = (celData.type === "lijn") ? "" : (celData.waarde || "");
         this.workAreaNode.appendChild(cel);
+      }
     }
-}
-}
-
+  }
 };
-   
+
 /* =========================================
    START
 ========================================= */
-
 function startNieuweOefening(){
+  // Voor nu nog even vast voorbeeld
+  const deeltal = 192;
+  const deler   = 4;
 
-    const deeltal = 192;
-    const deler = 4;
+  state.dividend = deeltal;
+  state.divisor  = deler;
+  state.stappen  = berekenDelen(deeltal, deler).stappen;
 
-    state.dividend = deeltal;
-    state.divisor = deler;
-
-    state.stappen = berekenDelen(deeltal, deler).stappen;
-
-    console.log("STAPPEN:", state.stappen);
-
-    document.getElementById("opgaveTekst").textContent =
-        `${deeltal} : ${deler} =`;
-
-    UI.tekenOefening(state);
+  document.getElementById("opgaveTekst").textContent = `${deeltal} : ${deler} =`;
+  UI.tekenOefening(state);
 }
-    
+
 /* =========================================
-   START PROGRAMMA
+   BOOTSTRAP - START PROGRAMMA
 ========================================= */
-
 window.addEventListener("DOMContentLoaded", () => {
-    UI.init();
-    startNieuweOefening();
+  UI.init();
+  startNieuweOefening();
 });
-    
 </script>
-
 </body>
 </html>
