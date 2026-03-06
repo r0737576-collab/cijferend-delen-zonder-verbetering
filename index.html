@@ -249,17 +249,19 @@ function berekenDelen(deeltal, deler){
     const cijfers = String(deeltal).split("");
 
     let rest = 0;
-    let positie = 0;
+    let gestart = false;
 
-    while(positie < cijfers.length){
+    for(let i=0;i<cijfers.length;i++){
 
-        rest = rest * 10 + Number(cijfers[positie]);
+        rest = rest*10 + Number(cijfers[i]);
 
         if(rest >= deler){
 
-            const q = Math.floor(rest / deler);
-            const product = q * deler;
-            const nieuweRest = rest - product;
+            gestart = true;
+
+            const q = Math.floor(rest/deler);
+            const product = q*deler;
+            const nieuweRest = rest-product;
 
             const huidigGetal = rest;
 
@@ -268,18 +270,32 @@ function berekenDelen(deeltal, deler){
                 product: product,
                 rest: nieuweRest,
                 q: q,
-                startKolom: positie - String(huidigGetal).length + 1,
+                startKolom: i - String(huidigGetal).length + 1,
                 breedte: String(huidigGetal).length,
-                laatsteCijfer: cijfers[positie+1] || ""
-});
+                laatsteCijfer: cijfers[i+1] || ""
+            });
 
             rest = nieuweRest;
         }
 
-        positie++;
+        else if(gestart){
+
+            // quotientcijfer 0
+            stappen.push({
+                huidig: rest,
+                product: 0,
+                rest: rest,
+                q: 0,
+                startKolom: i,
+                breedte: 1,
+                laatsteCijfer: cijfers[i+1] || ""
+            });
+
+        }
+
     }
 
-    return { stappen };
+    return {stappen};
 }
 /* =========================================
    HULPFUNCTIES
