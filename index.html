@@ -524,16 +524,31 @@ const UI = {
   tekenDividend(getal){
     if(!this.dividendNode) return;
     this.dividendNode.innerHTML = "";
-    const cijfers = String(getal).split("");
+    const chars = String(getal).split("");
+    const cijfers = chars.filter(c => c !== ".");   // alleen echte cijfers tellen
     this.dividendNode.style.display = "grid";
     this.dividendNode.style.gridTemplateColumns = `repeat(${cijfers.length},40px)`;
-    cijfers.forEach(cijfer=>{
-      const cel = document.createElement("div");
-      cel.className = "gridcell";
-      cel.textContent = cijfer;
-      this.dividendNode.appendChild(cel);
+    let laatsteCel = null;
+    chars.forEach(ch => {
+        if(ch === "."){
+            if(laatsteCel){
+                const punt = document.createElement("span");
+                punt.textContent = ".";
+                punt.style.position = "absolute";
+                punt.style.right = "-6px";
+                punt.style.bottom = "-4px";
+                punt.style.fontWeight = "bold";
+                laatsteCel.appendChild(punt);
+            }
+            return;
+        }
+        const cel = document.createElement("div");
+        cel.className = "gridcell";
+        cel.textContent = ch;
+        this.dividendNode.appendChild(cel);
+        laatsteCel = cel;
     });
-  },
+},
   tekenDivisor(getal){
     if(!this.divisorNode) return;
     this.divisorNode.innerHTML = "";
