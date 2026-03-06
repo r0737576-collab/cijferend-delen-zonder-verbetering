@@ -345,82 +345,93 @@ function genereerZeerMoeilijk() {
 
 function berekenDelen(deeltal, deler){
 
-    const chars = String(deeltal).replace(',', '.').split(''); // punt of komma → punt
+    const chars = String(deeltal).replace(',', '.').split('');
     const stappen = [];
 
     let rest = 0;
     let gestart = false;
-    let digitCol = 0;                // kolomteller over enkel de CIJFERS
-    let decimalQuotPos = null;       // positie waar de decimale punt in het quotiënt hoort
+    let digitCol = 0;          // echte kolomteller (ENKEL cijfers tellen!)
+    let decimalQuotPos = null; // waar hoort de komma in quotient
 
-    function isDigit(ch){ return ch >= '0' && ch <= '9'; }
+    function isDigit(ch){
+        return ch >= '0' && ch <= '9';
+    }
 
     function nextDigitChar(fromIdx){
-        for(let j=fromIdx; j<chars.length; j++){
+        for(let j = fromIdx; j < chars.length; j++){
             if(isDigit(chars[j])) return chars[j];
         }
         return "";
     }
 
-    for(let i=0; i<chars.length; i++){
+    for(let i = 0; i < chars.length; i++){
 
         const ch = chars[i];
 
-        // Punt/komma → niet delen, enkel positie quotiënt-komma bepalen
+        // 1. punt/komma NIET laten zakken → bepaalt enkel quotiënt-positie
         if(ch === '.'){
             if(decimalQuotPos === null) decimalQuotPos = stappen.length;
             continue;
         }
-        if(!isDigit(ch)) continue; // eender ander niet-cijfer negeren
 
+        // 2. andere niet-cijfers negeren
+        if(!isDigit(ch)) continue;
+
+        // 3. cijfer verwerken
         const cijfer = Number(ch);
-        rest = rest*10 + cijfer;
+        rest = rest * 10 + cijfer;
 
         if(rest >= deler){
             gestart = true;
 
-            const q = Math.floor(rest/deler);
+            const q = Math.floor(rest / deler);
             const product = q * deler;
             const nieuweRest = rest - product;
 
             const huidigGetal = rest;
             const breedte = String(huidigGetal).length;
+
+            // ⭐⭐ BELANGRIJK:
+            // startKolom gebaseerd op digitCol (cijferwereld), NIET i (stringwereld)
             const startKolom = digitCol - breedte + 1;
 
-            const gezaktVolgende = nextDigitChar(i+1); // sla punt/komma over
+            // volgende echte cijfer zoeken (punt overslaan)
+            const gezaktVolgende = nextDigitChar(i + 1);
 
             stappen.push({
                 huidig: huidigGetal,
                 product: product,
                 rest: nieuweRest,
                 q: q,
-                startKolom,
-                breedte,
+                startKolom: startKolom,
+                breedte: breedte,
                 laatsteCijfer: gezaktVolgende
             });
 
             rest = nieuweRest;
         }
         else if(gestart){
-            // quotientcijfer 0
-            const gezaktVolgende = nextDigitChar(i+1);
+            // quotiëntcijfer 0
+            const gezaktVolgende = nextDigitChar(i + 1);
 
             stappen.push({
                 huidig: rest,
                 product: 0,
                 rest: rest,
                 q: 0,
+
+                // ⭐ correct: deze 0 komt op digitCol, niet i
                 startKolom: digitCol,
                 breedte: 1,
                 laatsteCijfer: gezaktVolgende
             });
         }
 
-        digitCol++; // enkel optellen als we effectief een cijfer verwerkten
+        // ⭐ alleen verhogen wanneer we een geldig cijfer hadden!
+        digitCol++;
     }
 
     if(decimalQuotPos === null){
-        // geen decimaal punt in dividend → punt staat helemaal rechts van het quotiënt
         decimalQuotPos = stappen.length;
     }
 
