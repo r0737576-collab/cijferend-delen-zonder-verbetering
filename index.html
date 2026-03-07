@@ -351,6 +351,7 @@ function berekenDelen(deeltal, deler){
 
     const chars = String(deeltal).replace(',', '.').split('');
     const stappen = [];
+    const decimalDividendPos = chars.indexOf(".");
 
     let rest = 0;
     let gestart = false;
