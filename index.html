@@ -179,6 +179,19 @@ table{ border-collapse:collapse; }
 .gridcell.comma:hover {
   background: #e6eef9;
 }
+
+/* 1) Eén (zichtbare) cel voor de komma wanneer die geplaatst is */
+.gridcell.comma {
+  background: #f4f7fb;
+  color: #1c2541;
+  font-weight: 900;
+  border: 2px dashed #1c2541;  /* duidelijk dat dit de komma-plek is */
+}
+
+/* 2) Visuele feedback voor de gekozen invoerpositie (optioneel) */
+.gridcell.sel {
+  outline: 2px solid #3a506b;
+}
     
 </style>
 
@@ -264,6 +277,7 @@ const CONFIG = {
 /* =========================================
    STATE (huidige oefening)
 ========================================= */
+
 const state = {
   dividend: 0,
   divisor: 0,
@@ -271,8 +285,10 @@ const state = {
   instellingen: {
     decimalen: false,
     controle: false
-  }
+  },
+  selectedIndex: null   // <-- TOEVOEGEN: positie waar de leerling wil typen (0..#cijfers)
 };
+
 
 /* =========================================
    WISKUNDE rekenlogica
@@ -574,10 +590,21 @@ function vulRooster(state){
 ========================================= */
 const UI = {
   init(){
-    this.cacheDOM();
-    document.getElementById("btnNew")
-      .addEventListener("click", startNieuweOefening);
-  },
+  this.cacheDOM();
+  document.getElementById("btnNew")
+    .addEventListener("click", startNieuweOefening);
+
+  // TOEVOEGEN: leerling typt '.' of ',' om de komma te plaatsen
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "," || e.key === ".") {
+      if (state.selectedIndex != null) {
+        state.userDecimalPos = state.selectedIndex; // zet de komma op de gekozen positie
+        this.tekenQuotient(state.stappen);          // hertekenen
+        e.preventDefault();
+      }
+    }
+  });
+},
   cacheDOM(){
     this.dividendNode = document.getElementById("grid");
     this.divisorNode  = document.getElementById("divGrid");
@@ -661,42 +688,51 @@ const UI = {
 
   const digitsCount = stappen.length;
 
-  // Als leerling nog geen komma-plek koos: start met komma achteraan (na het laatste cijfer)
-  if (state.userDecimalPos == null) {
-    state.userDecimalPos = digitsCount;
-  }
+  // Is er al een komma geplaatst?
+  const hasComma = state.userDecimalPos != null;
 
-  // Aantal kolommen = aantal cijfers + 1 (exact één komma-cel)
-  const totalCols = digitsCount + 1;
+  // Kolommen: alleen cijfers, tenzij een komma geplaatst is -> dan +1
+  const totalCols = hasComma ? (digitsCount + 1) : digitsCount;
+
   this.quotientNode.style.display = "grid";
   this.quotientNode.style.gridTemplateColumns = `repeat(${totalCols},40px)`;
 
-  let digitPtr = 0; // loopt door de cijfers (stap.q)
+  let digitPtr = 0; // index in de quotiëntcijfers (stap.q)
 
-  for (let col = 0; col < totalCols; col++) {
-    const cel = document.createElement("div");
-    cel.className = "gridcell";
+  // We lopen de posities 0..digitsCount af.
+  // Als er een komma is op positie 'pos', tekenen we die cel vóór het volgende cijfer.
+  for (let pos = 0; pos <= digitsCount; pos++) {
 
-    if (col === state.userDecimalPos) {
-      // Dit is de ENIGE komma-cel
-      cel.classList.add("comma");
-      cel.textContent = ","; // visueel teken
-      // (Klik op de komma-cel zelf hoeft niets te doen; verplaatsen doe je via een cijfercel)
-    } else {
-      // Dit is een cijfercel
+    // 1) Indien er een komma is en die hoort op deze positie: teken de komma-cel
+    if (hasComma && state.userDecimalPos === pos) {
+      const celComma = document.createElement("div");
+      celComma.className = "gridcell comma";
+      celComma.textContent = ",";
+      this.quotientNode.appendChild(celComma);
+    }
+
+    // 2) Als er nog cijfers over zijn, teken een cijfercel
+    if (digitPtr < digitsCount) {
+      const celDigit = document.createElement("div");
+      celDigit.className = "gridcell";
+
       const digit = stappen[digitPtr]?.q ?? "";
-      cel.textContent = digit;
+      celDigit.textContent = digit;
 
-      // Klik op een cijfer: zet de komma vóór dit cijfer
-      cel.addEventListener("click", () => {
-        state.userDecimalPos = col; // komma vóór dit cijfer
+      // Klik op dit cijfer = invoerpositie kiezen (vóór dit cijfer)
+      celDigit.addEventListener("click", () => {
+        state.selectedIndex = pos;        // onthoud waar de leerling wil typen
         this.tekenQuotient(state.stappen);
       });
 
-      digitPtr++; // alleen ophogen als we een cijfercel tekenden
-    }
+      // Visueel een randje als dit de gekozen invoerpositie is
+      if (state.selectedIndex === pos) {
+        celDigit.classList.add("sel");
+      }
 
-    this.quotientNode.appendChild(cel);
+      this.quotientNode.appendChild(celDigit);
+      digitPtr++;
+    }
   }
 },
     
@@ -753,8 +789,9 @@ function startNieuweOefening(){
 
     // NIEUW: waar hoort de komma in het quotiënt (leerling zet ze zelf)
     state.decimalQuotPos = res.decimalQuotPos;
-    state.userDecimalPos = null; // leerling nog niet gezet
-    state.decimalDividendPos = String(deeltal).indexOf(".");
+    state.userDecimalPos = null;  // leerling heeft nog geen komma geplaatst
+    state.selectedIndex = null;   // leerling heeft nog geen invoerpositie gekozen
+    state.decimalDividendPos = toInternal(deeltal).indexOf(".");
 
     document.getElementById("opgaveTekst").textContent =
     `${toUI(deeltal)} : ${toUI(deler)} =`;
