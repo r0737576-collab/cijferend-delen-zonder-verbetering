@@ -667,8 +667,12 @@ const UI = {
         const cel = document.createElement("div");
         cel.className = "gridcell";
         if(celData.type){
-          cel.classList.add(celData.type); // voegt .aftrek toe voor de lijn
-        }
+          if (celData.type) {
+          for (const cls of celData.type.split(" ")) {
+        if (cls.trim()) cel.classList.add(cls.trim());
+  }
+}
+}
         cel.textContent = (celData.type === "lijn") ? "" : (celData.waarde || "");
         this.workAreaNode.appendChild(cel);
       }
