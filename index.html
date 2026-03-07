@@ -129,9 +129,9 @@ table{ border-collapse:collapse; }
 }
 
 .gridcell.decLeft::before{
-    content: ".";
+    content: ",";   /* was "." */
     position:absolute;
-    left: 8px;       /* je mag dit later nog finetunen */
+    left: 8px;
     top: -4px;
     font-weight:bold;
     font-size:18px;
@@ -195,6 +195,24 @@ table{ border-collapse:collapse; }
 <script>
 "use strict";
 console.log("SCRIPT START");
+
+/* === Locale helpers (moeten bovenaan staan) === */
+const SEP_UI = ','; // UI toont komma
+
+function toInternal(val) {
+  // alles intern met punt
+  return String(val).replace(',', '.');
+}
+
+function toUI(val) {
+  // alles voor de leerling met komma
+  return String(val).replace('.', SEP_UI);
+}
+
+function parseLearnerNumber(s) {
+  const n = parseFloat(toInternal(s));
+  return Number.isFinite(n) ? n : null;
+}
 
 /* =========================================
    CONFIG (instellingen - Alles wat didactisch instelbaar is)
@@ -349,7 +367,7 @@ function genereerZeerMoeilijk() {
 
 function berekenDelen(deeltal, deler){
 
-    const chars = String(deeltal).replace(',', '.').split('');
+    const chars = toInternal(deeltal).split('');
     const stappen = [];
     const decimalDividendPos = chars.indexOf(".");
 
@@ -446,6 +464,7 @@ function berekenDelen(deeltal, deler){
 /* =========================================
    HULPFUNCTIES
 ========================================= */
+    
 function random(a,b){
   return Math.floor(Math.random()*(b-a+1))+a;
 }
@@ -534,46 +553,71 @@ const UI = {
     this.tekenworkArea(state);
   },
   tekenDividend(getal){
-    if(!this.dividendNode) return;
-    this.dividendNode.innerHTML = "";
-    const chars = String(getal).split("");
-    const cijfers = chars.filter(c => c !== ".");   // alleen echte cijfers tellen
-    this.dividendNode.style.display = "grid";
-    this.dividendNode.style.gridTemplateColumns = `repeat(${cijfers.length},40px)`;
-    let laatsteCel = null;
-    chars.forEach(ch => {
-        if(ch === "."){
-            if(laatsteCel){
-                const punt = document.createElement("span");
-                punt.textContent = ".";
-                punt.style.position = "absolute";
-                punt.style.right = "-6px";
-                punt.style.bottom = "-4px";
-                punt.style.fontWeight = "bold";
-                laatsteCel.appendChild(punt);
-            }
-            return;
-        }
-        const cel = document.createElement("div");
-        cel.className = "gridcell";
-        cel.textContent = ch;
-        this.dividendNode.appendChild(cel);
-        laatsteCel = cel;
-    });
+  if(!this.dividendNode) return;
+  this.dividendNode.innerHTML = "";
+
+  const s = toUI(getal); // ==> "123,45" voor de leerling
+  const chars = s.split("");
+  const cijfers = chars.filter(c => c >= '0' && c <= '9'); // tel enkel cijfers
+
+  this.dividendNode.style.display = "grid";
+  this.dividendNode.style.gridTemplateColumns = `repeat(${cijfers.length},40px)`;
+
+  let laatsteCel = null;
+  chars.forEach(ch => {
+    if(ch === SEP_UI){ // "," tonen
+      if(laatsteCel){
+        const punt = document.createElement("span");
+        punt.textContent = SEP_UI; // visueel een komma
+        punt.style.position = "absolute";
+        punt.style.right = "-6px";
+        punt.style.bottom = "-4px";
+        punt.style.fontWeight = "bold";
+        laatsteCel.appendChild(punt);
+      }
+      return;
+    }
+    const cel = document.createElement("div");
+    cel.className = "gridcell";
+    cel.textContent = ch;
+    this.dividendNode.appendChild(cel);
+    laatsteCel = cel;
+  });
 },
   tekenDivisor(getal){
-    if(!this.divisorNode) return;
-    this.divisorNode.innerHTML = "";
-    const cijfers = String(getal).split("");
-    this.divisorNode.style.display = "grid";
-    this.divisorNode.style.gridTemplateColumns = `repeat(${cijfers.length},40px)`;
-    cijfers.forEach(cijfer=>{
-      const cel = document.createElement("div");
-      cel.className = "gridcell";
-      cel.textContent = cijfer;
-      this.divisorNode.appendChild(cel);
-    });
-  },
+  if(!this.divisorNode) return;
+  this.divisorNode.innerHTML = "";
+
+  const s = toUI(getal);
+  const chars = s.split("");
+
+  // tel enkel cijfers voor de kolommen
+  const enkelCijfers = chars.filter(c => c >= '0' && c <= '9');
+
+  this.divisorNode.style.display = "grid";
+  this.divisorNode.style.gridTemplateColumns = `repeat(${enkelCijfers.length},40px)`;
+
+  let laatsteCel = null;
+  chars.forEach(ch => {
+    if(ch === SEP_UI){
+      if(laatsteCel){
+        const punt = document.createElement("span");
+        punt.textContent = SEP_UI;
+        punt.style.position = "absolute";
+        punt.style.right = "-6px";
+        punt.style.bottom = "-4px";
+        punt.style.fontWeight = "bold";
+        laatsteCel.appendChild(punt);
+      }
+      return;
+    }
+    const cel = document.createElement("div");
+    cel.className = "gridcell";
+    cel.textContent = ch;
+    this.divisorNode.appendChild(cel);
+    laatsteCel = cel;
+  });
+},
  tekenQuotient(stappen){
 
     this.quotientNode.innerHTML="";
@@ -655,8 +699,8 @@ function startNieuweOefening(){
     state.decimalDividendPos = String(deeltal).indexOf(".");
 
     document.getElementById("opgaveTekst").textContent =
-        `${deeltal} : ${deler} =`;
-
+    `${toUI(deeltal)} : ${toUI(deler)} =`;
+    
     UI.tekenOefening(state);
 }
 
