@@ -18,6 +18,20 @@
     box-sizing:border-box;
 }
 
+/* Eén cel voor de komma in het quotiënt */
+.gridcell.comma {
+  background: #f4f7fb;
+  color: #1c2541;
+  cursor: pointer;
+  font-weight: 900;
+  border: 2px dashed #1c2541;  /* zichtbaar als "komma-plek" */
+}
+
+.gridcell.comma:hover {
+  background: #e6eef9;
+}
+``
+    
 table{ border-collapse:collapse; }
 
 .lijnCel{
@@ -645,60 +659,47 @@ const UI = {
  tekenQuotient(stappen){
   this.quotientNode.innerHTML = "";
 
-  // Aantal scheidingsposities (tussen digits) = aantal digits + 1
-  // We bouwen het raster: [ digit0 ][ , ][ digit1 ][ , ][ digit2 ] ... (visueel is de komma-positie een eigen cel)
   const digitsCount = stappen.length;
-  const commaSlots = digitsCount + 1;
 
-  // We genereren exact: digitsCount + commaSlots = digitsCount + (digitsCount + 1) cellen?
-  // Dat zou dubbel zijn; we kiezen een eenvoudiger patroon:
-  //  - we renderen enkel "logische posities": 0..digitsCount (comma slots) én 0..digitsCount-1 (digit slots)
-  //  - maar voor de grid tonen we dit als: [digit0][commaSlot0][digit1][commaSlot1]...[digitN-1][commaSlotN]
-  // Dus kolommen = digitsCount + commaSlots = 2*digitsCount + 1
-  const totalCols = 2 * digitsCount + 1;
+  // Als leerling nog geen komma-plek koos: start met komma achteraan (na het laatste cijfer)
+  if (state.userDecimalPos == null) {
+    state.userDecimalPos = digitsCount;
+  }
 
+  // Aantal kolommen = aantal cijfers + 1 (exact één komma-cel)
+  const totalCols = digitsCount + 1;
   this.quotientNode.style.display = "grid";
   this.quotientNode.style.gridTemplateColumns = `repeat(${totalCols},40px)`;
+
+  let digitPtr = 0; // loopt door de cijfers (stap.q)
 
   for (let col = 0; col < totalCols; col++) {
     const cel = document.createElement("div");
     cel.className = "gridcell";
 
-    const isCommaSlot = (col % 2 === 0); // even indexen: 0,2,4,... zijn komma-sleuven
-    if (isCommaSlot) {
-      // map naar "logische" komma-index 0..digitsCount
-      const commaIndex = col / 2; // 0 .. digitsCount
+    if (col === state.userDecimalPos) {
+      // Dit is de ENIGE komma-cel
       cel.classList.add("comma");
+      cel.textContent = ","; // visueel teken
+      // (Klik op de komma-cel zelf hoeft niets te doen; verplaatsen doe je via een cijfercel)
+    } else {
+      // Dit is een cijfercel
+      const digit = stappen[digitPtr]?.q ?? "";
+      cel.textContent = digit;
 
-      // toon komma indien leerling hier plaatste
-      if (state.userDecimalPos === commaIndex) {
-        cel.textContent = ",";       // visuele komma
-        cel.classList.add("userPlaced");
-      } else {
-        cel.textContent = "";        // leeg vakje waar je op kan klikken
-      }
-
-      // (optioneel) markeer de verwachte plek (alleen bij zelfcontrole bv.)
-      if (state.instellingen.controle && state.decimalQuotPos === commaIndex) {
-        cel.classList.add("expected");
-      }
-
-      // klik: leerling zet of verplaatst de komma naar deze sleuf
+      // Klik op een cijfer: zet de komma vóór dit cijfer
       cel.addEventListener("click", () => {
-        state.userDecimalPos = commaIndex;
+        state.userDecimalPos = col; // komma vóór dit cijfer
         this.tekenQuotient(state.stappen);
       });
-    } else {
-      // digit-cel: map naar welk quotiëntcijfer
-      const digitIndex = Math.floor(col / 2); // 0..digitsCount-1
-      const digit = stappen[digitIndex]?.q ?? "";
-      cel.textContent = digit;
+
+      digitPtr++; // alleen ophogen als we een cijfercel tekenden
     }
 
     this.quotientNode.appendChild(cel);
   }
 },
-
+    
   /* === AANGEPAST === */
   tekenworkArea(state){
     if(!this.workAreaNode) return;
