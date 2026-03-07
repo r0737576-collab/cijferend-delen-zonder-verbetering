@@ -138,6 +138,10 @@ table{ border-collapse:collapse; }
     color:#1c2541;
 }
 
+.decimalStart{
+    border-top:4px solid #2a9d8f !important;
+}
+    
 </style>
 
 /* ==> HIER komt jouw HTML  */
@@ -399,14 +403,15 @@ function berekenDelen(deeltal, deler){
             const gezaktVolgende = nextDigitChar(i + 1);
 
             stappen.push({
-                huidig: huidigGetal,
-                product: product,
-                rest: nieuweRest,
-                q: q,
-                startKolom: startKolom,
-                breedte: breedte,
-                laatsteCijfer: gezaktVolgende
-            });
+            huidig: huidigGetal,
+            product: product,
+            rest: nieuweRest,
+            q: q,
+            startKolom: startKolom,
+            breedte: breedte,
+            laatsteCijfer: gezaktVolgende,
+            decimalStap: digitCol === decimalDividendPos - 1
+});
 
             rest = nieuweRest;
         }
@@ -481,21 +486,27 @@ function vulRooster(state){
     for(let i=0;i<stap.breedte;i++){
       rooster[productRij][stap.startKolom+i] =
         {waarde:productStr[i], type:"product"};
-    }
+}
 
     // verschil (rest) — met dikke bovenrand als scheidingslijn
     for(let i=0;i<stap.breedte;i++){
-      rooster[aftrekRij][stap.startKolom+i] =
-        {waarde:aftrekStr[i], type:"aftrek"};
-    }
+    let type = "aftrek";
+    // lijn kleuren wanneer we de komma van het deeltal bereiken
+    if(stap.decimalStap){
+    type = "aftrek decimalStart";
+}
+
+  rooster[aftrekRij][stap.startKolom+i] =
+    {waarde:aftrekStr[i], type:type};
+}
 
     // cijfer laten zakken (indien niet de laatste stap)
     if(index < stappen.length-1){
       const gezakt = stap.laatsteCijfer || "";
       const col = stap.startKolom + stap.breedte;
       rooster[aftrekRij][col] = {waarde:gezakt, type:"gezakt"};
-    }
-  });
+}
+});
 
   return rooster;
 }
@@ -640,6 +651,7 @@ function startNieuweOefening(){
     // NIEUW: waar hoort de komma in het quotiënt (leerling zet ze zelf)
     state.decimalQuotPos = res.decimalQuotPos;
     state.userDecimalPos = null; // leerling nog niet gezet
+    state.decimalDividendPos = String(deeltal).indexOf(".");
 
     document.getElementById("opgaveTekst").textContent =
         `${deeltal} : ${deler} =`;
