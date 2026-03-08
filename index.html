@@ -157,10 +157,13 @@ table{ border-collapse:collapse; }
 .gridcell.comma.wrong {
   background: #ffc9c9; /* rood als fout bij nakijken */
 }
-
 /* Visuele feedback voor de gekozen invoerpositie (optioneel) */
 .gridcell.sel {
   outline: 2px solid #3a506b;
+}
+/* Verticale groene lijn op de rastercel (linkerrand) */
+.gridcell.vComma {
+  border-left: 4px solid #2a9d8f;
 }
 </style>
 
@@ -249,6 +252,7 @@ const state = {
   dividend: 0,
   divisor: 0,
   stappen: [],
+  level: "1", // "1"=Basis, "2"=Makkelijk, "3"=Gemiddeld, "4"=Moeilijk, "5"=Zeer moeilijk
   instellingen: {
     decimalen: false,
     howCommaPlaceholder: false,  // <--- nieuw: moet de komma-cel zichtbaar zijn?
@@ -475,14 +479,23 @@ function vulRooster(state){
         {waarde:productStr[i], type:"product"};
     }
 
-    // verschil (rest) — met dikke bovenrand als scheidingslijn
+    // verschil (rest) — gewone aftrek (geen horizontale kleur meer)
     for(let i=0;i<stap.breedte;i++){
-      let type = "aftrek";
-      if(stap.decimalStap){
-        type = "aftrek decimalStart";
-      }
+      const type = "aftrek"; // <-- géén 'decimalStart' meer
       rooster[aftrekRij][stap.startKolom+i] =
-        {waarde:aftrekStr[i], type:type};
+      {waarde:aftrekStr[i], type:type};
+    }
+    // ==> Verticale groene lijn ONDER de komma, ENKEL bij Gemiddeld, ENKEL op deze ene stap
+    if (state.level === "3" && stap.decimalStap) {
+    // kolom direct rechts van het huidige blok: daar "zakt" het volgende cijfer
+    const col = stap.startKolom + stap.breedte;
+
+    // haal bestaande cel (als die er al is door 'gezakt'), of maak er één
+    const bestaand = (rooster[aftrekRij][col] || { waarde: "", type: "" });
+
+    // voeg de klasse 'vComma' toe om de verticale lijn te tekenen
+    const nieuweType = (bestaand.type ? (bestaand.type + " ") : "") + "vComma";
+    rooster[aftrekRij][col] = { waarde: bestaand.waarde, type: nieuweType };
     }
 
     // cijfer laten zakken (indien niet de laatste stap)
@@ -701,6 +714,7 @@ const UI = {
 ========================================= */
 function startNieuweOefening(){
   const diff = document.getElementById("difficulty").value;
+  state.level = diff; // <--- niveau onthouden
   const oef = genereerOefening(diff);
   const deeltal = oef.dividend;
   const deler   = oef.divisor;
