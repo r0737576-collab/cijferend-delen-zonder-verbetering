@@ -467,45 +467,54 @@ function vulRooster(state){
   const rooster = maakLeegRooster(rijen, kolommen);
 
   stappen.forEach((stap, index) => {
-    const productRij = index * 2;
-    const aftrekRij  = productRij + 1;
+  const productRij = index * 2;
+  const aftrekRij  = productRij + 1;
 
-    const productStr = String(stap.product).padStart(stap.breedte,"0");
-    const aftrekStr  = String(stap.rest).padStart(stap.breedte,"0");
+  const productStr = String(stap.product).padStart(stap.breedte,"0");
+  const aftrekStr  = String(stap.rest).padStart(stap.breedte,"0");
 
-    // product
-    for(let i=0;i<stap.breedte;i++){
-      rooster[productRij][stap.startKolom+i] =
-        {waarde:productStr[i], type:"product"};
-    }
+  // product
+  for (let i = 0; i < stap.breedte; i++) {
+    rooster[productRij][stap.startKolom + i] =
+      { waarde: productStr[i], type: "product" };
+  }
 
-    // verschil (rest) — gewone aftrek (geen horizontale kleur meer)
-    for(let i=0;i<stap.breedte;i++){
-      const type = "aftrek"; // <-- géén 'decimalStart' meer
-      rooster[aftrekRij][stap.startKolom+i] =
-      {waarde:aftrekStr[i], type:type};
-    }
-    // ==> Verticale groene lijn ONDER de komma, ENKEL bij Gemiddeld, ENKEL op deze ene stap
-    if (state.level === "3" && stap.decimalStap) {
-    // kolom direct rechts van het huidige blok: daar "zakt" het volgende cijfer
-    const col = stap.startKolom + stap.breedte;
+  // verschil (rest) — gewone aftrek (géén horizontale kleur meer)
+  for (let i = 0; i < stap.breedte; i++) {
+    rooster[aftrekRij][stap.startKolom + i] =
+      { waarde: aftrekStr[i], type: "aftrek" };
+  }
 
-    // haal bestaande cel (als die er al is door 'gezakt'), of maak er één
+  // --- EERST: gezakt cijfer zetten (indien niet de laatste stap)
+  let colNaBlok = null;
+  if (index < stappen.length - 1) {
+    const gezakt = stap.laatsteCijfer || "";
+    colNaBlok = stap.startKolom + stap.breedte;
+
+    const bestaand = (rooster[aftrekRij][colNaBlok] || { waarde: "", type: "" });
+    const nieuwType = (bestaand.type ? (bestaand.type + " ") : "") + "gezakt";
+
+    rooster[aftrekRij][colNaBlok] = {
+      waarde: gezakt,
+      type: nieuwType
+    };
+  }
+
+  // --- DAN: de verticale groene lijn ONDER de komma
+  // Alleen bij Gemiddeld (level "3") en alleen bij de stap vóór de komma
+  if (state.level === "3" && stap.decimalStap) {
+    // kolom direct rechts van het huidige blok
+    const col = (colNaBlok !== null) ? colNaBlok : (stap.startKolom + stap.breedte);
+
     const bestaand = (rooster[aftrekRij][col] || { waarde: "", type: "" });
+    const nieuwType = (bestaand.type ? (bestaand.type + " ") : "") + "vComma";
 
-    // voeg de klasse 'vComma' toe om de verticale lijn te tekenen
-    const nieuweType = (bestaand.type ? (bestaand.type + " ") : "") + "vComma";
-    rooster[aftrekRij][col] = { waarde: bestaand.waarde, type: nieuweType };
-    }
-
-    // cijfer laten zakken (indien niet de laatste stap)
-    if(index < stappen.length-1){
-      const gezakt = stap.laatsteCijfer || "";
-      const col = stap.startKolom + stap.breedte;
-      rooster[aftrekRij][col] = {waarde:gezakt, type:"gezakt"};
-    }
-  });
-
+    rooster[aftrekRij][col] = {
+      waarde: bestaand.waarde,
+      type: nieuwType
+    };
+  }
+});
   return rooster;
 }
 
