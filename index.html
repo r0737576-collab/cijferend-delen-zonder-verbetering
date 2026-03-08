@@ -159,7 +159,7 @@ table{ border-collapse:collapse; }
 }
 /* Verticale groene lijn op de rastercel (linkerrand) */
 .gridcell.vComma {
-  border-left: 4px solid #2a9d8f;
+  border-left: 4px solid #2a9d8f !important;
 }
 </style>
 
@@ -249,16 +249,16 @@ const state = {
   dividend: 0,
   divisor: 0,
   stappen: [],
-  level: "1",
+  level: "1", // "1"=Basis, "2"=Makkelijk, "3"=Gemiddeld, "4"=Moeilijk, "5"=Zeer moeilijk
   instellingen: {
     decimalen: false,
     controle: false
   },
-  showCommaPlaceholder: false,  // <--- HIER goed en op root-niveau
-  selectedIndex: null,
-  decimalQuotPos: null,
-  userDecimalPos: null,
-  decimalDividendPos: null
+  showCommaPlaceholder: false,  // <-- HIER juist, op root-niveau
+  selectedIndex: null,          // positie waar de leerling wil typen (0..#cijfers)
+  decimalQuotPos: null,         // verwachte komma-positie
+  userDecimalPos: null,         // werkelijk geplaatste komma-positie
+  decimalDividendPos: null      // index van '.' in deeltal-string (intern)
 };
 
 /* =========================================
@@ -508,10 +508,8 @@ if (state.level === "3" && stap.decimalStap) {
 
   const rows = rooster.length;
 
-  // We starten "vanaf de tweede cel" onder deze kolom:
-  // aftrekRij is de eerste cel waar we een lijntje zouden kunnen zetten;
-  // jij wil vanaf de volgende => begin bij aftrekRij + 1
-  for (let r = aftrekRij + 1; r < rows; r++) {
+  // begin bij de aftrek-rij zelf
+  for (let r = aftrekRij; r < rows; r++) {
     const bestaand = (rooster[r][col] || { waarde: "", type: "" });
     const nieuwType = (bestaand.type ? (bestaand.type + " ") : "") + "vComma";
     rooster[r][col] = {
