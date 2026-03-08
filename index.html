@@ -500,20 +500,29 @@ function vulRooster(state){
     };
   }
 
-  // --- DAN: de verticale groene lijn ONDER de komma
-  // Alleen bij Gemiddeld (level "3") en alleen bij de stap vóór de komma
-  if (state.level === "3" && stap.decimalStap) {
-    // kolom direct rechts van het huidige blok
-    const col = (colNaBlok !== null) ? colNaBlok : (stap.startKolom + stap.breedte);
+  
+/ --- DAN: de verticale groene lijn ONDER de komma, DOORTREKKEN VANAF DE TWEEDE CEL
+// Alleen bij Gemiddeld (level "3") en alleen bij de stap vóór de komma
+if (state.level === "3" && stap.decimalStap) {
+  // De kolom direct rechts van het aftrek-blok = grens onder de komma
+  const col = (colNaBlok !== null)
+    ? colNaBlok
+    : (stap.startKolom + stap.breedte); // fallback
 
-    const bestaand = (rooster[aftrekRij][col] || { waarde: "", type: "" });
+  const rows = rooster.length;
+
+  // We starten "vanaf de tweede cel" onder deze kolom:
+  // aftrekRij is de eerste cel waar we een lijntje zouden kunnen zetten;
+  // jij wil vanaf de volgende => begin bij aftrekRij + 1
+  for (let r = aftrekRij + 1; r < rows; r++) {
+    const bestaand = (rooster[r][col] || { waarde: "", type: "" });
     const nieuwType = (bestaand.type ? (bestaand.type + " ") : "") + "vComma";
-
-    rooster[aftrekRij][col] = {
+    rooster[r][col] = {
       waarde: bestaand.waarde,
       type: nieuwType
     };
   }
+}
 });
   return rooster;
 }
