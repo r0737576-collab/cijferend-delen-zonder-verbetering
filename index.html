@@ -501,7 +501,7 @@ function vulRooster(state){
   }
 
   
-/ --- DAN: de verticale groene lijn ONDER de komma, DOORTREKKEN VANAF DE TWEEDE CEL
+// --- DAN: de verticale groene lijn ONDER de komma, DOORTREKKEN VANAF DE TWEEDE CEL
 // Alleen bij Gemiddeld (level "3") en alleen bij de stap vóór de komma
 if (state.level === "3" && stap.decimalStap) {
   // De kolom direct rechts van het aftrek-blok = grens onder de komma
@@ -522,6 +522,7 @@ if (state.level === "3" && stap.decimalStap) {
       type: nieuwType
     };
   }
+}
 });
   return rooster;
 }
