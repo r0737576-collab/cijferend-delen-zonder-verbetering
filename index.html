@@ -251,6 +251,7 @@ const state = {
   stappen: [],
   instellingen: {
     decimalen: false,
+    howCommaPlaceholder: false,  // <--- nieuw: moet de komma-cel zichtbaar zijn?
     controle: false
   },
   selectedIndex: null,     // positie waar de leerling wil typen (0..#cijfers)
@@ -604,15 +605,19 @@ const UI = {
 
   const digitsCount = stappen.length;
 
-  // Komma-positie voor de weergave:
-  // - als de leerling al een komma heeft geplaatst -> die gebruiken
-  // - anders toon je de verwachte plek (placeholder)
-  const commaPos = (state.userDecimalPos != null)
-    ? state.userDecimalPos
-    : state.decimalQuotPos;
+  // Alleen komma tonen wanneer het zinvol is (Gemiddeld/Moeilijk/Zeer moeilijk)
+  const shouldShowComma = state.showCommaPlaceholder === true;
 
-  // Altijd ruimte voor de komma: cijfers + 1
-  const totalCols = digitsCount + 1;
+  // Bepaal de komma-positie:
+  // - als leerling al geplaatst -> userDecimalPos
+  // - anders de verwachte plek -> decimalQuotPos
+  // - maar alleen als shouldShowComma true is
+  const commaPos = shouldShowComma
+    ? (state.userDecimalPos != null ? state.userDecimalPos : state.decimalQuotPos)
+    : null;
+
+  // Kolommen: cijfers + (1 als we een komma tonen)
+  const totalCols = digitsCount + (shouldShowComma ? 1 : 0);
 
   this.quotientNode.style.display = "grid";
   this.quotientNode.style.gridTemplateColumns = `repeat(${totalCols},40px)`;
@@ -620,19 +625,17 @@ const UI = {
   let digitPtr = 0;
 
   for (let pos = 0; pos <= digitsCount; pos++) {
-    // 1) Komma-cel op de juiste positie
-    if (pos === commaPos) {
+
+    // 1) Komma-cel (alleen als we ze moeten tonen en dit de juiste plek is)
+    if (shouldShowComma && pos === commaPos) {
       const celComma = document.createElement("div");
       celComma.className = "gridcell comma";
       celComma.textContent = ",";
-
-      // Als de leerling de komma nog niet zelf heeft gezet, markeer de verwachte plek
       if (state.userDecimalPos == null) {
-        celComma.classList.add("expected");
+        celComma.classList.add("expected");   // placeholder-stijl
       } else {
-        celComma.classList.add("userPlaced");
+        celComma.classList.add("userPlaced"); // door leerling gezet
       }
-
       this.quotientNode.appendChild(celComma);
     }
 
@@ -644,7 +647,7 @@ const UI = {
       const digit = stappen[digitPtr]?.q ?? "";
       celDigit.textContent = digit;
 
-      // Klik op dit cijfer = invoerpositie kiezen (vóór dit cijfer)
+      // Klik = invoerpositie voor de komma (vóór dit cijfer)
       celDigit.addEventListener("click", () => {
         state.selectedIndex = pos;
         this.tekenQuotient(state.stappen);
@@ -660,6 +663,7 @@ const UI = {
     }
   }
 },
+  
   tekenworkArea(state){
     if(!this.workAreaNode) return;
     this.workAreaNode.innerHTML = "";
@@ -711,8 +715,14 @@ function startNieuweOefening(){
   state.decimalQuotPos = res.decimalQuotPos;
   state.userDecimalPos = null;                // nog niet zichtbaar
   state.selectedIndex  = state.decimalQuotPos; // standaard typ-positie = juiste plek
-  state.decimalDividendPos = toInternal(deeltal).indexOf(".");
+  
+  // >>> Alleen komma tonen als deeltal of deler decimalen hebben
+  const hasDecimalDividend = toInternal(deeltal).includes(".");
+  const hasDecimalDivisor  = toInternal(deler).includes(".");
+  state.showCommaPlaceholder = hasDecimalDividend || hasDecimalDivisor;
 
+  state.decimalDividendPos = toInternal(deeltal).indexOf(".");
+  
   document.getElementById("opgaveTekst").textContent =
     `${toUI(deeltal)} : ${toUI(deler)} =`;
 
