@@ -133,10 +133,6 @@ table{ border-collapse:collapse; }
   color:#1c2541;
 }
 
-.decimalStart{
-  border-top:4px solid #2a9d8f !important;
-}
-
 /* Cel voor de komma in het quotiënt */
 .gridcell.comma {
   background: #f4f7fb;
@@ -248,20 +244,21 @@ const CONFIG = {
 /* =========================================
    STATE
 ========================================= */
+// In je STATE:
 const state = {
   dividend: 0,
   divisor: 0,
   stappen: [],
-  level: "1", // "1"=Basis, "2"=Makkelijk, "3"=Gemiddeld, "4"=Moeilijk, "5"=Zeer moeilijk
+  level: "1",
   instellingen: {
     decimalen: false,
-    howCommaPlaceholder: false,  // <--- nieuw: moet de komma-cel zichtbaar zijn?
     controle: false
   },
-  selectedIndex: null,     // positie waar de leerling wil typen (0..#cijfers)
-  decimalQuotPos: null,    // verwachte komma-positie
-  userDecimalPos: null,    // werkelijk geplaatste komma-positie
-  decimalDividendPos: null // index van '.' in deeltal-string (intern)
+  showCommaPlaceholder: false,  // <--- HIER goed en op root-niveau
+  selectedIndex: null,
+  decimalQuotPos: null,
+  userDecimalPos: null,
+  decimalDividendPos: null
 };
 
 /* =========================================
@@ -539,15 +536,18 @@ const UI = {
 
     // leerling typt ',' of '.' om de komma te plaatsen
     document.addEventListener("keydown", (e) => {
-      if (e.key === "," || e.key === ".") {
-        if (state.selectedIndex == null) {
-          state.selectedIndex = state.decimalQuotPos;
-        }
-        state.userDecimalPos = state.selectedIndex;
-        UI.tekenQuotient(state.stappen);
-        e.preventDefault();
-      }
-    });
+    if (e.key === "," || e.key === ".") {
+    // Alleen reageren wanneer er een komma hoort te zijn
+    if (!state.showCommaPlaceholder) return;
+
+    if (state.selectedIndex == null) {
+      state.selectedIndex = state.decimalQuotPos;
+    }
+    state.userDecimalPos = state.selectedIndex;
+    UI.tekenQuotient(state.stappen);
+    e.preventDefault();
+  }
+});
   },
 
   cacheDOM(){
