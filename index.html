@@ -600,50 +600,66 @@ const UI = {
   },
 
   tekenQuotient(stappen){
-    this.quotientNode.innerHTML = "";
+  this.quotientNode.innerHTML = "";
 
-    const digitsCount = stappen.length;
-    const hasComma = state.userDecimalPos != null;
-    const totalCols = hasComma ? (digitsCount + 1) : digitsCount;
+  const digitsCount = stappen.length;
 
-    this.quotientNode.style.display = "grid";
-    this.quotientNode.style.gridTemplateColumns = `repeat(${totalCols},40px)`;
+  // Komma-positie voor de weergave:
+  // - als de leerling al een komma heeft geplaatst -> die gebruiken
+  // - anders toon je de verwachte plek (placeholder)
+  const commaPos = (state.userDecimalPos != null)
+    ? state.userDecimalPos
+    : state.decimalQuotPos;
 
-    let digitPtr = 0;
+  // Altijd ruimte voor de komma: cijfers + 1
+  const totalCols = digitsCount + 1;
 
-    for (let pos = 0; pos <= digitsCount; pos++) {
-      // komma-cel
-      if (hasComma && state.userDecimalPos === pos) {
-        const celComma = document.createElement("div");
-        celComma.className = "gridcell comma";
-        celComma.textContent = ",";
-        this.quotientNode.appendChild(celComma);
+  this.quotientNode.style.display = "grid";
+  this.quotientNode.style.gridTemplateColumns = `repeat(${totalCols},40px)`;
+
+  let digitPtr = 0;
+
+  for (let pos = 0; pos <= digitsCount; pos++) {
+    // 1) Komma-cel op de juiste positie
+    if (pos === commaPos) {
+      const celComma = document.createElement("div");
+      celComma.className = "gridcell comma";
+      celComma.textContent = ",";
+
+      // Als de leerling de komma nog niet zelf heeft gezet, markeer de verwachte plek
+      if (state.userDecimalPos == null) {
+        celComma.classList.add("expected");
+      } else {
+        celComma.classList.add("userPlaced");
       }
 
-      // cijfercel
-      if (digitPtr < digitsCount) {
-        const celDigit = document.createElement("div");
-        celDigit.className = "gridcell";
-
-        const digit = stappen[digitPtr]?.q ?? "";
-        celDigit.textContent = digit;
-
-        // Klik = invoerpositie voor de komma (vóór dit cijfer)
-        celDigit.addEventListener("click", () => {
-          state.selectedIndex = pos;
-          this.tekenQuotient(state.stappen);
-        });
-
-        if (state.selectedIndex === pos) {
-          celDigit.classList.add("sel");
-        }
-
-        this.quotientNode.appendChild(celDigit);
-        digitPtr++;
-      }
+      this.quotientNode.appendChild(celComma);
     }
-  },
 
+    // 2) Cijfercellen
+    if (digitPtr < digitsCount) {
+      const celDigit = document.createElement("div");
+      celDigit.className = "gridcell";
+
+      const digit = stappen[digitPtr]?.q ?? "";
+      celDigit.textContent = digit;
+
+      // Klik op dit cijfer = invoerpositie kiezen (vóór dit cijfer)
+      celDigit.addEventListener("click", () => {
+        state.selectedIndex = pos;
+        this.tekenQuotient(state.stappen);
+      });
+
+      // Visuele hint op gekozen positie
+      if (state.selectedIndex === pos) {
+        celDigit.classList.add("sel");
+      }
+
+      this.quotientNode.appendChild(celDigit);
+      digitPtr++;
+    }
+  }
+},
   tekenworkArea(state){
     if(!this.workAreaNode) return;
     this.workAreaNode.innerHTML = "";
