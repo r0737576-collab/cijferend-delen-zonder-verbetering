@@ -596,15 +596,17 @@ const UI = {
 
   // TOEVOEGEN: leerling typt '.' of ',' om de komma te plaatsen
   document.addEventListener("keydown", (e) => {
-    if (e.key === "," || e.key === ".") {
-      if (state.selectedIndex != null) {
-        state.userDecimalPos = state.selectedIndex; // zet de komma op de gekozen positie
-        this.tekenQuotient(state.stappen);          // hertekenen
-        e.preventDefault();
-      }
+  if (e.key === "," || e.key === ".") {
+    // Als er nog geen typ-positie is, zet ze nu op de juiste (verwachte) positie
+    if (state.selectedIndex == null) {
+      state.selectedIndex = state.decimalQuotPos;
     }
-  });
-},
+    // Plaats/verschuif de komma naar de gekozen positie
+    state.userDecimalPos = state.selectedIndex;
+    UI.tekenQuotient(state.stappen);
+    e.preventDefault(); // voorkom dat de komma in een input-veld belandt
+  }
+});
   cacheDOM(){
     this.dividendNode = document.getElementById("grid");
     this.divisorNode  = document.getElementById("divGrid");
@@ -789,10 +791,9 @@ function startNieuweOefening(){
 
     // NIEUW: waar hoort de komma in het quotiënt (leerling zet ze zelf)
     state.decimalQuotPos = res.decimalQuotPos;
-    state.userDecimalPos = null;  // leerling heeft nog geen komma geplaatst
-    state.selectedIndex = null;   // leerling heeft nog geen invoerpositie gekozen
+    state.userDecimalPos = null;               // komma nog niet zichtbaar
+    state.selectedIndex = state.decimalQuotPos; // <-- standaard typ-positie = juiste plek
     state.decimalDividendPos = toInternal(deeltal).indexOf(".");
-
     document.getElementById("opgaveTekst").textContent =
     `${toUI(deeltal)} : ${toUI(deler)} =`;
     
