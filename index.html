@@ -254,12 +254,15 @@ const state = {
     decimalen: false,
     controle: false
   },
-  showCommaPlaceholder: false,  // <-- HIER juist, op root-niveau
+  showCommaPlaceholder: false, // <-- HIER juist, op root-niveau
   decimalReminderShown: false, // is de groene lijn al getoond?
-  selectedIndex: null,          // positie waar de leerling wil typen (0..#cijfers)
-  decimalQuotPos: null,         // verwachte komma-positie
-  userDecimalPos: null,         // werkelijk geplaatste komma-positie
-  decimalDividendPos: null      // index van '.' in deeltal-string (intern)
+  selectedIndex: null,         // positie waar de leerling wil typen (0..#cijfers)
+  decimalQuotPos: null,        // verwachte komma-positie
+  userDecimalPos: null,        // werkelijk geplaatste komma-positie
+  decimalDividendPos: null,    // index van '.' in deeltal-string (intern)
+  originalDividend: null,      // NIEUW: originelen enkel voor weergave in de opgave bovenaan
+  originalDivisor: null        // NIEUW: originelen enkel voor weergave in de opgave bovenaan
+
 };
 
 /* =========================================
@@ -285,6 +288,21 @@ function randomDecimal(min, max, dec) {
   return Math.round((Math.random() * (max - min) + min) * factor) / factor;
 }
 
+// Hoeveel decimalen heeft een (string) getal?
+function decimalPlaces(val){
+  const s = toInternal(val);
+  const i = s.indexOf('.');
+  return i === -1 ? 0 : (s.length - i - 1);
+}
+
+// Vermenigvuldig met 10^k en rond af op 'keepDecimals' decimalen
+function scaleNumber(val, k, keepDecimals){
+  const n = parseFloat(toInternal(val));
+  const factor = 10 ** k;
+  const scaled = n * factor;
+  return rondAf(scaled, keepDecimals);
+}
+  
 /* 1. BASIS — komt uit, 2–3 cijfers, deler ≤ 9 */
 function genereerBasis() {
   const deler = random(2, 9);
@@ -790,32 +808,63 @@ const UI = {
 ========================================= */
 function startNieuweOefening(){
   const diff = document.getElementById("difficulty").value;
-  state.level = diff; // <--- niveau onthouden
+  state.level = diff; // niveau onthouden
   state.decimalReminderShown = false; // reminder nog niet getoond
-  const oef = genereerOefening(diff);
-  const deeltal = oef.dividend;
-  const deler   = oef.divisor;
 
+  const oef = genereerOefening(diff);
+
+  // LET OP: 'let' gebruiken zodat we kunnen aanpassen bij zeer moeilijk (5)
+  let deeltal = oef.dividend;
+  let deler   = oef.divisor;
+
+  // Onthoud de originelen voor de opgave-weergave (bovenaan)
+  state.originalDividend = deeltal;
+  state.originalDivisor  = deler;
+
+  // === Alleen voor ZEER MOEILIJK (5): deler met komma -> schaal beide zodat deler geheel wordt
+  if (diff === "5") {
+    const k = decimalPlaces(deler); // aantal decimalen in de deler
+    if (k > 0) {
+      // schaal beide met 10^k
+      // deler wordt geheel getal; deeltal kan nog decimalen overhouden als het er meer had dan k
+      // 'keepDecimals' is optioneel; we houden het simpel en ronden op max 3 dec na het schalen
+      const keepDecimals = Math.max(0, CONFIG.maxDecimalen - k);
+
+      const scaledDividend = scaleNumber(deeltal, k, keepDecimals);
+      const scaledDivisor  = Math.round(parseFloat(toInternal(deler)) * (10 ** k));
+
+      deeltal = scaledDividend;
+      deler   = scaledDivisor;
+    }
+  }
+
+  // Vanaf hier rekent/tekent de UI met (eventueel) geschaalde waarden
   state.dividend = deeltal;
   state.divisor  = deler;
 
   const res = berekenDelen(deeltal, deler);
   state.stappen = res.stappen;
 
-  // waar hoort de komma in het quotiënt (leerling zet ze zelf)
+  // quotiënt-positie (leerling kan nog steeds zelf plaatsen)
   state.decimalQuotPos = res.decimalQuotPos;
-  state.userDecimalPos = null;                // nog niet zichtbaar
+  state.userDecimalPos = null;                 // nog niet zichtbaar
   state.selectedIndex  = state.decimalQuotPos; // standaard typ-positie = juiste plek
-  
-  // >>> Alleen komma tonen als deeltal of deler decimalen hebben
+
+  // Alleen komma tonen als (na schalen) deeltal of deler decimalen hebben
   const hasDecimalDividend = toInternal(deeltal).includes(".");
   const hasDecimalDivisor  = toInternal(deler).includes(".");
   state.showCommaPlaceholder = hasDecimalDividend || hasDecimalDivisor;
 
   state.decimalDividendPos = toInternal(deeltal).indexOf(".");
-  
-  document.getElementById("opgaveTekst").textContent =
-    `${toUI(deeltal)} : ${toUI(deler)} =`;
+
+  // === Opgave bovenaan: 
+  // - Bij ZEER MOEILIJK (5) tonen we de ORIGINELE opgave (dus met komma in de deler).
+  // - Bij andere niveaus tonen we gewoon de huidige (deeltal : deler).
+  const opgaveText = (diff === "5")
+    ? `${toUI(state.originalDividend)} : ${toUI(state.originalDivisor)} =`
+    : `${toUI(deeltal)} : ${toUI(deler)} =`;
+
+  document.getElementById("opgaveTekst").textContent = opgaveText;
 
   UI.tekenOefening(state);
 }
