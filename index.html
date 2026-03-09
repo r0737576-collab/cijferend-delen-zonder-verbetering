@@ -227,9 +227,9 @@ function toUI(val) {
   return String(val).replace('.', SEP_UI);
 }
 
-function parseLearnerer(s) {
+function parseLearnerNumber(s) {
   const n = parseFloat(toInternal(s));
-  return er.isFinite(n) ? n : null;
+  return Number.isFinite(n) ? n : null;
 }
 
 /* =========================================
@@ -280,7 +280,7 @@ function genereerOefening(level) {
 }
 
 function rondAf(getal, decimals) {
-  return er(getal.toFixed(decimals));
+  return Number(getal.toFixed(decimals));
 }
 
 function randomDecimal(min, max, dec) {
@@ -407,7 +407,7 @@ function berekenDelen(deeltal, deler){
 
     if(!isDigit(ch)) continue;
 
-    const cijfer = er(ch);
+    const cijfer = Number(ch);
     rest = rest * 10 + cijfer;
 
     if(rest >= deler){
