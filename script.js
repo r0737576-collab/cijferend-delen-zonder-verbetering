@@ -222,43 +222,47 @@ function vulRooster(state){
   if(!stappen.length) return [[{waarde:""}]];
 
   const kolommen = Math.max(
-    ...stappen.map((s,i)=>s.startKolom + s.breedte + (i<stappen.length-1 ? 1:0)),1
+    ...stappen.map((s,i)=> s.startKolom + s.breedte + (i < stappen.length-1 ? 1 : 0)),
+    1
   );
 
   const rijen = stappen.length * 2;
   const rooster = maakLeegRooster(rijen, kolommen);
 
   stappen.forEach((stap,index)=>{
-    const p = index*2;
-    const a = p+1;
+    const p = index*2;     // product-rij index
+    const a = p+1;         // aftrek-rij index
 
     const prod = String(stap.product).padStart(stap.breedte,"0");
     const aft  = String(stap.rest).padStart(stap.breedte,"0");
 
-    for(let i=0;i<stap.breedte;i++)
-      rooster[p][stap.startKolom+i]={waarde:prod[i],type:"product"};
+    for(let i=0; i<stap.breedte; i++){
+      rooster[p][stap.startKolom+i] = { waarde: prod[i], type: "product" };
+    }
 
-    for(let i=0;i<stap.breedte;i++)
-      rooster[a][stap.startKolom+i]={waarde:aft[i],type:"aftrek"};
+    for(let i=0; i<stap.breedte; i++){
+      rooster[a][stap.startKolom+i] = { waarde: aft[i], type: "aftrek" };
+    }
 
     if(index < stappen.length-1){
       const col = stap.startKolom + stap.breedte;
       const gez = stap.laatsteCijfer || "";
-      rooster[a][col] = {waarde:gez,type:"gezakt"};
+      rooster[a][col] = { waarde: gez, type: "gezakt" };
     }
   });
 
   // groene lijn bij Gemiddeld
-  if(state.level==="3"){
-    const idx = state.stappen.findIndex(s=>s.decimalStap);
+  if(state.level === "3"){
+    const idx = state.stappen.findIndex(s => s.decimalStap);
     if(idx !== -1){
       const stap = state.stappen[idx];
       const col = stap.startKolom + stap.breedte;
       const aftrekRij = idx*2 + 1;
+
       for(let r = aftrekRij; r < rooster.length; r++){
         const bestaand = rooster[r][col] || { waarde:"", type:"" };
         const nieuwType = (bestaand.type ? (bestaand.type + " ") : "") + "vComma";
-         rooster[r][col] = { waarde: bestaand.waarde, type: nieuwType };
+        rooster[r][col] = { waarde: bestaand.waarde, type: nieuwType };
       }
     }
   }
