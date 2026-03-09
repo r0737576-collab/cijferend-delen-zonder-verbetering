@@ -259,7 +259,6 @@ function vulRooster(state){
         const bestaand = rooster[r][col] || { waarde:"", type:"" };
         const nieuwType = (bestaand.type ? (bestaand.type + " ") : "") + "vComma";
          rooster[r][col] = { waarde: bestaand.waarde, type: nieuwType };
-         }
       }
     }
   }
