@@ -348,16 +348,27 @@ function genereerMoeilijk() {
   return { dividend, divisor: deler };
 }
 
-/* 5. ZEER MOEILIJK — deler mag decimalen (max 2), 3–5 cijfers, tot 3 dec, komt uit */
+/* 5. ZEER MOEILIJK
+   → DELER: tussen 2 en 10 (max 2 decimalen)
+   → Deeltal 3–5 cijfers (vóór de komma), tot 3 decimalen
+   → komt altijd uit
+*/
 function genereerZeerMoeilijk() {
-  const deler = randomDecimal(0.2, 20, 2);
+  // Deler in [2, 10], tot 2 decimalen (bv. 2, 2.3, 9.75, 10.00)
+  const deler = randomDecimal(2, 10, 2);
+
+  // Quotiënt zoals voorheen (kan decimalen hebben)
   const quotient = randomDecimal(1, 500, 3);
+
+  // Dividend berekenen met afronding op 3 dec
   let dividend = rondAf(deler * quotient, 3);
 
+  // Integer-deel (vóór de komma) 3–5 cijfers
   const intLen = String(Math.floor(dividend)).length;
   if (intLen < 3 || intLen > 5) {
     return genereerZeerMoeilijk();
   }
+
   return { dividend, divisor: deler };
 }
 
