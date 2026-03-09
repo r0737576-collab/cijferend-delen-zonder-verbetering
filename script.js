@@ -110,34 +110,28 @@ function genereerMakkelijk() {
 function genereerGemiddeld() {
   const deler = random(2, 12);
 
-  // Kies 1 of 2 decimalen voor het DEELTAL (zoals in je praktijkvoorbeelden).
-  // We willen 3–4 cijfers vóór de komma, en NIET exact deelbaar op 'dec' decimalen.
-  const dec = random(1, 2);           // <-- 1 of 2 decimalen
+  // Kies 1 of 2 decimalen voor het DEELTAL.
+  const dec = random(1, 2);
   const pow = 10 ** dec;
 
   for (let tries = 0; tries < 1000; tries++) {
-    // Kies een integer aantal "centen"/"tienden" in het bereik dat leidt tot 3–4 integercijfers.
-    // Met dec=1 werken we in "tienden", met dec=2 in "honderdsten".
-    // Ondergrens/bovengrens zo gekozen dat floor(dividend) 3–4 cijfers heeft.
-    const minInt = 100;   // 100.x  -> 3 cijfers
-    const maxInt = 9999;  // 9999.x -> 4 cijfers
-    const intPart = random(minInt, maxInt);
-    const fracPart = random(0, pow - 1);       // 0..9 (dec=1) of 0..99 (dec=2)
-    const cents = intPart * pow + fracPart;    // "deeltal × 10^dec"
-    const dividend = cents / pow;
+    // 3–4 cijfers vóór de komma houden het niveau netjes
+    const intPart = random(100, 9999);          // 100..9999
+    const fracPart = random(0, pow - 1);        // 0..9 of 0..99
+    const scaled   = intPart * pow + fracPart;  // deeltal × 10^dec
+    const dividend = scaled / pow;
 
-    // Niet exact deelbaar op dit decimale niveau:
-    if ((cents % deler) !== 0) {
+    // Zorg dat er (op dec decimalen) een rest is:
+    if ((scaled % deler) !== 0) {
       return { dividend, divisor: deler };
     }
   }
 
-  // Fallback (zou praktisch nooit nodig mogen zijn)
+  // Fallback (zou zelden nodig zijn)
   const fallbackQuot = randomDecimal(1, 300, 2);
   const fallbackDiv  = random(2, 12);
   return { dividend: rondAf(fallbackDiv * fallbackQuot, 2), divisor: fallbackDiv };
 }
-
 function genereerMoeilijk() {
   const deler = random(2, 20);
   const quotient = randomDecimal(1, 500, 3);
@@ -497,22 +491,27 @@ function fillCorrectAnswers(){
     const rInt = state.dividend - qInt * state.divisor;
     q.value = String(qInt);
     r.value = String(rInt);
+    return;
   }
-  else if (state.level === "3"){
-    // QUOTIENT: zelfde aantal decimalen als het DEELTAL
-    const decQ = decimalPlaces(state.dividend);
-    const { q: qDec, r: rDec } = divMetVasteDecimalen(state.dividend, state.divisor, decQ);
 
-    q.value = toUI(qDec.toFixed(decQ));  // b.v. 1 decimaal bij 1109,8
-    r.value = toUI(rDec.toFixed(decQ));  // rest eveneens op decQ decimals
+  if (state.level === "3"){
+    // Aantal decimalen van het DEELTAL bepaalt alles (0, 1 of 2).
+    const decQ = decimalPlaces(state.dividend);
+
+    // Trunceren tot decQ decimalen (geen afronding), rest op hetzelfde niveau.
+    const { q: qDec, r: rDec } = divMetVasteDecimalen(state.dividend, state.divisor, decQ);
+    q.value = toUI(qDec.toFixed(decQ));
+
+    // Rest ALTIJD tonen op decQ decimalen (ook als dat 0 is → een geheel getal)
+    r.value = toUI(rDec.toFixed(decQ));
+    return;
   }
-  else {
-    // Niveau 4–5: laat voorlopig zoals je wil (bijv. 3 decimalen)
-    const dec = (state.level === "4") ? 3 : 3;
-    const qDec = (state.dividend / state.divisor);
-    q.value = toUI(qDec.toFixed(dec));
-    r.value = "0";
-  }
+
+  // Niveau 4 en 5: laat zoals je prefereert (hier: 3 decimalen afronden en rest=0)
+  const dec = 3;
+  const qDec = (state.dividend / state.divisor);
+  q.value = toUI(qDec.toFixed(dec));
+  r.value = "0";
 }
 
 /* =========================================================
