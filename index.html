@@ -1,916 +1,215 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="UTF-8">
-<title>Staartdeling</title>
-<style>
-/* ====== Basis opmaak ====== */
+  <meta charset="UTF-8" />
+  <title>Staartdeling</title>
+  <style>
+    /* ====== Basis opmaak ====== */
+    .gridcell{
+      border:1px solid #ccc;
+      width:40px;
+      height:40px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      font-weight:bold;
+      box-sizing:border-box;
+      position: relative; /* nodig voor leesteken positionering */
+    }
 
-.gridcell{
-  border:1px solid #ccc;
-  width:40px;
-  height:40px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  font-weight:bold;
-  box-sizing:border-box;
-  position: relative; /* nodig voor leesteken positionering */
-}
+    table{ border-collapse:collapse; }
 
-table{ border-collapse:collapse; }
+    .lijnCel{
+      /* Niet meer gebruikt, mag blijven */
+      height:4px;
+      border:none;
+      border-top:4px solid #000;
+    }
 
-.lijnCel{
-  /* Niet meer gebruikt, mag blijven */
-  height:4px;
-  border:none;
-  border-top:4px solid #000;
-}
+    /* BOARD */
+    #controls{
+      display:flex;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
 
-/* BOARD */
-#controls{
-  display:flex;
-  gap:12px;
-  align-items:center;
-  flex-wrap:wrap;
-}
+    #app{
+      margin-left:40px;
+      margin-top:20px;
+    }
+    #app > *{
+      margin-bottom:20px;
+    }
 
-#app{
-  margin-left:40px;
-  margin-top:20px;
-}
-#app > *{
-  margin-bottom:20px;
-}
+    /* Knoppen */
+    #controls button{
+      padding:8px 16px;
+      font-size:14px;
+      font-weight:600;
+      border:1px solid #3a506b;
+      background:#f4f7fb;
+      color:#1c2541;
+      border-radius:6px;
+      cursor:pointer;
+      transition:all 0.15s ease;
+    }
+    #controls button:hover{
+      background:#3a506b;
+      color:white;
+    }
+    #controls button:active{
+      transform:scale(0.97);
+    }
+    #controls .primary{
+      background:#3a506b;
+      color:white;
+    }
+    #controls select{
+      padding:6px 10px;
+      font-size:14px;
+      border-radius:6px;
+      border:1px solid #3a506b;
+      background:#ffffff;
+    }
 
-/* Knoppen */
-#controls button{
-  padding:8px 16px;
-  font-size:14px;
-  font-weight:600;
-  border:1px solid #3a506b;
-  background:#f4f7fb;
-  color:#1c2541;
-  border-radius:6px;
-  cursor:pointer;
-  transition:all 0.15s ease;
-}
-#controls button:hover{
-  background:#3a506b;
-  color:white;
-}
-#controls button:active{
-  transform:scale(0.97);
-}
-#controls .primary{
-  background:#3a506b;
-  color:white;
-}
-#controls select{
-  padding:6px 10px;
-  font-size:14px;
-  border-radius:6px;
-  border:1px solid #3a506b;
-  background:#ffffff;
-}
+    #opgaveZone{
+      font-size:20px;
+      font-family:monospace;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
 
-#opgaveZone{
-  font-size:20px;
-  font-family:monospace;
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
+    .smallInput{
+      width:110px;             /* iets breder voor quotiënt met komma */
+      padding:6px 8px;
+      font-size:16px;
+      font-weight:600;
+      border:1px solid #3a506b;
+      background:#f4f7fb;
+      color:#1c2541;
+      border-radius:6px;
+      text-align:center;
+    }
+    .smallInput:focus{
+      outline:none;
+      border-color:#1c2541;
+    }
 
-.smallInput{
-  width:50px;
-  padding:6px 8px;
-  font-size:16px;
-  font-weight:600;
-  border:1px solid #3a506b;
-  background:#f4f7fb;
-  color:#1c2541;
-  border-radius:6px;
-  text-align:center;
-}
-.smallInput:focus{
-  outline:none;
-  border-color:#1c2541;
-}
+    .rLabel{ font-weight:bold; }
 
-.rLabel{ font-weight:bold; }
+    #gridWrapper{
+      display:flex;
+      align-items:flex-start;
+      gap:0px;
+    }
+    #leftSide{ display:flex; flex-direction:column; }
+    #rightSide{ display:flex; flex-direction:column; }
+    #verticalLine{
+      width:3px;
+      background:black;
+      align-self:stretch;
+    }
+    #bar{
+      border-top:3px solid black;
+      margin:0;
+    }
 
-#gridWrapper{
-  display:flex;
-  align-items:flex-start;
-  gap:0px;
-}
-#leftSide{ display:flex; flex-direction:column; }
-#rightSide{ display:flex; flex-direction:column; }
-#verticalLine{
-  width:3px;
-  background:black;
-  align-self:stretch;
-}
-#bar{
-  border-top:3px solid black;
-  margin:0;
-}
+    /* aftrek-rij (dikke bovengrens) */
+    .gridcell.aftrek{
+      border-top:4px solid #000;
+    }
 
-/* ==> Nieuw: lijn als border op de aftrek-rij */
-.gridcell.aftrek{
-  border-top:4px solid #000;
-}
+    /* decimale punt links van quotiëntcijfer (niet actief, ter referentie) */
+    .gridcell.decLeft::before{
+      content: ",";
+      position:absolute;
+      left: 8px;
+      top: -4px;
+      font-weight:bold;
+      font-size:18px;
+      color:#1c2541;
+    }
 
-/* --- decimale punt links van quotiëntcijfer --- */
-.gridcell.decLeft::before{
-  content: ",";
-  position:absolute;
-  left: 8px;
-  top: -4px;
-  font-weight:bold;
-  font-size:18px;
-  color:#1c2541;
-}
+    /* Cel voor de komma in het quotiënt */
+    .gridcell.comma {
+      background: #f4f7fb;
+      color: #1c2541;
+      cursor: pointer;
+      font-weight: 900;
+      border: 2px dashed #1c2541;  /* zichtbaar als "komma-plek" */
+    }
+    .gridcell.comma:hover {
+      background: #e6eef9;
+    }
+    .gridcell.comma.userPlaced {
+      background: #ffe8a1; /* geel als de leerling de komma hier zette */
+    }
+    .gridcell.comma.expected {
+      outline: 2px dashed #2a9d8f; /* markeer waar ze hoort bij zelfcontrole */
+    }
+    .gridcell.comma.wrong {
+      background: #ffc9c9; /* rood als fout bij nakijken */
+    }
 
-/* Cel voor de komma in het quotiënt */
-.gridcell.comma {
-  background: #f4f7fb;
-  color: #1c2541;
-  cursor: pointer;
-  font-weight: 900;
-  border: 2px dashed #1c2541;  /* zichtbaar als "komma-plek" */
-}
-.gridcell.comma:hover {
-  background: #e6eef9;
-}
-.gridcell.comma.userPlaced {
-  background: #ffe8a1; /* geel als de leerling de komma hier zette */
-}
-.gridcell.comma.expected {
-  outline: 2px dashed #2a9d8f; /* markeer waar ze hoort bij zelfcontrole */
-}
-.gridcell.comma.wrong {
-  background: #ffc9c9; /* rood als fout bij nakijken */
-}
-/* Visuele feedback voor de gekozen invoerpositie (optioneel) */
-.gridcell.sel {
-  outline: 2px solid #3a506b;
-}
-/* Verticale groene lijn op de rastercel (linkerrand) */
-.gridcell.vComma {
-  border-left: 4px solid #2a9d8f !important;
-}
-</style>
+    /* Visuele feedback voor de gekozen invoerpositie (optioneel) */
+    .gridcell.sel {
+      outline: 2px solid #3a506b;
+    }
 
-<!-- (verplaatst/afgerond) ==> HIER komt jouw HTML -->
+    /* Verticale groene lijn op de rastercel (linkerrand) */
+    .gridcell.vComma {
+      border-left: 4px solid #2a9d8f !important;
+    }
+  </style>
 </head>
 <body>
 
-<div id="app">
-  <h1>Staartdeling</h1>
+  <div id="app">
+    <h1>Staartdeling</h1>
 
-  <div id="controls">
-    <button id="btnNew" class="primary">Nieuwe oefening</button>
-    <button id="btnCheck">Nakijken</button>
-    <button id="btnSelf">Zelfcontrole</button>
+    <div id="controls">
+      <button id="btnNew" class="primary">Nieuwe oefening</button>
+      <button id="btnCheck">Nakijken</button>
+      <button id="btnSelf">Zelfcontrole</button>
 
-    <label>
-      Moeilijkheid:
-      <select id="difficulty">
-        <option value="1">Basis</option>
-        <option value="2">Makkelijk</option>
-        <option value="3">Gemiddeld</option>
-        <option value="4">Moeilijk</option>
-        <option value="5">Zeer moeilijk</option>
-      </select>
-    </label>
-  </div>
-
-  <div id="opgaveZone">
-    <span id="opgaveTekst"></span>
-    <input id="inputQuotient" type="text" class="smallInput" inputmode="decimal" placeholder="quotiënt">
-    <span class="rLabel">r</span>
-    <input id="inputRest" type="text" class="smallInput" inputmode="numeric" placeholder="rest">
-  </div>
-
-  <div id="gridWrapper">
-    <div id="leftSide">
-      <div id="grid"></div>
-      <div id="workArea"></div>
+      <label>
+        Moeilijkheid:
+        <select id="difficulty">
+          <option value="1">Basis</option>
+          <option value="2">Makkelijk</option>
+          <option value="3">Gemiddeld</option>
+          <option value="4">Moeilijk</option>
+          <option value="5">Zeer moeilijk</option>
+        </select>
+      </label>
     </div>
 
-    <div id="verticalLine"></div>
+    <div id="opgaveZone">
+      <span id="opgaveTekst"></span>
+      <input id="inputQuotient" type="text" class="smallInput" inputmode="decimal" placeholder="quotiënt">
+      <span class="rLabel">r</span>
+      <input id="inputRest" type="text" class="smallInput" inputmode="numeric" placeholder="rest">
+    </div>
 
-    <div id="rightSide">
-      <div id="divGrid"></div>
-      <div id="bar"></div>
-      <div id="quotientRow"></div>
+    <div id="gridWrapper">
+      <div id="leftSide">
+        <div id="grid"></div>
+        <div id="workArea"></div>
+      </div>
+
+      <div id="verticalLine"></div>
+
+      <div id="rightSide">
+        <div id="divGrid"></div>
+        <div id="bar"></div>
+        <div id="quotientRow"></div>
+      </div>
     </div>
   </div>
-</div>
 
-<script>
-"use strict";
-console.log("SCRIPT START");
-
-/* === Locale helpers === */
-const SEP_UI = ','; // UI toont komma
-
-function toInternal(val) {
-  // alles intern met punt
-  return String(val).replace(',', '.');
-}
-
-function toUI(val) {
-  // alles voor de leerling met komma
-  return String(val).replace('.', SEP_UI);
-}
-
-function parseLearnerNumber(s) {
-  const n = parseFloat(toInternal(s));
-  return Number.isFinite(n) ? n : null;
-}
-
-/* =========================================
-   CONFIG
-========================================= */
-const CONFIG = {
-  maxDecimalen: 3,
-  maxDivisor: 20,
-  maxQuotient: 50
-};
-
-/* =========================================
-   STATE
-========================================= */
-// In je STATE:
-const state = {
-  dividend: 0,
-  divisor: 0,
-  stappen: [],
-  level: "1", // "1"=Basis, "2"=Makkelijk, "3"=Gemiddeld, "4"=Moeilijk, "5"=Zeer moeilijk
-  instellingen: {
-    decimalen: false,
-    controle: false
-  },
-  showCommaPlaceholder: false, // <-- HIER juist, op root-niveau
-  decimalReminderShown: false, // is de groene lijn al getoond?
-  selectedIndex: null,         // positie waar de leerling wil typen (0..#cijfers)
-  decimalQuotPos: null,        // verwachte komma-positie
-  userDecimalPos: null,        // werkelijk geplaatste komma-positie
-  decimalDividendPos: null,    // index van '.' in deeltal-string (intern)
-  originalDividend: null,      // NIEUW: originelen enkel voor weergave in de opgave bovenaan
-  originalDivisor: null        // NIEUW: originelen enkel voor weergave in de opgave bovenaan
-
-};
-
-/* =========================================
-   WISKUNDE: Generatoren
-========================================= */
-function genereerOefening(level) {
-  switch(level) {
-    case "1":  return genereerBasis();
-    case "2":  return genereerMakkelijk();
-    case "3":  return genereerGemiddeld();
-    case "4":  return genereerMoeilijk();
-    case "5":  return genereerZeerMoeilijk();
-    default:   return genereerBasis();
-  }
-}
-
-function rondAf(getal, decimals) {
-  return Number(getal.toFixed(decimals));
-}
-
-function randomDecimal(min, max, dec) {
-  const factor = 10 ** dec;
-  return Math.round((Math.random() * (max - min) + min) * factor) / factor;
-}
-
-// Hoeveel decimalen heeft een (string) getal?
-function decimalPlaces(val){
-  const s = toInternal(val);
-  const i = s.indexOf('.');
-  return i === -1 ? 0 : (s.length - i - 1);
-}
-
-// Vermenigvuldig met 10^k en rond af op 'keepDecimals' decimalen
-function scaleer(val, k, keepDecimals){
-  const n = parseFloat(toInternal(val));
-  const factor = 10 ** k;
-  const scaled = n * factor;
-  return rondAf(scaled, keepDecimals);
-}
-  
-/* 1. BASIS — komt uit, 2–3 cijfers, deler ≤ 9 */
-function genereerBasis() {
-  const deler = random(2, 9);
-  const quotient = random(2, 99);
-  const dividend = deler * quotient;
-
-  if (dividend < 10 || dividend > 999) {
-    return genereerBasis();
-  }
-  return { dividend, divisor: deler };
-}
-
-/* 2. MAKKELIJK — mag rest hebben, 2–3 cijfers, deler ≤ 9 */
-function genereerMakkelijk() {
-  const deler = random(2, 9);
-  const dividend = random(10, 999);
-  return { dividend, divisor: deler };
-}
-
-/* 3. GEMIDDELD — tot 2 decimalen, 3–4 cijfers, deler ≤ 12, komt uit */
-function genereerGemiddeld() {
-  const deler = random(2, 12);
-  while (true) {
-    const quotient = randomDecimal(1, 300, 2);
-    let dividend = rondAf(deler * quotient, 2);
-    const intLen = String(Math.floor(dividend)).length;
-    if (intLen >= 3 && intLen <= 4) {
-      return { dividend, divisor: deler };
-    }
-  }
-}
-
-/* 4. MOEILIJK — tot 3 decimalen, 4–5 cijfers, deler ≤ 20, komt uit */
-function genereerMoeilijk() {
-  const deler = random(2, 20);
-  const quotient = randomDecimal(1, 500, 3);
-  let dividend = rondAf(deler * quotient, 3);
-
-  const intLen = String(Math.floor(dividend)).length;
-  if (intLen < 4 || intLen > 5) {
-    return genereerMoeilijk();
-  }
-  return { dividend, divisor: deler };
-}
-
-/* 5. ZEER MOEILIJK
-   → DELER: tussen 2 en 10 (max 2 decimalen)
-   → Deeltal 3–5 cijfers (vóór de komma), tot 3 decimalen
-   → komt altijd uit
-*/
-function genereerZeerMoeilijk() {
-  // Deler in [2, 10], tot 2 decimalen (bv. 2, 2.3, 9.75, 10.00)
-  const deler = randomDecimal(2, 10, 2);
-
-  // Quotiënt zoals voorheen (kan decimalen hebben)
-  const quotient = randomDecimal(1, 500, 3);
-
-  // Dividend berekenen met afronding op 3 dec
-  let dividend = rondAf(deler * quotient, 3);
-
-  // Integer-deel (vóór de komma) 3–5 cijfers
-  const intLen = String(Math.floor(dividend)).length;
-  if (intLen < 3 || intLen > 5) {
-    return genereerZeerMoeilijk();
-  }
-
-  return { dividend, divisor: deler };
-}
-
-/* =========================================
-   WISKUNDE: staartdeling stappen
-========================================= */
-function berekenDelen(deeltal, deler){
-  const chars = toInternal(deeltal).split('');
-  const stappen = [];
-  const decimalDividendPos = chars.indexOf(".");
-
-  let rest = 0;
-  let gestart = false;
-  let digitCol = 0;          // echte kolomteller (ENKEL cijfers tellen!)
-  let decimalQuotPos = null; // waar hoort de komma in quotient
-
-  function isDigit(ch){
-    return ch >= '0' && ch <= '9';
-  }
-
-  function nextDigitChar(fromIdx){
-    for(let j = fromIdx; j < chars.length; j++){
-      if(isDigit(chars[j])) return chars[j];
-    }
-    return "";
-  }
-
-  for(let i = 0; i < chars.length; i++){
-    const ch = chars[i];
-
-    // punt/komma bepaalt enkel quotiënt-positie
-    if(ch === '.'){
-      if(decimalQuotPos === null) decimalQuotPos = stappen.length;
-      continue;
-    }
-
-    if(!isDigit(ch)) continue;
-
-    const cijfer = Number(ch);
-    rest = rest * 10 + cijfer;
-
-    if(rest >= deler){
-      gestart = true;
-
-      const q = Math.floor(rest / deler);
-      const product = q * deler;
-      const nieuweRest = rest - product;
-
-      const huidigGetal = rest;
-      const breedte = String(huidigGetal).length;
-
-      const startKolom = digitCol - breedte + 1;
-
-      const gezaktVolgende = nextDigitChar(i + 1);
-
-      stappen.push({
-        huidig: huidigGetal,
-        product: product,
-        rest: nieuweRest,
-        q: q,
-        startKolom: startKolom,
-        breedte: breedte,
-        laatsteCijfer: gezaktVolgende,
-        decimalStap: digitCol === decimalDividendPos - 1
-      });
-
-      rest = nieuweRest;
-    }
-    else if(gestart){
-      // quotiëntcijfer 0
-      const gezaktVolgende = nextDigitChar(i + 1);
-
-      stappen.push({
-        huidig: rest,
-        product: 0,
-        rest: rest,
-        q: 0,
-        startKolom: digitCol,
-        breedte: 1,
-        laatsteCijfer: gezaktVolgende
-      });
-    }
-
-    digitCol++;
-  }
-
-  if(decimalQuotPos === null){
-    decimalQuotPos = stappen.length;
-  }
-
-  return { stappen, decimalQuotPos };
-}
-
-/* =========================================
-   HULPFUNCTIES
-========================================= */
-function random(a,b){
-  return Math.floor(Math.random()*(b-a+1))+a;
-}
-
-function maakLeegRooster(aantalRijen, aantalKolommen){
-  return Array.from({length:aantalRijen}, () =>
-    Array.from({length:aantalKolommen}, () =>
-      ({waarde:"", type:""})
-    )
-  );
-}
-
-/* === rooster vullen voor de werkzone === */
-function vulRooster(state){
-  const stappen = state.stappen;
-  if(!stappen || stappen.length === 0){
-    return [[{waarde:""}]];
-  }
-
-  const kolommen = Math.max(
-    ...stappen.map((s, i) => s.startKolom + s.breedte + (i < stappen.length-1 ? 1 : 0)),
-    1
-  );
-
-  // 2 rijen per stap: product-rij en aftrek-rij
-  const rijen = stappen.length * 2;
-  const rooster = maakLeegRooster(rijen, kolommen);
-
-  stappen.forEach((stap, index) => {
-  const productRij = index * 2;
-  const aftrekRij  = productRij + 1;
-
-  const productStr = String(stap.product).padStart(stap.breedte,"0");
-  const aftrekStr  = String(stap.rest).padStart(stap.breedte,"0");
-
-  // product
-  for (let i = 0; i < stap.breedte; i++) {
-    rooster[productRij][stap.startKolom + i] =
-      { waarde: productStr[i], type: "product" };
-  }
-
-  // verschil (rest) — gewone aftrek (géén horizontale kleur meer)
-  for (let i = 0; i < stap.breedte; i++) {
-    rooster[aftrekRij][stap.startKolom + i] =
-      { waarde: aftrekStr[i], type: "aftrek" };
-  }
-
-  // --- EERST: gezakt cijfer zetten (indien niet de laatste stap)
-  let colNaBlok = null;
-  if (index < stappen.length - 1) {
-    const gezakt = stap.laatsteCijfer || "";
-    colNaBlok = stap.startKolom + stap.breedte;
-
-    const bestaand = (rooster[aftrekRij][colNaBlok] || { waarde: "", type: "" });
-    const nieuwType = (bestaand.type ? (bestaand.type + " ") : "") + "gezakt";
-
-    rooster[aftrekRij][colNaBlok] = {
-      waarde: gezakt,
-      type: nieuwType
-    };
-  }
-
-  
-// --- DAN: de verticale groene lijn ONDER de komma, DOORTREKKEN VANAF DE TWEEDE CEL
-// Alleen bij Gemiddeld (level "3") en alleen bij de stap vóór de komma
-if (state.level === "3" && stap.decimalStap) {
-  // De kolom direct rechts van het aftrek-blok = grens onder de komma
-  const col = (colNaBlok !== null)
-    ? colNaBlok
-    : (stap.startKolom + stap.breedte); // fallback
-
-  const rows = rooster.length;
-
-  // begin bij de aftrek-rij zelf
-  for (let r = aftrekRij; r < rows; r++) {
-    const bestaand = (rooster[r][col] || { waarde: "", type: "" });
-    const nieuwType = (bestaand.type ? (bestaand.type + " ") : "") + "vComma";
-    rooster[r][col] = {
-      waarde: bestaand.waarde,
-      type: nieuwType
-    };
-  }
-}
-});
-  return rooster;
-}
-
-/* =========================================
-   UI
-========================================= */
-const UI = {
-  init(){
-    this.cacheDOM();
-
-    document.getElementById("btnNew")
-      .addEventListener("click", startNieuweOefening);
-
-    // leerling typt ',' of '.' om de komma te plaatsen
-    document.addEventListener("keydown", (e) => {
-    if (e.key === "," || e.key === ".") {
-    // Alleen reageren wanneer er een komma hoort te zijn
-    if (!state.showCommaPlaceholder) return;
-
-    if (state.selectedIndex == null) {
-      state.selectedIndex = state.decimalQuotPos;
-    }
-    state.userDecimalPos = state.selectedIndex;
-    UI.tekenQuotient(state.stappen);
-    e.preventDefault();
-  }
-});
-  },
-
-  cacheDOM(){
-    this.dividendNode = document.getElementById("grid");
-    this.divisorNode  = document.getElementById("divGrid");
-    this.quotientNode = document.getElementById("quotientRow");
-    this.workAreaNode = document.getElementById("workArea");
-  },
-
-  tekenOefening(state){
-    this.tekenDividend(state.dividend);
-    this.tekenDivisor(state.divisor);
-    this.tekenQuotient(state.stappen);
-    this.tekenworkArea(state);
-  },
-
-  tekenDividend(getal){
-    if(!this.dividendNode) return;
-    this.dividendNode.innerHTML = "";
-
-    const s = toUI(getal); // b.v. "123,45"
-    const chars = s.split("");
-    const cijfers = chars.filter(c => c >= '0' && c <= '9'); // tel enkel cijfers
-
-    this.dividendNode.style.display = "grid";
-    this.dividendNode.style.gridTemplateColumns = `repeat(${cijfers.length},40px)`;
-
-    let laatsteCel = null;
-    chars.forEach(ch => {
-      if(ch === SEP_UI){ // komma tekenen aan de rechterkant van de vorige cel
-        if(laatsteCel){
-          const punt = document.createElement("span");
-          punt.textContent = SEP_UI;
-          punt.style.position = "absolute";
-          punt.style.right = "-6px";
-          punt.style.bottom = "-4px";
-          punt.style.fontWeight = "bold";
-          laatsteCel.appendChild(punt);
-        }
-        return;
-      }
-      const cel = document.createElement("div");
-      cel.className = "gridcell";
-      cel.textContent = ch;
-      this.dividendNode.appendChild(cel);
-      laatsteCel = cel;
-    });
-  },
-
-  tekenDivisor(getal){
-    if(!this.divisorNode) return;
-    this.divisorNode.innerHTML = "";
-
-    const s = toUI(getal);
-    const chars = s.split("");
-
-    const enkelCijfers = chars.filter(c => c >= '0' && c <= '9');
-
-    this.divisorNode.style.display = "grid";
-    this.divisorNode.style.gridTemplateColumns = `repeat(${enkelCijfers.length},40px)`;
-
-    let laatsteCel = null;
-    chars.forEach(ch => {
-      if(ch === SEP_UI){
-        if(laatsteCel){
-          const punt = document.createElement("span");
-          punt.textContent = SEP_UI;
-          punt.style.position = "absolute";
-          punt.style.right = "-6px";
-          punt.style.bottom = "-4px";
-          punt.style.fontWeight = "bold";
-          laatsteCel.appendChild(punt);
-        }
-        return;
-      }
-      const cel = document.createElement("div");
-      cel.className = "gridcell";
-      cel.textContent = ch;
-      this.divisorNode.appendChild(cel);
-      laatsteCel = cel;
-    });
-  },
-
-  tekenQuotient(stappen){
-  this.quotientNode.innerHTML = "";
-
-  const digitsCount = stappen.length;
-
-  // Alleen komma tonen wanneer het zinvol is (Gemiddeld/Moeilijk/Zeer moeilijk)
-  const shouldShowComma = state.showCommaPlaceholder === true;
-
-  // Bepaal de komma-positie:
-  // - als leerling al geplaatst -> userDecimalPos
-  // - anders de verwachte plek -> decimalQuotPos
-  // - maar alleen als shouldShowComma true is
-  const commaPos = shouldShowComma
-    ? (state.userDecimalPos != null ? state.userDecimalPos : state.decimalQuotPos)
-    : null;
-
-  // Kolommen: cijfers + (1 als we een komma tonen)
-  const totalCols = digitsCount + (shouldShowComma ? 1 : 0);
-
-  this.quotientNode.style.display = "grid";
-  this.quotientNode.style.gridTemplateColumns = `repeat(${totalCols},40px)`;
-
-  let digitPtr = 0;
-
-  for (let pos = 0; pos <= digitsCount; pos++) {
-
-    // 1) Komma-cel (alleen als we ze moeten tonen en dit de juiste plek is)
-    if (shouldShowComma && pos === commaPos) {
-      const celComma = document.createElement("div");
-      celComma.className = "gridcell comma";
-      celComma.textContent = ",";
-      if (state.userDecimalPos == null) {
-        celComma.classList.add("expected");   // placeholder-stijl
-      } else {
-        celComma.classList.add("userPlaced"); // door leerling gezet
-      }
-      this.quotientNode.appendChild(celComma);
-    }
-
-    // 2) Cijfercellen
-    if (digitPtr < digitsCount) {
-      const celDigit = document.createElement("div");
-      celDigit.className = "gridcell";
-
-      const digit = stappen[digitPtr]?.q ?? "";
-      celDigit.textContent = digit;
-
-      // Klik = invoerpositie voor de komma (vóór dit cijfer)
-      celDigit.addEventListener("click", () => {
-        state.selectedIndex = pos;
-        this.tekenQuotient(state.stappen);
-      });
-
-      // Visuele hint op gekozen positie
-      if (state.selectedIndex === pos) {
-        celDigit.classList.add("sel");
-      }
-
-      this.quotientNode.appendChild(celDigit);
-      digitPtr++;
-    }
-  }
-},
-
-  showDecimalReminder(col, startRow, totalRows){
-    // Lijn vanaf startRow naar beneden in kolom 'col'
-    for (let r = startRow; r < totalRows; r++) {
-      const idx = r * this._cols + col;   // index in the grid children
-      const cel = this.workAreaNode.children[idx];
-      if (!cel) continue;
-      cel.classList.add("vComma");
-  }
-},
-  
-  tekenworkArea(state){
-    if(!this.workAreaNode) return;
-    this.workAreaNode.innerHTML = "";
-
-    const rooster = vulRooster(state);
-    if(!rooster || rooster.length === 0) return;
-
-    const rows = rooster.length;
-    const cols = Math.max(...rooster.map(r => r.length));
-
-    this.workAreaNode.style.display = "grid";
-    this.workAreaNode.style.gridTemplateColumns = `repeat(${cols},40px)`;
-    this.workAreaNode.style.gridTemplateRows = `repeat(${rows},40px)`;
-
-    // Onthoud kolommen voor index-berekening
-    this._cols = cols;
-
-    // Alleen bij Gemiddeld: bereken aftrek-rij vóór de komma + kolom onder de komma
-    let decimalAftrekRow = null; // rijindex (0-based)
-    let decimalCol = null;       // kolomindex (0-based)
-    if (state.level === "3") {
-      const idxDecimalStap = state.stappen.findIndex(s => s.decimalStap);
-      if (idxDecimalStap !== -1) {
-        decimalAftrekRow = idxDecimalStap * 2 + 1; // product=2*k, aftrek=2*k+1
-        const stap = state.stappen[idxDecimalStap];
-        decimalCol = stap.startKolom + stap.breedte; // kolom rechts van blok = onder de komma
-  }
-}
-
-    for(let r=0;r<rows;r++){
-  for(let c=0;c<cols;c++){
-    const celData = (rooster[r] && rooster[r][c]) ? rooster[r][c] : {waarde:"", type:""};
-    const cel = document.createElement("div");
-    cel.className = "gridcell";
-    if(celData.type){
-      for (const cls of String(celData.type).split(" ")) {
-        const t = cls.trim();
-        if (t) cel.classList.add(t);
-      }
-    }
-    cel.textContent = (celData.type === "lijn") ? "" : (celData.waarde || "");
-
-    // === NIEUW: Bij GEMIDDELD, op de aftrek-rij vóór de komma,
-    // maak de 'aftrek'-cellen invoerbaar en toon de lijn zodra er iets ingevoerd is
-    if (state.level === "3" &&
-        decimalAftrekRow !== null &&
-        r === decimalAftrekRow &&
-        cel.classList.contains("aftrek")) {
-
-      // Maak de cel eenvoudig invoerbaar (geen extra input-element nodig)
-      cel.contentEditable = "true";
-      cel.style.outline = "none";    // rustiger
-      cel.spellcheck = false;
-
-      // Laat enkel simpele tekens toe (optioneel – je kan dit weglaten)
-      cel.addEventListener("beforeinput", (e) => {
-        // sta cijfers toe en backspace/delete/navigatie
-        const allowed = ["insertText","deleteContentBackward","deleteContentForward"];
-        if (!allowed.includes(e.inputType)) return;
-        if (e.inputType === "insertText" && !/^[0-9]$/.test(e.data)) {
-          e.preventDefault();
-        }
-      });
-
-      // Zodra er IETS in de cel staat (ook fout), en we hebben de lijn nog niet getoond:
-      cel.addEventListener("input", () => {
-        if (!state.decimalReminderShown && cel.textContent.trim().length > 0) {
-          const startRow = r;              // vanaf deze aftrek-rij
-          const colForLine = decimalCol;   // kolom onder de komma
-          UI.showDecimalReminder(colForLine, startRow, rows);
-          state.decimalReminderShown = true; // toon maar één keer
-        }
-      });
-    }
-
-    this.workAreaNode.appendChild(cel);
-  }
-}
-  }
-  
-};
-
-function resetAnswerInputs(){
-  const q = document.getElementById("inputQuotient");
-  const r = document.getElementById("inputRest");
-
-  q.value = "";
-  r.value = "";
-},
-
-function fillCorrectAnswers(){
-  const q = document.getElementById("inputQuotient");
-  const r = document.getElementById("inputRest");
-
-  // correct quotiënt met komma i.p.v. punt
-  let juistQ = state.dividend / state.divisor;
-  juistQ = toUI(juistQ); // vervangt punt door komma
-
-  // rest exact zoals uit de deling komt (geschaald indien nodig)
-  let juistR = state.dividend % state.divisor;
-
-  q.value = juistQ;
-  r.value = juistR;
-}
-  
-/* =========================================
-   START
-========================================= */
-function startNieuweOefening(){
-  const diff = document.getElementById("difficulty").value;
-  state.level = diff; // niveau onthouden
-  state.decimalReminderShown = false; // reminder nog niet getoond
-
-  const oef = genereerOefening(diff);
-
-  // LET OP: 'let' gebruiken zodat we kunnen aanpassen bij zeer moeilijk (5)
-  let deeltal = oef.dividend;
-  let deler   = oef.divisor;
-
-  // Onthoud de originelen voor de opgave-weergave (bovenaan)
-  state.originalDividend = deeltal;
-  state.originalDivisor  = deler;
-
-  // === Alleen voor ZEER MOEILIJK (5): deler met komma -> schaal beide zodat deler geheel wordt
-  if (diff === "5") {
-    const k = decimalPlaces(deler); // aantal decimalen in de deler
-    if (k > 0) {
-      // schaal beide met 10^k
-      // deler wordt geheel getal; deeltal kan nog decimalen overhouden als het er meer had dan k
-      // 'keepDecimals' is optioneel; we houden het simpel en ronden op max 3 dec na het schalen
-      const keepDecimals = Math.max(0, CONFIG.maxDecimalen - k);
-
-      const scaledDividend = scaleNumber(deeltal, k, keepDecimals);
-      const scaledDivisor  = Math.round(parseFloat(toInternal(deler)) * (10 ** k));
-
-      deeltal = scaledDividend;
-      deler   = scaledDivisor;
-    }
-  }
-
-  // Vanaf hier rekent/tekent de UI met (eventueel) geschaalde waarden
-  state.dividend = deeltal;
-  state.divisor  = deler;
-
-  const res = berekenDelen(deeltal, deler);
-  state.stappen = res.stappen;
-
-  // quotiënt-positie (leerling kan nog steeds zelf plaatsen)
-  state.decimalQuotPos = res.decimalQuotPos;
-  state.userDecimalPos = null;                 // nog niet zichtbaar
-  state.selectedIndex  = state.decimalQuotPos; // standaard typ-positie = juiste plek
-
-  // Alleen komma tonen als (na schalen) deeltal of deler decimalen hebben
-  const hasDecimalDividend = toInternal(deeltal).includes(".");
-  const hasDecimalDivisor  = toInternal(deler).includes(".");
-  state.showCommaPlaceholder = hasDecimalDividend || hasDecimalDivisor;
-
-  state.decimalDividendPos = toInternal(deeltal).indexOf(".");
-
-  // === Opgave bovenaan: 
-  // - Bij ZEER MOEILIJK (5) tonen we de ORIGINELE opgave (dus met komma in de deler).
-  // - Bij andere niveaus tonen we gewoon de huidige (deeltal : deler).
-  const opgaveText = (diff === "5")
-    ? `${toUI(state.originalDividend)} : ${toUI(state.originalDivisor)} =`
-    : `${toUI(deeltal)} : ${toUI(deler)} =`;
-
-  document.getElementById("opgaveTekst").textContent = opgaveText;
-
-  UI.tekenOefening(state);
-}
-
-/* =========================================
-   BOOTSTRAP
-========================================= */
-window.addEventListener("DOMContentLoaded", () => {
-  UI.init();
-  startNieuweOefening();
-});
-</script>
+  <!-- Extern script -->
+  script.js</script>
 </body>
 </html>
