@@ -452,7 +452,83 @@ function resetAnswerInputs(){
   const r=document.getElementById("inputRest");
   if(q) q.value="";
   if(r) r.value="";
-}
+},
 
 function fillCorrectAnswers(){
   const q=document.getElementById("inputQuotient");
+  const r=document.getElementById("inputRest");
+  if(!q||!r) return;
+
+  if(state.level==="1" || state.level==="2"){
+    const qInt=Math.floor(state.dividend/state.divisor);
+    const rInt=state.dividend - qInt*state.divisor;
+    q.value=String(qInt);
+    r.value=String(rInt);
+  }
+  else{
+    const dec = (state.level==="3") ? 2 : 3;
+    const qDec=(state.dividend/state.divisor).toFixed(dec);
+    q.value=toUI(qDec);
+    r.value="0";
+  }
+}
+
+/* =========================================================
+   START NIEUWE OEFENING
+========================================================= */
+function startNieuweOefening(){
+  const diff=document.getElementById("difficulty").value;
+  state.level=diff;
+  state.decimalReminderShown=false;
+
+  const oef = genereerOefening(diff);
+
+  let deeltal=oef.dividend;
+  let deler=oef.divisor;
+
+  state.originalDividend=deeltal;
+  state.originalDivisor=deler;
+
+  if(diff==="5"){
+    const k=decimalPlaces(deler);
+    if(k>0){
+      const keep=Math.max(0,CONFIG.maxDecimalen-k);
+      deeltal = scaleNumber(deeltal,k,keep);
+      deler   = Math.round(parseFloat(toInternal(deler))*(10**k));
+    }
+  }
+
+  state.dividend=deeltal;
+  state.divisor=deler;
+
+  const res=berekenDelen(deeltal,deler);
+  state.stappen=res.stappen;
+  state.decimalQuotPos=res.decimalQuotPos;
+  state.userDecimalPos=null;
+  state.selectedIndex=res.decimalQuotPos;
+
+  const showDiv = toInternal(deeltal).includes(".");
+  const showDer = toInternal(deler).includes(".");
+  state.showCommaPlaceholder = showDiv || showDer;
+
+  state.decimalDividendPos=toInternal(deeltal).indexOf(".");
+
+  const opgaveTekst = (diff==="5")
+    ? `${toUI(state.originalDividend)} : ${toUI(state.originalDivisor)} =`
+    : `${toUI(deeltal)} : ${toUI(deler)} =`;
+
+  document.getElementById("opgaveTekst").textContent = opgaveTekst;
+
+  resetAnswerInputs();
+  fillCorrectAnswers();
+
+  UI.tekenOefening();
+}
+
+/* =========================================================
+   BOOTSTRAP
+========================================================= */
+window.addEventListener("DOMContentLoaded",()=>{
+  UI.init();
+  startNieuweOefening();
+});
