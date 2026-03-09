@@ -560,7 +560,7 @@ const UI = {
     this.cacheDOM();
 
     document.getElementById("btnNew")
-      .addEventListener("click", startNieuweOefening);
+      .addEventListener("click", ieuweOefening);
 
     // leerling typt ',' of '.' om de komma te plaatsen
     document.addEventListener("keydown", (e) => {
@@ -811,7 +811,31 @@ const UI = {
     this.workAreaNode.appendChild(cel);
   }
 }
-  }
+  },
+
+function resetAnswerInputs(){
+  const q = document.getElementById("inputQuotient");
+  const r = document.getElementById("inputRest");
+
+  q.value = "";
+  r.value = "";
+},
+
+function fillCorrectAnswers(){
+  const q = document.getElementById("inputQuotient");
+  const r = document.getElementById("inputRest");
+
+  // correct quotiënt met komma i.p.v. punt
+  let juistQ = state.dividend / state.divisor;
+  juistQ = toUI(juistQ); // vervangt punt door komma
+
+  // rest exact zoals uit de deling komt (geschaald indien nodig)
+  let juistR = state.dividend % state.divisor;
+
+  q.value = juistQ;
+  r.value = juistR;
+}
+  
 };
 
 /* =========================================
