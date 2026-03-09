@@ -141,7 +141,7 @@ function berekenDelen(deeltal, deler){
   let digitCol = 0;
   let decimalQuotPos = null;
 
-  function isDigit(ch){ return ch >= '0' && ch <= '9'; }
+  function isDigit(ch){ return ch >= '0'  ch <= '9'; }
 
   function nextDigitChar(i){
     for (let j=i; j<chars.length; j++) if(isDigit(chars[j])) return chars[j];
@@ -255,9 +255,11 @@ function vulRooster(state){
       const stap = state.stappen[idx];
       const col = stap.startKolom + stap.breedte;
       const aftrekRij = idx*2 + 1;
-      for(let r=aftrekRij; r<rooster.length; r++){
-        const cel = rooster[r][col] || {waarde:"",type:""};
-        cel.type += " vComma";
+      for(let r = aftrekRij; r < rooster.length; r++){
+        const bestaand = rooster[r][col] || { waarde:"", type:"" };
+        const nieuwType = (bestaand.type ? (bestaand.type + " ") : "") + "vComma";
+        rooster[r][col] = { waarde: bestaand.waarde, type:Type };
+         }
       }
     }
   }
@@ -452,7 +454,7 @@ function resetAnswerInputs(){
   const r=document.getElementById("inputRest");
   if(q) q.value="";
   if(r) r.value="";
-},
+}
 
 function fillCorrectAnswers(){
   const q=document.getElementById("inputQuotient");
