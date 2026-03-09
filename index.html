@@ -560,7 +560,7 @@ const UI = {
     this.cacheDOM();
 
     document.getElementById("btnNew")
-      .addEventListener("click", ieuweOefening);
+      .addEventListener("click", startNieuweOefening);
 
     // leerling typt ',' of '.' om de komma te plaatsen
     document.addEventListener("keydown", (e) => {
@@ -811,7 +811,9 @@ const UI = {
     this.workAreaNode.appendChild(cel);
   }
 }
-  },
+  }
+  
+};
 
 function resetAnswerInputs(){
   const q = document.getElementById("inputQuotient");
@@ -836,8 +838,6 @@ function fillCorrectAnswers(){
   r.value = juistR;
 }
   
-};
-
 /* =========================================
    START
 ========================================= */
