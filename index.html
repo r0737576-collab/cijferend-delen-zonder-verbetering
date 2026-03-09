@@ -189,9 +189,9 @@ table{ border-collapse:collapse; }
 
   <div id="opgaveZone">
     <span id="opgaveTekst"></span>
-    <input id="inputQuotient" type="number" class="smallInput">
+    <input id="inputQuotient" type="text" class="smallInput" inputmode="decimal" placeholder="quotiënt">
     <span class="rLabel">r</span>
-    <input id="inputRest" type="number" class="smallInput">
+    <input id="inputRest" type="text" class="smallInput" inputmode="numeric" placeholder="rest">
   </div>
 
   <div id="gridWrapper">
@@ -227,9 +227,9 @@ function toUI(val) {
   return String(val).replace('.', SEP_UI);
 }
 
-function parseLearnerNumber(s) {
+function parseLearnerer(s) {
   const n = parseFloat(toInternal(s));
-  return Number.isFinite(n) ? n : null;
+  return er.isFinite(n) ? n : null;
 }
 
 /* =========================================
@@ -280,7 +280,7 @@ function genereerOefening(level) {
 }
 
 function rondAf(getal, decimals) {
-  return Number(getal.toFixed(decimals));
+  return er(getal.toFixed(decimals));
 }
 
 function randomDecimal(min, max, dec) {
@@ -296,7 +296,7 @@ function decimalPlaces(val){
 }
 
 // Vermenigvuldig met 10^k en rond af op 'keepDecimals' decimalen
-function scaleNumber(val, k, keepDecimals){
+function scaleer(val, k, keepDecimals){
   const n = parseFloat(toInternal(val));
   const factor = 10 ** k;
   const scaled = n * factor;
@@ -407,7 +407,7 @@ function berekenDelen(deeltal, deler){
 
     if(!isDigit(ch)) continue;
 
-    const cijfer = Number(ch);
+    const cijfer = er(ch);
     rest = rest * 10 + cijfer;
 
     if(rest >= deler){
