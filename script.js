@@ -141,7 +141,7 @@ function berekenDelen(deeltal, deler){
   let digitCol = 0;
   let decimalQuotPos = null;
 
-  function isDigit(ch){ return ch >= '0'  ch <= '9'; }
+  function isDigit(ch){ return ch >= '0' && ch <= '9'; }
 
   function nextDigitChar(i){
     for (let j=i; j<chars.length; j++) if(isDigit(chars[j])) return chars[j];
@@ -258,7 +258,7 @@ function vulRooster(state){
       for(let r = aftrekRij; r < rooster.length; r++){
         const bestaand = rooster[r][col] || { waarde:"", type:"" };
         const nieuwType = (bestaand.type ? (bestaand.type + " ") : "") + "vComma";
-        rooster[r][col] = { waarde: bestaand.waarde, type:Type };
+         rooster[r][col] = { waarde: bestaand.waarde, type: nieuwType };
          }
       }
     }
