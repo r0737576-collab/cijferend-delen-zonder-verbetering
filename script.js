@@ -545,7 +545,7 @@ function fillCorrectAnswers(){
   const r = document.getElementById("inputRest");
   if(!q || !r) return;
 
-  if(state.level === "1" || state.level === "2"){
+  if (state.level === "1" || state.level === "2"){
     const qInt = Math.floor(state.dividend / state.divisor);
     const rInt = state.dividend - qInt * state.divisor;
     q.value = String(qInt);
@@ -554,7 +554,8 @@ function fillCorrectAnswers(){
   }
 
   if (state.level === "3"){
-    const decQ = decimalPlaces(state.dividend); // 0, 1 of 2
+    // Zelfde aantal decimalen als het DEELTAL (0, 1 of 2), trunceren
+    const decQ = decimalPlaces(state.dividend);
     const { q: qDec, r: rDec } = divMetVasteDecimalen(state.dividend, state.divisor, decQ);
     q.value = toUI(qDec.toFixed(decQ));
     r.value = toUI(rDec.toFixed(decQ));
@@ -562,25 +563,26 @@ function fillCorrectAnswers(){
   }
 
   if (state.level === "4"){
-    // Vaste precisie: 3 decimalen (trunceren), rest op 3 decimalen tonen
+    // Vaste precisie: 3 decimalen (trunc), rest op 3 decimalen
     const { q: qDec, r: rDec } = divMetVasteDecimalen(state.dividend, state.divisor, 3);
     q.value = toUI(qDec.toFixed(3));
     r.value = toUI(rDec.toFixed(3));
     return;
   }
 
-  else if (state.level === "5"){
-  const dec = 3; // vaste precisie in de opgave voor Zeer Moeilijk
-  const dividendOrig = state.originalDividend;
-  const divisorOrig  = state.originalDivisor;
+  if (state.level === "5"){
+    // Opgave op originele schaal (komma-deler), vaste 3 decimalen (trunc)
+    const dec = 3;
+    const dividendOrig = state.originalDividend;
+    const divisorOrig  = state.originalDivisor;
 
-  const { q: qTrunc, r } = divMetVasteDecimalen(dividendOrig, divisorOrig, dec);
-
-  // Opgave: quotient en rest in originele schaal, met komma in UI
-  q.value = toUI(qTrunc.toFixed(dec));
-  r.value = toUI(r.toFixed(dec));
-  return;
+    const { q: qTrunc, r: rDec } = divMetVasteDecimalen(dividendOrig, divisorOrig, dec);
+    q.value = toUI(qTrunc.toFixed(dec));
+    r.value = toUI(rDec.toFixed(dec));
+    return;
+  }
 }
+
 /* =========================================================
    START NIEUWE OEFENING
 ========================================================= */
