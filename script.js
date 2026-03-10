@@ -229,6 +229,23 @@ function berekenDelen(deeltal, deler){
     return "";
   }
 
+  // === Niveau 5: we willen ALTIJD 3 decimalen uitrekenen ===
+  // Als het weggeschaalde dividend minder dan 3 decimalen heeft,
+  // voegen we virtuele '0'-cijfers toe achteraan, zodat de staartdeling
+  // tot 3 decimalen kan doorrekenen.
+   if (state.level === "5") {
+    const intern = toInternal(deeltal);
+    const dpos = intern.indexOf(".");
+    let decs = dpos === -1 ? 0 : intern.length - dpos - 1;
+
+    const needed = 3 - decs;
+    if (needed > 0) {
+      // Voeg virtuele nullen toe aan chars
+      // (bv. 5558.06 → 5558.060 → 5558.0600)
+      const extra = "0".repeat(needed);
+      chars.push(...extra.split(""));
+    }
+  }
   for(let i=0; i<chars.length; i++){
     const ch = chars[i];
 
