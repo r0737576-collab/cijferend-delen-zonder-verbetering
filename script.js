@@ -222,6 +222,18 @@ function berekenDelen(deeltal, deler){
   let digitCol = 0;
   let decimalQuotPos = null;
 
+  // === NIVEAU 5: forceer minstens 3 decimalen in het werkveld ===
+  if (state.level === "5") {
+    const intern = toInternal(deeltal);
+    const dpos = intern.indexOf(".");
+    let decs = (dpos === -1) ? 0 : (intern.length - dpos - 1);
+    const needed = 3 - decs;
+    if (needed > 0) {
+      // voeg extra '0'-cijfers toe achter het decimaal deel
+      for (let k = 0; k < needed; k++) chars.push("0");
+    }
+  }
+
   function isDigit(ch){ return ch >= '0' && ch <= '9'; }
 
   function nextDigitChar(i){
@@ -229,21 +241,6 @@ function berekenDelen(deeltal, deler){
     return "";
   }
 
-  // === NIVEAU 5: forceer minstens 3 decimalen in het werkveld ===
-  if (state.level === "5") {
-    const intern = toInternal(deeltal);
-    const dpos = intern.indexOf(".");
-    let decs = dpos === -1 ? 0 : intern.length - dpos - 1;
-
-    const needed = 3 - decs;
-    if (needed > 0) {
-      // Voeg virtuele nullen toe aan het dividend (voor werkveld)
-      // Voorbeeld: 5558.06 → 5558.060 → 5558.0600
-      for (let k = 0; k < needed; k++) {
-        chars.push("0");
-      }
-    }
-  }
   for(let i=0; i<chars.length; i++){
     const ch = chars[i];
 
@@ -405,37 +402,53 @@ const UI = {
   },
 
   tekenDividend(getal){
-    const node = this.dividendNode;
-    node.innerHTML="";
-    const s = toUI(getal);
-    const chars = s.split("");
-    const cijfers = chars.filter(c=>c>='0' && c<='9');
+  const node = this.dividendNode;
+  node.innerHTML="";
 
-    node.style.display="grid";
-    node.style.gridTemplateColumns=`repeat(${cijfers.length},40px)`;
-
-    let last=null;
-    chars.forEach(ch=>{
-      if(ch===SEP_UI){
-        if(last){
-          const punt=document.createElement("span");
-          punt.textContent=SEP_UI;
-          punt.style.position="absolute";
-          punt.style.right="-6px";
-          punt.style.bottom="-4px";
-          punt.style.fontWeight="bold";
-          last.appendChild(punt);
-        }
-        return;
+  // --- NIEUW: bij niveau 5 altijd minimaal 3 decimalen tonen ---
+  let internalStr = toInternal(getal);
+  if (state.level === "5") {
+    const dpos = internalStr.indexOf(".");
+    let decs = (dpos === -1) ? 0 : (internalStr.length - dpos - 1);
+    if (decs < 3) {
+      if (dpos === -1) {
+        internalStr = internalStr + ".000".slice(0, 4); // ".000"
+      } else {
+        internalStr = internalStr + "000".slice(0, 3 - decs);
       }
-      const cel=document.createElement("div");
-      cel.className="gridcell";
-      cel.textContent=ch;
-      node.appendChild(cel);
-      last=cel;
-    });
-  },
+    }
+  }
+  const s = toUI(internalStr);
+  // -------------------------------------------------------------
 
+  const chars = s.split("");
+  const cijfers = chars.filter(c=>c>='0' && c<='9');
+
+  node.style.display="grid";
+  node.style.gridTemplateColumns=`repeat(${cijfers.length},40px)`;
+
+  let last=null;
+  chars.forEach(ch=>{
+    if(ch===SEP_UI){
+      if(last){
+        const punt=document.createElement("span");
+        punt.textContent=SEP_UI;
+        punt.style.position="absolute";
+        punt.style.right="-6px";
+        punt.style.bottom="-4px";
+        punt.style.fontWeight="bold";
+        last.appendChild(punt);
+      }
+      return;
+    }
+    const cel=document.createElement("div");
+    cel.className="gridcell";
+    cel.textContent=ch;
+    node.appendChild(cel);
+    last=cel;
+  });
+},
+   
   tekenDivisor(getal){
     const node=this.divisorNode;
     node.innerHTML="";
@@ -585,22 +598,36 @@ function fillCorrectAnswers(){
     return;
   }
 
-  if (state.level === "5"){
+  else if (state.level === "5"){
   const dec = 3;
-  const dividendOrig = state.originalDividend;
-  const divisorOrig  = state.originalDivisor;
-
-  // Truncatie van quotiënt
   const pow = 10 ** dec;
-  const qRaw = dividendOrig / divisorOrig;
-  const qTrunc = Math.floor(qRaw * pow) / pow;
 
-  // TRUNC rest (NIET afronden)
-  const rawRest = dividendOrig - qTrunc * divisorOrig;
-  const rTrunc = Math.floor(rawRest * pow) / pow;
+  // Oorspronkelijke getallen (met komma-deler)
+  const D = state.originalDividend;
+  const d = state.originalDivisor;
+
+  // Trunc quotiënt op 3 decimalen
+  const qRaw   = D / d;
+  const qInt   = Math.floor(qRaw * pow);   // integer met 3-decimale precisie
+  const qTrunc = qInt / pow;
+
+  // Rest op ORIGINELE schaal, TRUNC (géén afronding)
+  // Gebruik de "work"-deler schaalfactor k om nauwkeuriger te blijven
+  const k     = decimalPlaces(d);          // hoeveel we opschalen in werkveld
+  const Wd    = state.divisor;             // werk-deler (geheel)
+  const WD    = state.dividend;            // werk-deeltal (mogelijk met extra 0)
+  // Reken rest eerst in werk-schaal: r_work = WD - qTrunc * Wd
+  let r_work  = WD - qTrunc * Wd;
+  if (r_work < 0) r_work = 0;              // safeguard tegen -0 door floating
+
+  // Terug naar originele schaal:
+  let r_orig  = r_work / (10 ** k);
+
+  // Trunc op 3 decimalen (niet afronden!)
+  r_orig = Math.floor(r_orig * pow) / pow;
 
   q.value = toUI(qTrunc.toFixed(dec));
-  r.value = toUI(rTrunc.toFixed(dec));
+  r.value = toUI(r_orig.toFixed(dec));
   return;
    }
 }
