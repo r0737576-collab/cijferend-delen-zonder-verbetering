@@ -229,21 +229,19 @@ function berekenDelen(deeltal, deler){
     return "";
   }
 
-  // === Niveau 5: we willen ALTIJD 3 decimalen uitrekenen ===
-  // Als het weggeschaalde dividend minder dan 3 decimalen heeft,
-  // voegen we virtuele '0'-cijfers toe achteraan, zodat de staartdeling
-  // tot 3 decimalen kan doorrekenen.
-   if (state.level === "5") {
+  // === NIVEAU 5: forceer minstens 3 decimalen in het werkveld ===
+  if (state.level === "5") {
     const intern = toInternal(deeltal);
     const dpos = intern.indexOf(".");
     let decs = dpos === -1 ? 0 : intern.length - dpos - 1;
 
     const needed = 3 - decs;
     if (needed > 0) {
-      // Voeg virtuele nullen toe aan chars
-      // (bv. 5558.06 → 5558.060 → 5558.0600)
-      const extra = "0".repeat(needed);
-      chars.push(...extra.split(""));
+      // Voeg virtuele nullen toe aan het dividend (voor werkveld)
+      // Voorbeeld: 5558.06 → 5558.060 → 5558.0600
+      for (let k = 0; k < needed; k++) {
+        chars.push("0");
+      }
     }
   }
   for(let i=0; i<chars.length; i++){
@@ -588,16 +586,23 @@ function fillCorrectAnswers(){
   }
 
   if (state.level === "5"){
-    // Opgave op originele schaal (komma-deler), vaste 3 decimalen (trunc)
-    const dec = 3;
-    const dividendOrig = state.originalDividend;
-    const divisorOrig  = state.originalDivisor;
+  const dec = 3;
+  const dividendOrig = state.originalDividend;
+  const divisorOrig  = state.originalDivisor;
 
-    const { q: qTrunc, r: rDec } = divMetVasteDecimalen(dividendOrig, divisorOrig, dec);
-    q.value = toUI(qTrunc.toFixed(dec));
-    r.value = toUI(rDec.toFixed(dec));
-    return;
-  }
+  // Truncatie van quotiënt
+  const pow = 10 ** dec;
+  const qRaw = dividendOrig / divisorOrig;
+  const qTrunc = Math.floor(qRaw * pow) / pow;
+
+  // TRUNC rest (NIET afronden)
+  const rawRest = dividendOrig - qTrunc * divisorOrig;
+  const rTrunc = Math.floor(rawRest * pow) / pow;
+
+  q.value = toUI(qTrunc.toFixed(dec));
+  r.value = toUI(rTrunc.toFixed(dec));
+  return;
+   }
 }
 
 /* =========================================================
