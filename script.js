@@ -133,11 +133,38 @@ function genereerGemiddeld() {
   return { dividend: rondAf(fallbackDiv * fallbackQuot, 2), divisor: fallbackDiv };
 }
 function genereerMoeilijk() {
+  // Deler: geheel getal 2..20 (zoals bij jou)
   const deler = random(2, 20);
+
+  // We willen: dividend met exact 3 decimalen, 4–5 cijfers vóór de komma,
+  // en na 3 decimalen nog een rest: ( (dividend * 1000) % deler ) != 0
+  const pow = 10 ** 3;
+
+  for (let tries = 0; tries < 2000; tries++) {
+    // Kies integer deel zodat we 4–5 cijfers vóór de komma krijgen (1000..99999)
+    const intPart = random(1000, 99999);
+
+    // Kies de 3-decimale fractie 000..999
+    const frac = random(0, pow - 1);
+
+    const scaled = intPart * pow + frac; // dividend * 1000 (integer)
+    const dividend = scaled / pow;
+
+    // Lengte integerdeel: 4–5 cijfers
+    const lenInt = String(intPart).length;
+    if (lenInt < 4 || lenInt > 5) continue;
+
+    // Zorg voor rest na 3 decimalen tov deler:
+    if ((scaled % deler) !== 0) {
+      return { dividend, divisor: deler };
+    }
+  }
+
+  // Fallback (zou zelden nodig zijn)
   const quotient = randomDecimal(1, 500, 3);
   const dividend = rondAf(deler * quotient, 3);
   const len = String(Math.floor(dividend)).length;
-  if (len < 4 || len > 5) return genereerMoeilijk();
+  if (len < 4 || len > 5) return genereerMoeilijk(); // herprobeer
   return { dividend, divisor: deler };
 }
 
@@ -495,25 +522,27 @@ function fillCorrectAnswers(){
   }
 
   if (state.level === "3"){
-    // Aantal decimalen van het DEELTAL bepaalt alles (0, 1 of 2).
-    const decQ = decimalPlaces(state.dividend);
-
-    // Trunceren tot decQ decimalen (geen afronding), rest op hetzelfde niveau.
+    const decQ = decimalPlaces(state.dividend); // 0, 1 of 2
     const { q: qDec, r: rDec } = divMetVasteDecimalen(state.dividend, state.divisor, decQ);
     q.value = toUI(qDec.toFixed(decQ));
-
-    // Rest ALTIJD tonen op decQ decimalen (ook als dat 0 is → een geheel getal)
     r.value = toUI(rDec.toFixed(decQ));
     return;
   }
 
-  // Niveau 4 en 5: laat zoals je prefereert (hier: 3 decimalen afronden en rest=0)
+  if (state.level === "4"){
+    // Vaste precisie: 3 decimalen (trunceren), rest op 3 decimalen tonen
+    const { q: qDec, r: rDec } = divMetVasteDecimalen(state.dividend, state.divisor, 3);
+    q.value = toUI(qDec.toFixed(3));
+    r.value = toUI(rDec.toFixed(3));
+    return;
+  }
+
+  // Niveau 5: laat je huidige aanpak staan; we pakken dat straks aan.
   const dec = 3;
   const qDec = (state.dividend / state.divisor);
   q.value = toUI(qDec.toFixed(dec));
   r.value = "0";
 }
-
 /* =========================================================
    START NIEUWE OEFENING
 ========================================================= */
