@@ -169,12 +169,44 @@ function genereerMoeilijk() {
 }
 
 function genereerZeerMoeilijk() {
-  const deler = randomDecimal(2, 10, 2); // tussen 2 en 10
-  const quotient = randomDecimal(1, 500, 3);
-  const dividend = rondAf(deler * quotient, 3);
-  const len = String(Math.floor(dividend)).length;
-  if (len < 3 || len > 5) return genereerZeerMoeilijk();
-  return { dividend, divisor: deler };
+  // Kies een deler met 1–2 decimalen (2..10), geen hele getallen
+  const dec = random(1, 2);           // aantal decimalen in de DELER
+  const pow = 10 ** dec;
+
+  // Willekeurige deler met 'dec' decimalen (2.00..9.99)
+  const raw = random(200, 999);       // zodat raw/100 of raw/10 tussen 2..9.99 valt
+  const divisor = raw / (10 ** 2);    // start met 2 dec; we knippen later indien nodig
+  const divisorRounded = Number(divisor.toFixed(dec)); // precies 'dec' decimalen
+
+  // Kies quotient-omvang en construeer dividend zodat integer-deel 3–5 cijfers heeft.
+  // We willen rest ≠ 0 na 3 decimalen in de originele schaal.
+  const targetDec = 3; // vaste precisie voor niveau 5 in de opgave/antwoorden
+
+  for (let tries = 0; tries < 3000; tries++) {
+    // Kies een quotient met 3 decimalen (1..500)
+    const qPow = 10 ** targetDec;
+    const qInt = random(1 * qPow, 500 * qPow);  // 1.000 .. 500.000
+    const quotient = qInt / qPow;
+
+    // Dividend = divisor * quotient (afronden op targetDec + margin om variatie te houden)
+    // We willen dat (dividend / divisor) bij trunc op 3 dec een rest oplevert.
+    const dividend = rondAf(divisorRounded * quotient, targetDec);
+
+    const intLen = String(Math.floor(dividend)).length;
+    if (intLen < 3 || intLen > 5) continue;  // 3–5 cijfers vóór de komma in de opgave
+
+    // Check: rest ≠ 0 na 3 dec in originele schaal (trunc op 3 dec)
+    const { r } = divMetVasteDecimalen(dividend, divisorRounded, targetDec);
+    if (r > 0) {
+      return { dividend, divisor: divisorRounded };
+    }
+  }
+
+  // Fallback — praktisch zelden nodig
+  const fallbackDivisor = Number(randomDecimal(2, 10, 2).toFixed(2));
+  const fallbackQuot = randomDecimal(1, 500, 3);
+  const fallbackDividend = rondAf(fallbackDivisor * fallbackQuot, 3);
+  return { dividend: fallbackDividend, divisor: fallbackDivisor };
 }
 
 /* =========================================================
@@ -537,11 +569,17 @@ function fillCorrectAnswers(){
     return;
   }
 
-  // Niveau 5: laat je huidige aanpak staan; we pakken dat straks aan.
-  const dec = 3;
-  const qDec = (state.dividend / state.divisor);
-  q.value = toUI(qDec.toFixed(dec));
-  r.value = "0";
+  else if (state.level === "5"){
+  const dec = 3; // vaste precisie in de opgave voor Zeer Moeilijk
+  const dividendOrig = state.originalDividend;
+  const divisorOrig  = state.originalDivisor;
+
+  const { q: qTrunc, r } = divMetVasteDecimalen(dividendOrig, divisorOrig, dec);
+
+  // Opgave: quotient en rest in originele schaal, met komma in UI
+  q.value = toUI(qTrunc.toFixed(dec));
+  r.value = toUI(r.toFixed(dec));
+  return;
 }
 /* =========================================================
    START NIEUWE OEFENING
