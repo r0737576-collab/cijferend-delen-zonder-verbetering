@@ -69,8 +69,39 @@ const FEEDBACK = {
     1: "De rest is niet ingevuld. Noteer 0 als er geen rest is.",
     2: "Rest ontbreekt.",
     3: "Geen rest."
-  }
+  },
+   // ► In je bestaande FEEDBACK-object, voeg toe:
+   STEP_Q_FOUT: {
+  1: "Stap {i}: het quotiëntcijfer klopt niet. Bepaal hoeveel keer de deler past in het huidige getal.",
+  2: "Stap {i}: controleer je quotiëntcijfer.",
+  3: "Stap {i}: quotiëntcijfer fout."
+},
+   STEP_PRODUCT_FOUT: {
+  1: "Stap {i}: het product (quotiënt × deler) klopt niet. Reken de vermenigvuldiging opnieuw.",
+  2: "Stap {i}: controleer het product.",
+  3: "Stap {i}: product fout."
+},
+   STEP_AFTREK_FOUT: {
+  1: "Stap {i}: de aftrekking (verschil) klopt niet. Reken opnieuw: huidig getal − product.",
+  2: "Stap {i}: controleer je aftrekking.",
+  3: "Stap {i}: aftrek fout."
+},
+   STEP_ZAKKEN_ONTBREEKT: {
+  1: "Stap {i}: je hebt geen cijfer laten zakken, terwijl dat wel moet.",
+  2: "Stap {i}: cijfer laten zakken ontbreekt.",
+  3: "Stap {i}: zakken ontbreekt."
+},
+   STEP_ZAKKEN_FOUT: {
+  1: "Stap {i}: je liet het verkeerde cijfer zakken. Neem het volgende cijfer van het deeltal.",
+  2: "Stap {i}: controleer het gezakte cijfer.",
+  3: "Stap {i}: zakken fout."
+}
 };
+
+// ► Plak deze helper ONDER het FEEDBACK-blok:
+function msg(fmt, i) { 
+  return fmt.replace("{i}", (i+1));  // i=0 → "Stap 1"
+}
 
 function feedbackText(code, level) {
   const l = Math.min(Math.max(Number(level)||1,1),3); // 1..3
@@ -84,6 +115,11 @@ const state = {
   dividend: 0,
   divisor: 0,
   stappen: [],
+
+  // --- NIEUW voor stap-voor-stap ---
+  stepMode: false,
+  userSteps: [],
+
   level: "1",
   instellingen: { decimalen: false, controle: false },
 
@@ -507,8 +543,14 @@ if (chk) {
     state.userDecimalPos = state.selectedIndex;
     UI.tekenQuotient(state.stappen);
     e.preventDefault();
-  }
-});
+        }
+      });
+   // Nakijk werkblad (stap-voor-stap)
+   const btnSteps = document.getElementById("btnCheckSteps");
+   if (btnSteps) {
+     btnSteps.addEventListener("click", () => checkWorkSteps());
+}
+     
 },
 
   cacheDOM(){
@@ -886,6 +928,172 @@ function checkAnswersAndFeedback() {
 }
 
 /* =========================================================
+   STAP-MODUS: data en UI (opbouw invulvelden)
+========================================================= */
+
+// 1) Maak per stap een lege invoerstructuur voor de leerling
+function initUserSteps() {
+  // 1 object per stap met lege strings; leerling vult dit in
+  state.userSteps = state.stappen.map(() => ({
+    q: "",        // quotiëntcijfer voor deze stap
+    product: "",  // product = q × deler
+    rest: "",     // resultaat na aftrekken
+    zak: ""       // gezakt cijfer (alleen indien van toepassing)
+  }));
+}
+
+// 2) Bouw de rijen "Stap 1, Stap 2, ..." met vier invoervelden
+function renderStepInputs() {
+  const wrap = document.getElementById("stepInputs");
+  if (!wrap) return;
+
+  // Toon of verberg het hele paneel op basis van de checkbox
+  wrap.hidden = !state.stepMode;
+  if (!state.stepMode) return;
+
+  // Voor elke stap in state.stappen bouwen we een rij
+  const rows = state.stappen.map((stap, i) => {
+    // Moet er na deze stap een cijfer gezakt worden?
+    const mustDrop = (i < state.stappen.length - 1) && (stap.laatsteCijfer !== "");
+
+    return `
+      <div class="stepRow" data-i="${i}">
+        <div class="stepHead">Stap ${i+1}</div>
+        <input class="stepInput" id="step-q-${i}" inputmode="numeric" placeholder="q" value="${state.userSteps[i].q}">
+        <input class="stepInput" id="step-p-${i}" inputmode="numeric" placeholder="product" value="${state.userSteps[i].product}">
+        <input class="stepInput" id="step-r-${i}" inputmode="numeric" placeholder="aftrek/rest" value="${state.userSteps[i].rest}">
+        <input class="stepInput" id="step-z-${i}" inputmode="numeric" placeholder="zakken" value="${state.userSteps[i].zak}" ${mustDrop ? "" : "disabled"}>
+      </div>
+      ${mustDrop ? `<div class="mini">Tip: in deze stap moet je het volgende cijfer laten zakken.</div>` : ""}
+    `;
+  }).join("");
+
+  // Header + alle rijen plaatsen
+  wrap.innerHTML = `
+    <div class="mini" style="margin-bottom:6px;">
+      Vul per stap het <b>quotiëntcijfer</b>, het <b>product</b> (quotiënt × deler), de <b>aftrek/rest</b> en (indien nodig) het <b>gezakte cijfer</b> in.
+    </div>
+    ${rows}
+  `;
+
+  // Inputs laten "schrijven" in state.userSteps zodat we later kunnen nakijken
+  state.stappen.forEach((_, i) => {
+    const bind = (id, key) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener("input", () => {
+        state.userSteps[i][key] = el.value.trim();
+      });
+    };
+    bind(`step-q-${i}`, "q");
+    bind(`step-p-${i}`, "product");
+    bind(`step-r-${i}`, "rest");
+    bind(`step-z-${i}`, "zak");
+  });
+}
+
+/* =========================================================
+   STAP-MODUS: nakijken per stap
+========================================================= */
+function markStepField(i, kind, ok) {
+  const el = document.getElementById(`step-${kind}-${i}`);
+  if (!el) return;
+  el.classList.remove("step-ok","step-err");
+  el.classList.add(ok ? "step-ok" : "step-err");
+}
+
+function clearStepMarks() {
+  state.stappen.forEach((_, i) => {
+    ["q","p","r","z"].forEach(kind => {
+      const el = document.getElementById(`step-${kind}-${i}`);
+      if (el) el.classList.remove("step-ok","step-err");
+    });
+  });
+}
+
+function checkWorkSteps() {
+  const level = state.level;
+  const msgs = [];
+
+  clearStepMarks();
+
+  state.stappen.forEach((s, i) => {
+    // Verwachte waarden uit je berekende stappen
+    const expQ   = Number(s.q);         // 1 cijfer
+    const expP   = Number(s.product);   // product
+    const expR   = Number(s.rest);      // verschil/rest
+    const expZak = (i < state.stappen.length - 1) ? (s.laatsteCijfer || "") : ""; // string
+
+    // Invoer van leerling
+    const get = (key) => (state.userSteps[i] && state.userSteps[i][key]) ? state.userSteps[i][key].trim() : "";
+    const uQraw = get("q");
+    const uPraw = get("product");
+    const uRraw = get("rest");
+    const uZraw = get("zak");
+
+    // Helpers
+    const has = v => v !== null && v !== undefined && String(v).trim() !== "";
+    const num = v => parseLearnerNumber(v);  // accepteert komma of punt
+
+    // 1) quotiëntcijfer
+    if (has(uQraw)) {
+      const ok = Number(num(uQraw)) === expQ;
+      markStepField(i, "q", ok);
+      if (!ok && level !== "5" && level !== "4") msgs.push( msg(FEEDBACK.STEP_Q_FOUT[level], i) );
+    } else {
+      markStepField(i, "q", false);
+      if (level !== "5" && level !== "4") msgs.push( msg(FEEDBACK.STEP_Q_FOUT[level], i) );
+    }
+
+    // 2) product (vermenigvuldigen)
+    if (has(uPraw)) {
+      const ok = Number(num(uPraw)) === expP;
+      markStepField(i, "p", ok);
+      if (!ok && level !== "5" && level !== "4") msgs.push( msg(FEEDBACK.STEP_PRODUCT_FOUT[level], i) );
+    } else {
+      markStepField(i, "p", false);
+      if (level !== "5" && level !== "4") msgs.push( msg(FEEDBACK.STEP_PRODUCT_FOUT[level], i) );
+    }
+
+    // 3) aftrek/rest
+    if (has(uRraw)) {
+      const ok = Number(num(uRraw)) === expR;
+      markStepField(i, "r", ok);
+      if (!ok && level !== "5" && level !== "4") msgs.push( msg(FEEDBACK.STEP_AFTREK_FOUT[level], i) );
+    } else {
+      markStepField(i, "r", false);
+      if (level !== "5" && level !== "4") msgs.push( msg(FEEDBACK.STEP_AFTREK_FOUT[level], i) );
+    }
+
+    // 4) zakken (alleen als het moet)
+    const mustDrop = expZak !== "";
+    if (mustDrop) {
+      if (!has(uZraw)) {
+        markStepField(i, "z", false);
+        if (level !== "5" && level !== "4") msgs.push( msg(FEEDBACK.STEP_ZAKKEN_ONTBREEKT[level], i) );
+      } else {
+        const ok = String(uZraw) === String(expZak);
+        markStepField(i, "z", ok);
+        if (!ok && level !== "5" && level !== "4") msgs.push( msg(FEEDBACK.STEP_ZAKKEN_FOUT[level], i) );
+      }
+    }
+  });
+
+  // Tekstoutput per niveau
+  if (level === "4") {
+    // Alleen kleuren
+    return showMessages([]);
+  }
+  if (level === "5") {
+    // Geen tekst
+    return showMessages([]);
+  }
+
+  // Niveau 1–3
+  showMessages(msgs.length ? msgs : ["Knap! Alles klopt."], msgs.length === 0);
+}
+
+/* =========================================================
    START NIEUWE OEFENING
 ========================================================= */
 function startNieuweOefening(){
@@ -936,6 +1144,12 @@ function startNieuweOefening(){
    // fillCorrectAnswers();  // NIET automatisch: alleen via “Zelfcontrole”
 
    UI.tekenOefening();
+
+   // Als de stap-modus aanstaat, (her)bouw het paneel met lege velden
+   if (state.stepMode) {
+  initUserSteps();
+  renderStepInputs();
+   }
 }
 
 /* =========================================================
