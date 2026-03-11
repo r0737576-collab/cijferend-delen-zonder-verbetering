@@ -168,39 +168,44 @@ function genereerMoeilijk() {
   return { dividend, divisor: deler };
 }
 
-function genereerZeerMoeilijk() {
+function genereerZeerMoeilijk(){
 
-  const dec = random(1,2);
-  const divisor = Number(randomDecimal(2,10,dec).toFixed(dec));
+  for(let tries = 0; tries < 2000; tries++){
 
-  const pow = 1000;
-
-  for(let tries=0; tries<2000; tries++){
+    // deler met 1 of 2 decimalen
+    const dec = random(1,2);
+    const divisor = Number(randomDecimal(2,10,dec).toFixed(dec));
 
     // quotiënt met 3 decimalen
-    const qInt = random(1000,500000);
-    const q = qInt / pow;
+    const qInt = random(10000,400000);
+    const q = qInt / 1000;
 
     // rest kleiner dan deler
-    const r = random(1, Math.floor(divisor*1000)-1) / 1000;
+    const rInt = random(1, Math.floor(divisor*1000)-1);
+    const r = rInt / 1000;
 
-    const dividend = Number((q*divisor + r).toFixed(3));
+    // deeltal berekenen
+    let dividend = q*divisor + r;
 
+    // afronden om floating fouten te vermijden
+    dividend = Number(dividend.toFixed(3));
+
+    // werkbladlengte controleren
     const len = String(Math.floor(dividend)).length;
 
-    if(len >=3 && len <=5){
+    if(len>=3 && len<=5){
       return { dividend, divisor };
     }
-
   }
 
-  const divisorFallback = Number(randomDecimal(2,10,2).toFixed(2));
-  const q = randomDecimal(1,500,3);
-  const r = randomDecimal(0.001, divisorFallback-0.001,3);
+  // fallback
+  const divisor = Number(randomDecimal(2,10,2).toFixed(2));
+  const q = randomDecimal(1,200,3);
+  const r = randomDecimal(0.001, divisor-0.001,3);
 
-  const dividend = Number((q*divisorFallback + r).toFixed(3));
+  const dividend = Number((q*divisor + r).toFixed(3));
 
-  return { dividend, divisor: divisorFallback };
+  return { dividend, divisor };
 }
 
 /* =========================================================
