@@ -568,40 +568,24 @@ function fillCorrectAnswers(){
   }
 
   else if (state.level === "5"){
-  const dec = 3;
-  const pow = 10 ** dec;
 
-  // Oorspronkelijke getallen (met komma-deler)
   const D = state.originalDividend;
   const d = state.originalDivisor;
 
-  // Trunc quotiënt op 3 decimalen
-  const qRaw   = D / d;
-  const qInt   = Math.floor(qRaw * pow);   // integer met 3-decimale precisie
-  const qTrunc = qInt / pow;
+  // exact quotiënt
+  let q = D / d;
 
-  // Rest op ORIGINELE schaal, TRUNC (géén afronding)
-  // Gebruik de "work"-deler schaalfactor k om nauwkeuriger te blijven
-  const k     = decimalPlaces(d);          // hoeveel we opschalen in werkveld
-  const Wd    = state.divisor;             // werk-deler (geheel)
-  const WD    = state.dividend;            // werk-deeltal (mogelijk met extra 0)
-  
-   // rest berekenen met integers (stabieler)
-   const scaledDividend = Math.round(WD * pow);   // WD met 3 decimalen schaal
-   const scaledDivisor  = Wd;
+  // floating point afrondingsfouten opruimen
+  q = Number(q.toFixed(10));
 
-   const r_work_scaled = scaledDividend - qInt * scaledDivisor;
+  // rest berekenen
+  let r = D - q * d;
+  r = Number(r.toFixed(10));
 
-   // terug naar originele schaal
-   let r_orig = r_work_scaled / (pow * (10 ** k));
+  q.value = toUI(q);
+  r.value = toUI(r);
 
-   // trunceren op 3 decimalen
-   r_orig = Math.floor(r_orig * pow) / pow;
-
-  q.value = toUI(qTrunc.toFixed(dec));
-  r.value = toUI(r_orig.toFixed(dec));
   return;
-   }
 }
 
 /* =========================================================
