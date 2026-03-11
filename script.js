@@ -427,6 +427,7 @@ const UI = {
       }
       return;
     }
+
     const cel=document.createElement("div");
     cel.className="gridcell";
     cel.textContent=ch;
