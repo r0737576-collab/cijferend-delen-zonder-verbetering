@@ -121,7 +121,7 @@ function genereerGemiddeld() {
     const scaled   = intPart * pow + fracPart;  // deeltal × 10^dec
     const dividend = scaled / pow;
 
-    // Zorg dat er (op dec decimalen) een rest is:
+    // Zorg dat er (op dec decimalen) een  is:
     if ((scaled % deler) !== 0) {
       return { dividend, divisor: deler };
     }
