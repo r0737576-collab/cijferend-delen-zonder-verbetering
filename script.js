@@ -442,13 +442,28 @@ const UI = {
 
   // Zelfcontrole-knop
   document.getElementById("btnSelf")
-    .addEventListener("click", () => {
-      // Zelfcontrole: toon correcte antwoorden + verwachte kommaplaats
-      fillCorrectAnswers();
-      state.userDecimalPos = null;           // geen door leerling geplaatste komma
-      UI.tekenQuotient(state.stappen);       // 'expected' stijl zichtbaar
-      showInfo("Dit is de zelfcontrole. Vergelijk met je eigen werk en pas aan indien nodig.");
-    });
+  .addEventListener("click", () => {
+    // Zelfcontrole: géén auto-invulling meer.
+    // We tonen enkel een hint + de verwachte kommapositie in het raster.
+
+    // Laat de eigen invoer staan:
+    // (NIETS invullen in inputQuotient/inputRest)
+
+    // Toon de verwachte kommapositie (groen streepje / expected)
+    state.userDecimalPos = null;           // toon 'expected' stijl in quotient
+    UI.tekenQuotient(state.stappen);
+
+    // Toon een duidelijke, leerbevorderende hint
+    const exp = expectedAnswer();
+    const heeftKomma = exp.qStr.includes(SEP_UI) || toInternal(exp.qStr).includes('.');
+    const hintKomma = heeftKomma
+      ? "Let op: er hoort een komma in het quotiënt. Bepaal zélf waar die moet komen."
+      : "Voor deze oefening is géén komma in het quotiënt nodig.";
+
+    showInfo(
+      `Zelfcontrole: kijk je stappen na en verbeter. ${hintKomma}`
+    );
+  });
 
   // Nieuwe oefening
   document.getElementById("btnNew")
@@ -456,17 +471,28 @@ const UI = {
 
   // Bestaande keydown-handler laten staan (komma-plaatsing)
   document.addEventListener("keydown", (e) => {
-    if (e.key === "," || e.key === ".") {
-      if (!state.showCommaPlaceholder) return;
+  // 1) Als de gebruiker in een invoerveld typt, NIETS onderscheppen:
+  const t = e.target;
+  const isTextInput =
+    t && (
+      t.tagName === 'INPUT' ||
+      t.tagName === 'TEXTAREA' ||
+      t.isContentEditable
+    );
+  if (isTextInput) return;
 
-      if (state.selectedIndex == null)
-        state.selectedIndex = state.decimalQuotPos;
+  // 2) Alleen buiten invoervelden reageren op komma/punt voor de quotiënt-komma:
+  if (e.key === "," || e.key === ".") {
+    if (!state.showCommaPlaceholder) return;
 
-      state.userDecimalPos = state.selectedIndex;
-      this.tekenQuotient(state.stappen);
-      e.preventDefault();
-    }
-  });
+    if (state.selectedIndex == null)
+      state.selectedIndex = state.decimalQuotPos;
+
+    state.userDecimalPos = state.selectedIndex;
+    UI.tekenQuotient(state.stappen);
+    e.preventDefault();
+  }
+});
 },
 
   cacheDOM(){
