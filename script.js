@@ -574,10 +574,23 @@ function fillCorrectAnswers(){
 
   else if (state.level === "5"){
 
+  const steps = state.stappen;
+
+  // quotient exact zoals in het werkveld
+  let qStr = steps.map(s => s.q).join("");
+
+  if(state.decimalQuotPos !== null){
+    qStr =
+      qStr.slice(0, state.decimalQuotPos) +
+      "." +
+      qStr.slice(state.decimalQuotPos);
+  }
+
+  const qVal = parseFloat(qStr);
+
   const D = state.originalDividend;
   const d = state.originalDivisor;
 
-  const qVal = Number((D / d).toFixed(10));
   const rVal = Number((D - qVal * d).toFixed(10));
 
   q.value = toUI(qVal);
