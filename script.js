@@ -36,6 +36,49 @@ const CONFIG = {
 };
 
 /* =========================================================
+   FEEDBACK-TEKSTEN (niveau 1-3 inhoudelijk, 4-5 generiek)
+========================================================= */
+const FEEDBACK = {
+  // Codes die we NU al kunnen detecteren met jouw UI
+  VERDEEL_FOUT: {
+    1: "Het gekozen cijfer in het quotiënt klopt niet. Kijk hoeveel keer de deler écht in dit getal past. Gebruik eventueel een tafelrij.",
+    2: "Controleer of je quotiënt niet te groot of te klein is.",
+    3: "Fout bij delen: quotiënt klopt niet."
+  },
+  REST_FOUT: {
+    1: "De rest klopt niet. Reken je aftrekking/rest opnieuw na: rest = deeltal − (quotiënt × deler).",
+    2: "Kijk je rest nog eens na.",
+    3: "Fout in rest."
+  },
+  KOMMA_NIET: {
+    1: "Je bent de komma in het quotiënt vergeten. Zet de komma zodra je voorbij het kommagetal deelt.",
+    2: "Controleer of er een komma nodig is.",
+    3: "Komma ontbreekt."
+  },
+  KOMMA_FOUT: {
+    1: "De komma staat op de verkeerde plaats in het quotiënt.",
+    2: "Controleer de positie van de komma.",
+    3: "Kommaplaats fout."
+  },
+  // Invoer vergeten (praktisch nodig)
+  INVOER_QUOTIENT_LEEG: {
+    1: "Het quotiënt is niet ingevuld. Vul eerst je antwoord in.",
+    2: "Quotiënt ontbreekt.",
+    3: "Geen quotiënt."
+  },
+  INVOER_REST_LEEG: {
+    1: "De rest is niet ingevuld. Vul je rest in of noteer 0 als er geen rest is.",
+    2: "Rest ontbreekt.",
+    3: "Geen rest."
+  }
+};
+
+function feedbackText(code, level) {
+  const l = Math.min(Math.max(Number(level)||1,1),3); // 1..3
+  return FEEDBACK[code] ? FEEDBACK[code][l] : "";
+}
+
+/* =========================================================
    STATE
 ========================================================= */
 const state = {
@@ -77,6 +120,39 @@ function scaleNumber(val, k, keepDecimals){
   const n = parseFloat(toInternal(val));
   const scaled = n * (10 ** k);
   return rondAf(scaled, keepDecimals);
+}
+
+/* =========================================================
+   FEEDBACK UI HELPERS
+========================================================= */
+function setFieldState(el, state) {
+  if (!el) return;
+  el.classList.remove('input-ok','input-err');
+  if (state === 'ok') el.classList.add('input-ok');
+  if (state === 'err') el.classList.add('input-err');
+}
+
+function showMessages(msgs, ok=false) {
+  const box = document.getElementById('feedbackPanel');
+  if (!box) return;
+  if (!msgs || msgs.length===0) {
+    box.innerHTML = "";
+    return;
+  }
+  const cls = ok ? 'ok' : 'err';
+  box.innerHTML = msgs.map(m => `<div class="msg ${cls}">${m}</div>`).join("");
+}
+
+function showInfo(text){
+  const box = document.getElementById('feedbackPanel');
+  if (!box) return;
+  box.innerHTML = `<div class="msg info">${text}</div>`;
+}
+
+function clearFeedbackUI(){
+  showMessages([]);
+  setFieldState(document.getElementById("inputQuotient"), null);
+  setFieldState(document.getElementById("inputRest"), null);
 }
 
 /* =========================================================
@@ -358,24 +434,40 @@ function vulRooster(state){
 ========================================================= */
 const UI = {
   init(){
-    this.cacheDOM();
+  this.cacheDOM();
 
-    document.getElementById("btnNew")
-      .addEventListener("click", startNieuweOefening);
+  // Nakijken-knop
+  document.getElementById("btnCheck")
+    .addEventListener("click", () => checkAnswersAndFeedback());
 
-    document.addEventListener("keydown", (e)=>{
-      if(e.key === "," || e.key === "."){
-        if(!state.showCommaPlaceholder) return;
-
-        if(state.selectedIndex == null)
-          state.selectedIndex = state.decimalQuotPos;
-
-        state.userDecimalPos = state.selectedIndex;
-        this.tekenQuotient(state.stappen);
-        e.preventDefault();
-      }
+  // Zelfcontrole-knop
+  document.getElementById("btnSelf")
+    .addEventListener("click", () => {
+      // Zelfcontrole: toon correcte antwoorden + verwachte kommaplaats
+      fillCorrectAnswers();
+      state.userDecimalPos = null;           // geen door leerling geplaatste komma
+      UI.tekenQuotient(state.stappen);       // 'expected' stijl zichtbaar
+      showInfo("Dit is de zelfcontrole. Vergelijk met je eigen werk en pas aan indien nodig.");
     });
-  },
+
+  // Nieuwe oefening
+  document.getElementById("btnNew")
+    .addEventListener("click", startNieuweOefening);
+
+  // Bestaande keydown-handler laten staan (komma-plaatsing)
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "," || e.key === ".") {
+      if (!state.showCommaPlaceholder) return;
+
+      if (state.selectedIndex == null)
+        state.selectedIndex = state.decimalQuotPos;
+
+      state.userDecimalPos = state.selectedIndex;
+      this.tekenQuotient(state.stappen);
+      e.preventDefault();
+    }
+  });
+},
 
   cacheDOM(){
     this.dividendNode = document.getElementById("grid");
@@ -602,7 +694,126 @@ function fillCorrectAnswers(){
   return;
    }
 }
-   
+
+/* =========================================================
+   VERWACHT ANTWOORD PER NIVEAU (zonder invullen)
+========================================================= */
+function expectedAnswer() {
+  const level = state.level;
+  const D = state.dividend;
+  const d = state.divisor;
+
+  if (level === "1" || level === "2") {
+    const qInt = Math.floor(D / d);
+    const rInt = D - qInt * d;
+    return { qStr: toUI(String(qInt)), rStr: toUI(String(rInt)), decimals: 0 };
+  }
+
+  if (level === "3") {
+    const decQ = decimalPlaces(D);
+    const { q: qDec, r: rDec } = divMetVasteDecimalen(D, d, decQ);
+    return { qStr: toUI(qDec.toFixed(decQ)), rStr: toUI(rDec.toFixed(decQ)), decimals: decQ };
+  }
+
+  if (level === "4") {
+    const { q: qDec, r: rDec } = divMetVasteDecimalen(D, d, 3);
+    return { qStr: toUI(qDec.toFixed(3)), rStr: toUI(rDec.toFixed(3)), decimals: 3 };
+  }
+
+  // level 5: volgens werkveld (stappen + originele schaal)
+  if (level === "5") {
+    let qWork = state.stappen.map(s => s.q).join("");
+    if (state.decimalQuotPos !== null) {
+      qWork = qWork.slice(0, state.decimalQuotPos) + "." + qWork.slice(state.decimalQuotPos);
+    }
+    const qVal = parseFloat(qWork);
+    const D0 = state.originalDividend;
+    const d0 = state.originalDivisor;
+    const rVal = Number((D0 - qVal * d0).toFixed(10));
+    return { qStr: toUI(String(qVal)), rStr: toUI(String(rVal)), decimals: -1 }; // -1 = geen vaste afronding
+  }
+
+  // fallback
+  return { qStr: "", rStr: "" };
+}
+
+/* =========================================================
+   NAKIJKEN: verzamel fouten en toon feedback
+========================================================= */
+function checkAnswersAndFeedback() {
+  const level = state.level;
+
+  const qEl = document.getElementById("inputQuotient");
+  const rEl = document.getElementById("inputRest");
+  const qIn = qEl ? qEl.value.trim() : "";
+  const rIn = rEl ? rEl.value.trim() : "";
+
+  const exp = expectedAnswer();
+
+  const errors = [];
+
+  // 0) lege invoer
+  if (!qIn) errors.push("INVOER_QUOTIENT_LEEG");
+  if (!rIn) errors.push("INVOER_REST_LEEG");
+
+  // 1) komma-controles (alleen relevant wanneer er *komma* verwacht kán zijn)
+  const commaVisible = state.showCommaPlaceholder;  // jouw flag
+  if (commaVisible) {
+    // gebruiker plaatste geen komma
+    if (state.userDecimalPos == null && (exp.qStr.includes(SEP_UI) || toInternal(exp.qStr).includes('.'))) {
+      errors.push("KOMMA_NIET");
+    }
+    // gebruiker plaatste komma maar op foute plaats
+    if (state.userDecimalPos != null && state.userDecimalPos !== state.decimalQuotPos) {
+      errors.push("KOMMA_FOUT");
+    }
+  }
+
+  // 2) inhoudelijke controle quotiënt/rest
+  const qUser = parseLearnerNumber(qIn);
+  const rUser = parseLearnerNumber(rIn);
+  const qExp  = parseLearnerNumber(exp.qStr);
+  const rExp  = parseLearnerNumber(exp.rStr);
+
+  // vergelijk quotiënt
+  if (qUser == null || qExp == null || Math.abs(qUser - qExp) > 1e-12) {
+    errors.push("VERDEEL_FOUT");
+  }
+
+  // vergelijk rest (alleen checken als leerling iets invulde)
+  if (rUser == null || rExp == null || Math.abs(rUser - rExp) > 1e-9) {
+    errors.push("REST_FOUT");
+  }
+
+  // ==== UI-afhandeling per niveau ====
+  if (errors.length === 0) {
+    setFieldState(qEl, 'ok');
+    setFieldState(rEl, 'ok');
+    showMessages(["Knap! Alles is correct."], true);
+    return;
+  }
+
+  // markeer velden
+  setFieldState(qEl, errors.includes("VERDEEL_FOUT") || errors.includes("INVOER_QUOTIENT_LEEG") ? 'err' : null);
+  setFieldState(rEl, errors.includes("REST_FOUT")   || errors.includes("INVOER_REST_LEEG")     ? 'err' : null);
+
+  // Toon feedback volgens niveau:
+  if (level === "4") {
+    // Alleen markeren (geen tekst)
+    showMessages([]);
+  } else if (level === "5") {
+    // Helemaal geen feedback (alleen eindscore-idee)
+    showMessages([]);
+  } else {
+    // Niveaus 1..3: inhoudelijke boodschap
+    const msgs = [];
+    for (const code of errors) {
+      if (FEEDBACK[code]) msgs.push( feedbackText(code, level) );
+    }
+    showMessages(msgs);
+  }
+}
+
 /* =========================================================
    START NIEUWE OEFENING
 ========================================================= */
@@ -650,9 +861,10 @@ function startNieuweOefening(){
   document.getElementById("opgaveTekst").textContent = opgaveTekst;
 
   resetAnswerInputs();
-  fillCorrectAnswers();
+   clearFeedbackUI();      // wis oude feedback
+   // fillCorrectAnswers();  // NIET automatisch: alleen via “Zelfcontrole”
 
-  UI.tekenOefening();
+   UI.tekenOefening();
 }
 
 /* =========================================================
