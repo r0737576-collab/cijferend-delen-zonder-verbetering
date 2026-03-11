@@ -217,7 +217,22 @@
 
   /* Kleine hulptekst */
   .mini { font-size: 12px; color: #415a77; line-height: 1.2; }
-  
+
+  /* ===== Invulbare rooster-cellen ===== */
+  .gridcell.editable {
+  background: #ffffff;
+  cursor: text;
+  outline: none;
+  border: 1px solid #3a506b;
+  }
+  .gridcell.editable:focus {
+  box-shadow: 0 0 0 2px rgba(53,88,162,.15);
+  }
+
+  /* Kleurfeedback op rooster-cellen */
+  .cell-ok  { background: #e6f4ea !important; }   /* lichtgroen */
+  .cell-err { background: #ffe8e8 !important; }   /* lichtrood  */
+    
   </style>
 </head>
 <body>
