@@ -181,6 +181,43 @@
   .input-ok { border-color: #2e7d32 !important; box-shadow: 0 0 0 2px rgba(46,125,50,.15); }
   .input-err { border-color: #c62828 !important; box-shadow: 0 0 0 2px rgba(198,40,40,.15); }
 
+  /* ===== Stap-voor-stap paneel ===== */
+#stepInputs { 
+  margin-top: 16px; 
+  max-width: 820px; 
+}
+
+.stepRow {
+  display: grid;
+  grid-template-columns: auto 100px 120px 120px 120px;
+  gap: 8px;
+  align-items: center;
+  margin: 6px 0;
+}
+
+.stepHead {
+  font-weight: 700;
+  color: #1c2541;
+}
+
+.stepInput {
+  width: 100%;
+  padding: 6px 8px;
+  font-size: 14px;
+  text-align: center;
+  border: 1px solid #3a506b;
+  border-radius: 6px;
+  background: #fff;
+  box-sizing: border-box;
+}
+
+  /* Kleurfeedback per veld (juist/fout) */
+  .step-ok  { border-color: #2e7d32 !important; box-shadow: 0 0 0 2px rgba(46,125,50,.15); }
+  .step-err { border-color: #c62828 !important; box-shadow: 0 0 0 2px rgba(198,40,40,.15); }
+
+  /* Kleine hulptekst */
+  .mini { font-size: 12px; color: #415a77; line-height: 1.2; }
+  
   </style>
 </head>
 <body>
@@ -242,7 +279,9 @@
       </div>
     </div>
   </div>
-
+  
+  <div id="stepInputs" hidden></div>
+  
   <!-- Extern script -->
   <script src="script.js" defer></script>
 </body>
