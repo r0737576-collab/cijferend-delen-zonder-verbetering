@@ -468,9 +468,26 @@ const UI = {
   document.getElementById("btnNew")
     .addEventListener("click", startNieuweOefening);
 
+   // --- NIEUW: Stap-modus aan/uit ---
+const chk = document.getElementById("chkStepMode");
+if (chk) {
+  chk.addEventListener("change", () => {
+    state.stepMode = chk.checked;
+
+    if (state.stepMode) {
+      // Stap-invulvelden voorbereiden + tonen
+      initUserSteps();
+      renderStepInputs();
+    } else {
+      // Paneel verbergen
+      document.getElementById("stepInputs").hidden = true;
+    }
+  });
+}
+     
   // Bestaande keydown-handler laten staan (komma-plaatsing)
   document.addEventListener("keydown", (e) => {
-  // 1) Als de gebruiker in een invoerveld typt, NIETS onderscheppen:
+  // 1) Typ de komma/punt NIET onderscheppen als gebruiker in een invoerveld bezig is
   const t = e.target;
   const isTextInput =
     t && (
