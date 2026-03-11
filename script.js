@@ -616,15 +616,18 @@ function fillCorrectAnswers(){
   const k     = decimalPlaces(d);          // hoeveel we opschalen in werkveld
   const Wd    = state.divisor;             // werk-deler (geheel)
   const WD    = state.dividend;            // werk-deeltal (mogelijk met extra 0)
-  // Reken rest eerst in werk-schaal: r_work = WD - qTrunc * Wd
-  let r_work  = WD - qTrunc * Wd;
-  if (r_work < 0) r_work = 0;              // safeguard tegen -0 door floating
+  
+   // rest berekenen met integers (stabieler)
+   const scaledDividend = Math.round(WD * pow);   // WD met 3 decimalen schaal
+   const scaledDivisor  = Wd;
 
-  // Terug naar originele schaal:
-  let r_orig  = r_work / (10 ** k);
+   const r_work_scaled = scaledDividend - qInt * scaledDivisor;
 
-  // Trunc op 3 decimalen (niet afronden!)
-  r_orig = Math.floor(r_orig * pow) / pow;
+   // terug naar originele schaal
+   let r_orig = r_work_scaled / (pow * (10 ** k));
+
+   // trunceren op 3 decimalen
+   r_orig = Math.floor(r_orig * pow) / pow;
 
   q.value = toUI(qTrunc.toFixed(dec));
   r.value = toUI(r_orig.toFixed(dec));
