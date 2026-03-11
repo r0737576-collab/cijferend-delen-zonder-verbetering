@@ -216,18 +216,6 @@ function berekenDelen(deeltal, deler){
   let digitCol = 0;
   let decimalQuotPos = null;
 
-  // === NIVEAU 5: forceer minstens 3 decimalen in het werkveld ===
-  if (state.level === "5") {
-    const intern = toInternal(deeltal);
-    const dpos = intern.indexOf(".");
-    let decs = (dpos === -1) ? 0 : (intern.length - dpos - 1);
-    const needed = 3 - decs;
-    if (needed > 0) {
-      // voeg extra '0'-cijfers toe achter het decimaal deel
-      for (let k = 0; k < needed; k++) chars.push("0");
-    }
-  }
-
   function isDigit(ch){ return ch >= '0' && ch <= '9'; }
 
   function nextDigitChar(i){
