@@ -264,18 +264,21 @@ function berekenDelen(deeltal, deler){
       rest = nieuweRest;
     }
     else if(gestart){
-      const gezakt = nextDigitChar(i+1);
-      stappen.push({
-        huidig: rest,
-        product: 0,
-        rest: rest,
-        q: 0,
-        startKolom: digitCol,
-        breedte: 1,
-        laatsteCijfer: gezakt,
-        decimalStap: false
-      });
-    }
+  const gezakt = nextDigitChar(i+1);
+
+  const breedte = String(rest).length;
+
+  stappen.push({
+    huidig: rest,
+    product: 0,
+    rest: rest,
+    q: 0,
+    startKolom: digitCol - breedte + 1,
+    breedte: breedte,
+    laatsteCijfer: gezakt,
+    decimalStap: false
+     });
+   }
 
     digitCol++;
   }
