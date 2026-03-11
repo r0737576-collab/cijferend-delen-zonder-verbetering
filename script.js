@@ -39,35 +39,34 @@ const CONFIG = {
    FEEDBACK-TEKSTEN (niveau 1-3 inhoudelijk, 4-5 generiek)
 ========================================================= */
 const FEEDBACK = {
-  // Codes die we NU al kunnen detecteren met jouw UI
+  // -- bestond al --
   VERDEEL_FOUT: {
-    1: "Het gekozen cijfer in het quotiënt klopt niet. Kijk hoeveel keer de deler écht in dit getal past. Gebruik eventueel een tafelrij.",
-    2: "Controleer of je quotiënt niet te groot of te klein is.",
-    3: "Fout bij delen: quotiënt klopt niet."
+    1: "Het quotiënt in het antwoordveld klopt niet. Controleer je berekening of je overname uit het werkveld.",
+    2: "Controleer of je quotiënt klopt (let op overnemen).",
+    3: "Quotiënt klopt niet."
   },
   REST_FOUT: {
-    1: "De rest klopt niet. Reken je aftrekking/rest opnieuw na: rest = deeltal − (quotiënt × deler).",
-    2: "Kijk je rest nog eens na.",
-    3: "Fout in rest."
+    1: "De rest in het antwoordveld klopt niet. Reken rest = deeltal − (quotiënt × deler) na, of controleer het overnemen.",
+    2: "Kijk je rest nog eens na (of het overnemen).",
+    3: "Rest klopt niet."
   },
   KOMMA_NIET: {
-    1: "Je bent de komma in het quotiënt vergeten. Zet de komma zodra je voorbij het kommagetal deelt.",
+    1: "Er hoort een komma in het quotiënt. Bepaal en noteer de plaats van de komma.",
     2: "Controleer of er een komma nodig is.",
     3: "Komma ontbreekt."
   },
   KOMMA_FOUT: {
-    1: "De komma staat op de verkeerde plaats in het quotiënt.",
-    2: "Controleer de positie van de komma.",
+    1: "De komma staat op een verkeerde plaats in het quotiënt.",
+    2: "Controleer de kommaplaats.",
     3: "Kommaplaats fout."
   },
-  // Invoer vergeten (praktisch nodig)
   INVOER_QUOTIENT_LEEG: {
     1: "Het quotiënt is niet ingevuld. Vul eerst je antwoord in.",
     2: "Quotiënt ontbreekt.",
     3: "Geen quotiënt."
   },
   INVOER_REST_LEEG: {
-    1: "De rest is niet ingevuld. Vul je rest in of noteer 0 als er geen rest is.",
+    1: "De rest is niet ingevuld. Noteer 0 als er geen rest is.",
     2: "Rest ontbreekt.",
     3: "Geen rest."
   }
@@ -771,30 +770,106 @@ function checkAnswersAndFeedback() {
 
   const qEl = document.getElementById("inputQuotient");
   const rEl = document.getElementById("inputRest");
-  const qIn = qEl ? qEl.value.trim() : "";
-  const rIn = rEl ? rEl.value.trim() : "";
+  const qInRaw = qEl ? qEl.value.trim() : "";
+  const rInRaw = rEl ? rEl.value.trim() : "";
 
   const exp = expectedAnswer();
 
   const errors = [];
 
-  // 0) lege invoer
-  if (!qIn) errors.push("INVOER_QUOTIENT_LEEG");
-  if (!rIn) errors.push("INVOER_REST_LEEG");
+  // ---------- 0) Normaliseer invoer ----------
+  const qInHasComma = /[.,]/.test(qInRaw);     // leerling heeft een komma/punt gezet
+  const rInHasValue = rInRaw !== "";
 
-  // 1) komma-controles (alleen relevant wanneer er *komma* verwacht kán zijn)
-  const commaVisible = state.showCommaPlaceholder;  // jouw flag
-  if (commaVisible) {
-    // gebruiker plaatste geen komma
-    if (state.userDecimalPos == null && (exp.qStr.includes(SEP_UI) || toInternal(exp.qStr).includes('.'))) {
-      errors.push("KOMMA_NIET");
-    }
-    // gebruiker plaatste komma maar op foute plaats
-    if (state.userDecimalPos != null && state.userDecimalPos !== state.decimalQuotPos) {
-      errors.push("KOMMA_FOUT");
+  const qUser = qInRaw === "" ? null : parseLearnerNumber(qInRaw);
+  const rUser = rInRaw === "" ? null : parseLearnerNumber(rInRaw);
+
+  const qExp  = parseLearnerNumber(exp.qStr);
+  const rExp  = parseLearnerNumber(exp.rStr);
+
+  // ---------- 1) Eerst leeg-invoer afhandelen (prioriteit) ----------
+  if (qUser == null) {
+    errors.push("INVOER_QUOTIENT_LEEG");
+  }
+  // Rest: alleen foutmelding als er echt iets verwacht wordt
+  if (rUser == null) {
+    if (rExp != null && Math.abs(rExp) > 1e-12) {
+      // Er is wél een rest verwacht, maar niks ingevuld
+      errors.push("INVOER_REST_LEEG");
+    } else {
+      // Verwachte rest is 0, leeg = ok -> geen fout
     }
   }
 
+  // ---------- 2) Komma-controle ----------
+  // We beschouwen een komma als 'aanwezig' als OF:
+  // - de leerling een komma/punt in het quotiëntveld zette, OF
+  // - de leerling via het raster een komma plaatste (userDecimalPos != null)
+  const expNeedsComma = (exp.qStr.includes(SEP_UI) || toInternal(exp.qStr).includes('.'));
+  const userHasComma = qInHasComma || (state.userDecimalPos != null);
+
+  if (expNeedsComma && !userHasComma) {
+    errors.push("KOMMA_NIET");
+  } else if (expNeedsComma && userHasComma) {
+    // Alleen positie checken als we het via het raster trainen én de user die functie gebruikte
+    // (dus: userDecimalPos is gezet, en we vergelijken met state.decimalQuotPos)
+    if (state.userDecimalPos != null && state.userDecimalPos !== state.decimalQuotPos) {
+      errors.push("KOMMA_FOUT");
+    }
+    // Als alleen in het antwoordveld een komma staat, accepteren we die zonder positiecheck.
+  }
+
+  // ---------- 3) Inhoudelijke checks PAS als de velden niet leeg zijn ----------
+  if (qUser != null && qExp != null && Math.abs(qUser - qExp) > 1e-12) {
+    errors.push("VERDEEL_FOUT"); // inhoudelijk fout of overnamefout in quotiënt
+  }
+  if (rUser != null && rExp != null && Math.abs(rUser - rExp) > 1e-9) {
+    errors.push("REST_FOUT");    // inhoudelijk fout of overnamefout in rest
+  }
+
+  // ---------- 4) UI-uitvoer ----------
+  if (errors.length === 0) {
+    setFieldState(qEl, 'ok');
+    setFieldState(rEl, 'ok');
+    showMessages(["Knap! Alles is correct."], true);
+    return;
+  }
+
+  // Velden rood markeren alleen voor fouten die dat veld raken
+  setFieldState(
+    qEl,
+    (errors.includes("INVOER_QUOTIENT_LEEG") || errors.includes("VERDEEL_FOUT")) ? 'err' : null
+  );
+  setFieldState(
+    rEl,
+    (errors.includes("INVOER_REST_LEEG") || errors.includes("REST_FOUT")) ? 'err' : null
+  );
+
+  // Tekst per niveau
+  if (level === "4") {
+    showMessages([]);  // alleen kleur
+  } else if (level === "5") {
+    showMessages([]);  // niets tonen
+  } else {
+    // Niveaus 1..3: toon inhoudelijke, maar voorkom "foutenlawine"
+    // Regel: als een veld leeg is, tonen we voor dat veld alleen de "ontbreekt"-melding,
+    // niet ook nog de inhoudelijke fout.
+    const msgs = [];
+    const filtered = new Set(errors);
+
+    if (filtered.has("INVOER_QUOTIENT_LEEG")) {
+      filtered.delete("VERDEEL_FOUT");
+    }
+    if (filtered.has("INVOER_REST_LEEG")) {
+      filtered.delete("REST_FOUT");
+    }
+
+    for (const code of filtered) {
+      if (FEEDBACK[code]) msgs.push( feedbackText(code, level) );
+    }
+    showMessages(msgs);
+  }
+}
   // 2) inhoudelijke controle quotiënt/rest
   const qUser = parseLearnerNumber(qIn);
   const rUser = parseLearnerNumber(rIn);
