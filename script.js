@@ -577,18 +577,11 @@ function fillCorrectAnswers(){
   const D = state.originalDividend;
   const d = state.originalDivisor;
 
-  // exact quotiënt
-  let q = D / d;
+  const qVal = Number((D / d).toFixed(10));
+  const rVal = Number((D - qVal * d).toFixed(10));
 
-  // floating point afrondingsfouten opruimen
-  q = Number(q.toFixed(10));
-
-  // rest berekenen
-  let r = D - q * d;
-  r = Number(r.toFixed(10));
-
-  q.value = toUI(q);
-  r.value = toUI(r);
+  q.value = toUI(qVal);
+  r.value = toUI(rVal);
 
   return;
 }
