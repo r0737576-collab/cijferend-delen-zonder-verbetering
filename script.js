@@ -169,44 +169,38 @@ function genereerMoeilijk() {
 }
 
 function genereerZeerMoeilijk() {
-  // Kies een deler met 1–2 decimalen (2..10), geen hele getallen
-  const dec = random(1, 2);           // aantal decimalen in de DELER
-  const pow = 10 ** dec;
 
-  // Willekeurige deler met 'dec' decimalen (2.00..9.99)
-  const raw = random(200, 999);       // zodat raw/100 of raw/10 tussen 2..9.99 valt
-  const divisor = raw / (10 ** 2);    // start met 2 dec; we knippen later indien nodig
-  const divisorRounded = Number(divisor.toFixed(dec)); // precies 'dec' decimalen
+  const dec = random(1,2);
+  const divisor = Number(randomDecimal(2,10,dec).toFixed(dec));
 
-  // Kies quotient-omvang en construeer dividend zodat integer-deel 3–5 cijfers heeft.
-  // We willen rest ≠ 0 na 3 decimalen in de originele schaal.
-  const targetDec = 3; // vaste precisie voor niveau 5 in de opgave/antwoorden
+  const pow = 1000;
 
-  for (let tries = 0; tries < 3000; tries++) {
-    // Kies een quotient met 3 decimalen (1..500)
-    const qPow = 10 ** targetDec;
-    const qInt = random(1 * qPow, 500 * qPow);  // 1.000 .. 500.000
-    const quotient = qInt / qPow;
+  for(let tries=0; tries<2000; tries++){
 
-    // Dividend = divisor * quotient (afronden op targetDec + margin om variatie te houden)
-    // We willen dat (dividend / divisor) bij trunc op 3 dec een rest oplevert.
-    const dividend = rondAf(divisorRounded * quotient, targetDec);
+    // quotiënt met 3 decimalen
+    const qInt = random(1000,500000);
+    const q = qInt / pow;
 
-    const intLen = String(Math.floor(dividend)).length;
-    if (intLen < 3 || intLen > 5) continue;  // 3–5 cijfers vóór de komma in de opgave
+    // rest kleiner dan deler
+    const r = random(1, Math.floor(divisor*1000)-1) / 1000;
 
-    // Check: rest ≠ 0 na 3 dec in originele schaal (trunc op 3 dec)
-    const { r } = divMetVasteDecimalen(dividend, divisorRounded, targetDec);
-    if (r > 0) {
-      return { dividend, divisor: divisorRounded };
+    const dividend = Number((q*divisor + r).toFixed(3));
+
+    const len = String(Math.floor(dividend)).length;
+
+    if(len >=3 && len <=5){
+      return { dividend, divisor };
     }
+
   }
 
-  // Fallback — praktisch zelden nodig
-  const fallbackDivisor = Number(randomDecimal(2, 10, 2).toFixed(2));
-  const fallbackQuot = randomDecimal(1, 500, 3);
-  const fallbackDividend = rondAf(fallbackDivisor * fallbackQuot, 3);
-  return { dividend: fallbackDividend, divisor: fallbackDivisor };
+  const divisorFallback = Number(randomDecimal(2,10,2).toFixed(2));
+  const q = randomDecimal(1,500,3);
+  const r = randomDecimal(0.001, divisorFallback-0.001,3);
+
+  const dividend = Number((q*divisorFallback + r).toFixed(3));
+
+  return { dividend, divisor: divisorFallback };
 }
 
 /* =========================================================
