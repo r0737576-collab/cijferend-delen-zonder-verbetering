@@ -162,6 +162,25 @@
     .gridcell.vComma {
       border-left: 4px solid #2a9d8f !important;
     }
+    /* ====== Feedback UI ====== */
+  #feedbackPanel { 
+  margin-top: 10px; 
+  font-size: 15px; 
+  max-width: 680px;
+  }
+  .msg { 
+  padding: 8px 10px; 
+  border-radius: 6px; 
+  margin: 6px 0; 
+  line-height: 1.3;
+  }
+  .msg.ok { background: #e6f4ea; border: 1px solid #2e7d32; color: #1b5e20; }
+  .msg.err { background: #ffe8e8; border: 1px solid #c62828; color: #7f1d1d; }
+  .msg.info { background: #eef4ff; border: 1px solid #3558a2; color: #1c2b5a; }
+
+  .input-ok { border-color: #2e7d32 !important; box-shadow: 0 0 0 2px rgba(46,125,50,.15); }
+  .input-err { border-color: #c62828 !important; box-shadow: 0 0 0 2px rgba(198,40,40,.15); }
+
   </style>
 </head>
 <body>
@@ -195,9 +214,11 @@
       <div id="level5Hint" aria-live="polite" hidden>
       Tip: in het werkveld rekenen we eerst zonder komma in de deler (weggeschaald).
       De opgave en je antwoorden blijven in de originele schaal.
-</div>
+      </div>
     </div>
 
+    <div id="feedbackPanel" aria-live="polite"></div>
+    
     <div id="gridWrapper">
       <div id="leftSide">
         <div id="grid"></div>
