@@ -184,7 +184,7 @@ function genereerZeerMoeilijk(){
     const rInt = random(1, Math.floor(divisor*1000)-1);
     const r = rInt / 1000;
 
-    // deeltal berekenen
+    // deeltal en
     let dividend = q*divisor + r;
 
     // afronden om floating fouten te vermijden
@@ -246,7 +246,7 @@ function berekenDelen(deeltal, deler){
       const product = q*deler;
       const nieuweRest = rest - product;
 
-      const breedte = String(rest).length;
+      const breedte = Math.max(String(rest).length, String(product).length);
       const startKolom = digitCol - breedte + 1;
       const gezakt = nextDigitChar(i+1);
 
