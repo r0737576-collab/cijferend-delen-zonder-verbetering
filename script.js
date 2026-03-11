@@ -405,19 +405,6 @@ const UI = {
   const node = this.dividendNode;
   node.innerHTML="";
 
-  // --- NIEUW: bij niveau 5 altijd minimaal 3 decimalen tonen ---
-  let internalStr = toInternal(getal);
-  if (state.level === "5") {
-    const dpos = internalStr.indexOf(".");
-    let decs = (dpos === -1) ? 0 : (internalStr.length - dpos - 1);
-    if (decs < 3) {
-      if (dpos === -1) {
-        internalStr = internalStr + ".000".slice(0, 4); // ".000"
-      } else {
-        internalStr = internalStr + "000".slice(0, 3 - decs);
-      }
-    }
-  }
   const s = toUI(internalStr);
   // -------------------------------------------------------------
 
