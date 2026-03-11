@@ -119,6 +119,8 @@ const state = {
   // --- NIEUW voor stap-voor-stap ---
   stepMode: false,
   userSteps: [],
+   userGrid: [],   // 2D-array met leerlinginvoer per rooster-cel
+
 
   level: "1",
   instellingen: { decimalen: false, controle: false },
@@ -504,20 +506,16 @@ const UI = {
   document.getElementById("btnNew")
     .addEventListener("click", startNieuweOefening);
 
-   // --- NIEUW: Stap-modus aan/uit ---
+   // --- Stap-modus aan/uit (rooster invulbaar maken) ---
 const chk = document.getElementById("chkStepMode");
 if (chk) {
   chk.addEventListener("change", () => {
     state.stepMode = chk.checked;
-
     if (state.stepMode) {
-      // Stap-invulvelden voorbereiden + tonen
-      initUserSteps();
-      renderStepInputs();
-    } else {
-      // Paneel verbergen
-      document.getElementById("stepInputs").hidden = true;
+      initUserGrid();
     }
+    // Tekenen met (of zonder) invulbare cellen
+    UI.tekenworkArea(state);
   });
 }
      
@@ -545,11 +543,11 @@ if (chk) {
     e.preventDefault();
         }
       });
-   // Nakijk werkblad (stap-voor-stap)
+   // Nakijk werkblad (rooster)
    const btnSteps = document.getElementById("btnCheckSteps");
    if (btnSteps) {
-     btnSteps.addEventListener("click", () => checkWorkSteps());
-}
+  btnSteps.addEventListener("click", () => checkWorkGrid());
+   }
      
 },
 
@@ -682,33 +680,80 @@ if (chk) {
   },
 
   tekenworkArea(state){
-    const node=this.workAreaNode;
-    node.innerHTML="";
+  const node = this.workAreaNode;
+  node.innerHTML = "";
 
-    const rooster = vulRooster(state);
-    const rows = rooster.length;
-    const cols = Math.max(...rooster.map(r=>r.length));
+  const rooster = vulRooster(state);
+  const rows = rooster.length;
+  const cols = Math.max(...rooster.map(r => r.length));
 
-    node.style.display="grid";
-    node.style.gridTemplateColumns=`repeat(${cols},40px)`;
-    node.style.gridTemplateRows=`repeat(${rows},40px)`;
+  node.style.display = "grid";
+  node.style.gridTemplateColumns = `repeat(${cols},40px)`;
+  node.style.gridTemplateRows = `repeat(${rows},40px)`;
 
-    for(let r=0;r<rows;r++){
-      for(let c=0;c<cols;c++){
-        const celData = rooster[r][c] || {waarde:"",type:""};
-        const cel=document.createElement("div");
-        cel.className="gridcell";
-        cel.textContent = celData.waarde;
-
-        if(celData.type){
-          const parts = celData.type.split(" ");
-          parts.forEach(t=>{ if(t.trim()) cel.classList.add(t.trim()); });
-        }
-
-        node.appendChild(cel);
-      }
+  // Als stap-modus aan staat, zorg dat userGrid de juiste maat heeft
+  if (state.stepMode) {
+    if (!state.userGrid || state.userGrid.length !== rows) {
+      initUserGrid();
     }
   }
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const celData = (rooster[r][c]) || { waarde:"", type:"" };
+      const cel = document.createElement("div");
+      cel.className = "gridcell";
+
+      // type kan samengestelde klassen bevatten ("aftrek vComma"); splits ze
+      if (celData.type) {
+        const parts = celData.type.split(" ");
+        parts.forEach(t => { if (t.trim()) cel.classList.add(t.trim()); });
+      }
+
+      const mainType = (celData.type || "").split(" ")[0];
+
+      // In stap-modus maken we 'product', 'aftrek' en 'gezakt' invulbaar
+      const isEditableType = /^(product|aftrek|gezakt)$/.test(mainType);
+      if (state.stepMode && isEditableType) {
+        cel.contentEditable = "true";
+        cel.classList.add("editable");
+        // Toon de huidige invoer (1 teken) of leeg
+        const v = (state.userGrid[r] && state.userGrid[r][c] != null) ? state.userGrid[r][c] : "";
+        cel.textContent = v;
+
+        // Bewaar r/c in data-attribuut voor updates
+        cel.dataset.r = String(r);
+        cel.dataset.c = String(c);
+
+        // Alleen cijfers toestaan, en max 1 karakter
+        cel.addEventListener("beforeinput", (e) => {
+          if (e.inputType === "insertText") {
+            const ch = e.data;
+            if (!/^[0-9]$/.test(ch)) { e.preventDefault(); return; }
+            // Overschrijf de inhoud zodat er max 1 cijfer staat
+            // (we zetten in 'input' de definitieve inhoud)
+          }
+        });
+
+        cel.addEventListener("input", (e) => {
+          const rr = Number(e.currentTarget.dataset.r);
+          const cc = Number(e.currentTarget.dataset.c);
+          // Houd enkel 1 cijfer over
+          let txt = e.currentTarget.textContent.replace(/\D/g, "");
+          if (txt.length > 1) txt = txt.slice(-1); // laatste tik telt
+          e.currentTarget.textContent = txt;
+          state.userGrid[rr][cc] = txt;
+        });
+
+      } else {
+        // Niet invulbaar: toon de verwachte waarde (zoals vroeger)
+        cel.textContent = celData.waarde;
+      }
+
+      node.appendChild(cel);
+    }
+  }
+}
 };
 
 /* =========================================================
@@ -1094,6 +1139,82 @@ function checkWorkSteps() {
 }
 
 /* =========================================================
+   Rooster-invoer voorbereiden (zelfde maat als verwacht rooster)
+========================================================= */
+function initUserGrid() {
+  const rooster = vulRooster(state);
+  const rows = rooster.length;
+  const cols = Math.max(...rooster.map(r => r.length));
+  state.userGrid = Array.from({length: rows}, () => Array.from({length: cols}, () => ""));
+}
+
+/* =========================================================
+   Nakijken in het rooster (cel per cel)
+========================================================= */
+function clearGridMarks(){
+  const node = UI.workAreaNode;
+  if (!node) return;
+  [...node.children].forEach(el => el.classList && el.classList.remove("cell-ok","cell-err"));
+}
+
+function checkWorkGrid() {
+  const level = state.level;
+
+  const rooster = vulRooster(state);
+  const rows = rooster.length;
+  const cols = Math.max(...rooster.map(r => r.length));
+
+  clearGridMarks();
+
+  const node = UI.workAreaNode;
+  const msgs = [];
+
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const celData = (rooster[r][c]) || { waarde:"", type:"" };
+      const mainType = (celData.type || "").split(" ")[0];
+      const isCheckType = /^(product|aftrek|gezakt)$/.test(mainType);
+      if (!isCheckType) continue;
+
+      const exp = String(celData.waarde || "");
+      const usr = (state.userGrid[r] && state.userGrid[r][c] != null) ? String(state.userGrid[r][c]) : "";
+
+      const ok = (usr === exp);
+
+      // DOM-cel ophalen en kleuren
+      const domIndex = r*cols + c; // omdat we grid cellen in rijvolgorde append'en
+      const domCell = node.children[domIndex];
+      if (domCell) {
+        domCell.classList.add(ok ? "cell-ok" : "cell-err");
+      }
+
+      // Tekstfeedback (alleen niveau 1..3), 1 melding per stap/type is genoeg
+      if (!ok && level !== "4" && level !== "5") {
+        const stapIndex = Math.floor(r/2); // product/ aftrek-rij per stap
+        if (mainType === "product" && FEEDBACK.STEP_PRODUCT_FOUT) {
+          msgs.push( msg(FEEDBACK.STEP_PRODUCT_FOUT[level], stapIndex) );
+        }
+        if (mainType === "aftrek" && FEEDBACK.STEP_AFTREK_FOUT) {
+          msgs.push( msg(FEEDBACK.STEP_AFTREK_FOUT[level], stapIndex) );
+        }
+        if (mainType === "gezakt" && FEEDBACK.STEP_ZAKKEN_FOUT) {
+          msgs.push( msg(FEEDBACK.STEP_ZAKKEN_FOUT[level], stapIndex) );
+        }
+      }
+    }
+  }
+
+  // Dubbels weghalen
+  const unique = [...new Set(msgs)];
+
+  if (level === "4" || level === "5") {
+    showMessages([]); // alleen kleuren of niets
+  } else {
+    showMessages(unique.length ? unique : ["Knap! Alles klopt."], unique.length === 0);
+  }
+}
+
+/* =========================================================
    START NIEUWE OEFENING
 ========================================================= */
 function startNieuweOefening(){
@@ -1140,10 +1261,14 @@ function startNieuweOefening(){
   document.getElementById("opgaveTekst").textContent = opgaveTekst;
 
   resetAnswerInputs();
-   clearFeedbackUI();      // wis oude feedback
-   // fillCorrectAnswers();  // NIET automatisch: alleen via “Zelfcontrole”
+clearFeedbackUI();
+// fillCorrectAnswers();  // NIET automatisch
 
-   UI.tekenOefening();
+if (state.stepMode) {
+  initUserGrid();        // leeg invulrooster met juiste maat
+}
+
+UI.tekenOefening();      // tekent ook workArea; in stepMode worden cellen invulbaar
 
    // Als de stap-modus aanstaat, (her)bouw het paneel met lege velden
    if (state.stepMode) {
