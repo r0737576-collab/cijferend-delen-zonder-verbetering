@@ -597,8 +597,9 @@ function fillCorrectAnswers(){
   r.value = toUI(rVal);
 
   return;
+   }
 }
-
+   
 /* =========================================================
    START NIEUWE OEFENING
 ========================================================= */
