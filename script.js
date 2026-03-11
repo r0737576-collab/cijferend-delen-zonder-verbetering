@@ -401,12 +401,11 @@ const UI = {
     this.tekenworkArea(state);
   },
 
-  tekenDividend(getal){
+ tekenDividend(getal){
   const node = this.dividendNode;
   node.innerHTML="";
 
-  const s = toUI(internalStr);
-  // -------------------------------------------------------------
+  const s = toUI(getal);
 
   const chars = s.split("");
   const cijfers = chars.filter(c=>c>='0' && c<='9');
