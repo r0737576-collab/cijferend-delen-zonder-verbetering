@@ -779,7 +779,7 @@ function checkAnswersAndFeedback() {
 
   // ---------- 0) Normaliseer invoer ----------
   const qInHasComma = /[.,]/.test(qInRaw);     // leerling heeft een komma/punt gezet
-  const rInHasValue = rInRaw !== "";
+  // const rInHasValue = rInRaw !== "";         // (optioneel; niet nodig in de logica hieronder)
 
   const qUser = qInRaw === "" ? null : parseLearnerNumber(qInRaw);
   const rUser = rInRaw === "" ? null : parseLearnerNumber(rInRaw);
@@ -802,8 +802,8 @@ function checkAnswersAndFeedback() {
   }
 
   // ---------- 2) Komma-controle ----------
-  // We beschouwen een komma als 'aanwezig' als OF:
-  // - de leerling een komma/punt in het quotiëntveld zette, OF
+  // Komma telt als aanwezig als OF:
+  // - de leerling in het antwoordveld een komma/punt heeft gezet, OF
   // - de leerling via het raster een komma plaatste (userDecimalPos != null)
   const expNeedsComma = (exp.qStr.includes(SEP_UI) || toInternal(exp.qStr).includes('.'));
   const userHasComma = qInHasComma || (state.userDecimalPos != null);
@@ -811,12 +811,11 @@ function checkAnswersAndFeedback() {
   if (expNeedsComma && !userHasComma) {
     errors.push("KOMMA_NIET");
   } else if (expNeedsComma && userHasComma) {
-    // Alleen positie checken als we het via het raster trainen én de user die functie gebruikte
-    // (dus: userDecimalPos is gezet, en we vergelijken met state.decimalQuotPos)
+    // Alleen positie checken als de leerling de raster-komma gebruikte
     if (state.userDecimalPos != null && state.userDecimalPos !== state.decimalQuotPos) {
       errors.push("KOMMA_FOUT");
     }
-    // Als alleen in het antwoordveld een komma staat, accepteren we die zonder positiecheck.
+    // Komma uitsluitend in het antwoordveld? Dan accepteren we zonder positiecheck.
   }
 
   // ---------- 3) Inhoudelijke checks PAS als de velden niet leeg zijn ----------
@@ -851,9 +850,7 @@ function checkAnswersAndFeedback() {
   } else if (level === "5") {
     showMessages([]);  // niets tonen
   } else {
-    // Niveaus 1..3: toon inhoudelijke, maar voorkom "foutenlawine"
-    // Regel: als een veld leeg is, tonen we voor dat veld alleen de "ontbreekt"-melding,
-    // niet ook nog de inhoudelijke fout.
+    // Niveaus 1..3: toon inhoudelijke feedback, voorkom dubbele meldingen
     const msgs = [];
     const filtered = new Set(errors);
 
@@ -865,50 +862,6 @@ function checkAnswersAndFeedback() {
     }
 
     for (const code of filtered) {
-      if (FEEDBACK[code]) msgs.push( feedbackText(code, level) );
-    }
-    showMessages(msgs);
-  }
-}
-  // 2) inhoudelijke controle quotiënt/rest
-  const qUser = parseLearnerNumber(qIn);
-  const rUser = parseLearnerNumber(rIn);
-  const qExp  = parseLearnerNumber(exp.qStr);
-  const rExp  = parseLearnerNumber(exp.rStr);
-
-  // vergelijk quotiënt
-  if (qUser == null || qExp == null || Math.abs(qUser - qExp) > 1e-12) {
-    errors.push("VERDEEL_FOUT");
-  }
-
-  // vergelijk rest (alleen checken als leerling iets invulde)
-  if (rUser == null || rExp == null || Math.abs(rUser - rExp) > 1e-9) {
-    errors.push("REST_FOUT");
-  }
-
-  // ==== UI-afhandeling per niveau ====
-  if (errors.length === 0) {
-    setFieldState(qEl, 'ok');
-    setFieldState(rEl, 'ok');
-    showMessages(["Knap! Alles is correct."], true);
-    return;
-  }
-
-  // markeer velden
-  setFieldState(qEl, errors.includes("VERDEEL_FOUT") || errors.includes("INVOER_QUOTIENT_LEEG") ? 'err' : null);
-  setFieldState(rEl, errors.includes("REST_FOUT")   || errors.includes("INVOER_REST_LEEG")     ? 'err' : null);
-
-  // Toon feedback volgens niveau:
-  if (level === "4") {
-    // Alleen markeren (geen tekst)
-    showMessages([]);
-  } else if (level === "5") {
-    // Helemaal geen feedback (alleen eindscore-idee)
-    showMessages([]);
-  } else {
-    // Niveaus 1..3: inhoudelijke boodschap
-    const msgs = [];
-    for (const code of errors) {
       if (FEEDBACK[code]) msgs.push( feedbackText(code, level) );
     }
     showMessages(msgs);
