@@ -707,7 +707,7 @@ if (chk) {
   node.style.gridTemplateColumns = `repeat(${cols},40px)`;
   node.style.gridTemplateRows = `repeat(${rows},40px)`;
 
-  // Als stap-modus aan staat, zorg dat userGrid de juiste maat heeft
+  // Als stap-modus aan staat ➜ userGrid moet juiste maat hebben
   if (state.stepMode) {
     if (!state.userGrid || state.userGrid.length !== rows) {
       initUserGrid();
@@ -720,7 +720,7 @@ if (chk) {
       const cel = document.createElement("div");
       cel.className = "gridcell";
 
-      // type kan samengestelde klassen bevatten ("aftrek vComma"); splits ze
+      // type(s) zoals "product", "aftrek", "gezakt"
       if (celData.type) {
         const parts = celData.type.split(" ");
         parts.forEach(t => { if (t.trim()) cel.classList.add(t.trim()); });
@@ -728,53 +728,47 @@ if (chk) {
 
       const mainType = (celData.type || "").split(" ")[0];
 
-      // --- Aftreklijn pas tonen als er product is ingevuld in deze stap ---
-      const stepIndex = Math.floor(r/2);    // product/aftrek paren vormen 1 stap
+      // --- NIEUW: aftreklijn pas tonen wanneer product is ingevuld ---
       if (mainType === "aftrek") {
-        const productRow = stepIndex * 2;   // product-rij voor deze stap
+        const stepIndex = Math.floor(r / 2);
+        const productRow = stepIndex * 2;
         if (!anyInputInRow(productRow)) {
-          cel.classList.remove("aftrek");   // dikke lijn verbergen tot product ingevuld
+          cel.classList.remove("aftrek"); // dikke streep weghalen
         }
       }
 
-      // In stap-modus maken we 'product', 'aftrek' en 'gezakt' invulbaar
-      const isEditableType = /^(product|aftrek|gezakt)$/.test(mainType);
-      if (state.stepMode && isEditableType) {
+      const editable = /^(product|aftrek|gezakt)$/.test(mainType);
+
+      if (state.stepMode && editable) {
+        // Leerling kan hier typen
         cel.contentEditable = "true";
         cel.classList.add("editable");
 
-        // Toon de huidige invoer (1 teken) of leeg
-        const v = (state.userGrid[r] && state.userGrid[r][c] != null) ? state.userGrid[r][c] : "";
+        const v = state.userGrid[r]?.[c] ?? "";
         cel.textContent = v;
 
-        // Bewaar r/c in data-attribuut voor updates
-        cel.dataset.r = String(r);
-        cel.dataset.c = String(c);
+        cel.dataset.r = r;
+        cel.dataset.c = c;
 
-        // Alleen cijfers toestaan, en max 1 karakter
-        cel.addEventListener("beforeinput", (e) => {
-          if (e.inputType === "insertText") {
-            const ch = e.data;
-            if (!/^[0-9]$/.test(ch)) { e.preventDefault(); }
+        cel.addEventListener("beforeinput", e => {
+          if (e.inputType === "insertText" && !/^[0-9]$/.test(e.data)) {
+            e.preventDefault();
           }
         });
 
-        cel.addEventListener("input", (e) => {
-          const rr = Number(e.currentTarget.dataset.r);
-          const cc = Number(e.currentTarget.dataset.c);
-          // Houd enkel 1 cijfer over
-          let txt = e.currentTarget.textContent.replace(/\D/g, "");
-          if (txt.length > 1) txt = txt.slice(-1); // laatste tik telt
+        cel.addEventListener("input", e => {
+          let txt = e.currentTarget.textContent.replace(/\D/g,"");
+          if (txt.length > 1) txt = txt.slice(-1);
           e.currentTarget.textContent = txt;
-          state.userGrid[rr][cc] = txt;
+          state.userGrid[r][c] = txt;
         });
 
       } else {
-        // Niet invulbaar: toon de opgave maar hou werkveld leeg
+        // Niet invulbaar → werkveld leeg houden
         if (mainType === "product" || mainType === "aftrek" || mainType === "gezakt") {
-          cel.textContent = "";             // werkcellen leeg
+          cel.textContent = "";
         } else {
-          cel.textContent = celData.waarde; // opgavecellen (dividend/deler) tonen
+          cel.textContent = celData.waarde; // enkel voor dividend / divisor
         }
       }
 
