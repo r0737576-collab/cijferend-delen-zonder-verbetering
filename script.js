@@ -747,7 +747,14 @@ if (chk) {
 
       } else {
         // Niet invulbaar: toon de verwachte waarde (zoals vroeger)
-        cel.textContent = celData.waarde;
+        // Werkveld leeg houden: product, aftrek en gezakt NIET tonen
+         const mainType = (celData.type || "").split(" ")[0];
+
+         if (mainType === "product" || mainType === "aftrek" || mainType === "gezakt") {
+          cel.textContent = "";
+}       else {
+          cel.textContent = celData.waarde;
+}
       }
 
       node.appendChild(cel);
@@ -1261,14 +1268,14 @@ function startNieuweOefening(){
   document.getElementById("opgaveTekst").textContent = opgaveTekst;
 
   resetAnswerInputs();
-clearFeedbackUI();
-// fillCorrectAnswers();  // NIET automatisch
+   clearFeedbackUI();
 
-if (state.stepMode) {
-  initUserGrid();        // leeg invulrooster met juiste maat
-}
+   // QUOTIENT + REST altijd leeg laten
+   document.getElementById("inputQuotient").value = "";
+   document.getElementById("inputRest").value = "";
 
-UI.tekenOefening();      // tekent ook workArea; in stepMode worden cellen invulbaar
+   // Werkveld tekenen (we maken het in de volgende stap ook leeg)
+   UI.tekenOefening();
 
    // Als de stap-modus aanstaat, (her)bouw het paneel met lege velden
    if (state.stepMode) {
