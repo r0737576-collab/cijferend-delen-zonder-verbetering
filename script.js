@@ -725,30 +725,24 @@ if (chk) {
         const parts = celData.type.split(" ");
         parts.forEach(t => { if (t.trim()) cel.classList.add(t.trim()); });
       }
-      // --- NIEUW: aftreklijn pas tonen als er product is ingevuld in deze stap ---
+
       const mainType = (celData.type || "").split(" ")[0];
 
-      // Bepaal voor deze rij bij welke stap we zitten
-      const rowIndex = r; // huidige rij in het grid
-      const stepIndex = Math.floor(rowIndex / 2);         // product=aftrek paren
-
+      // --- Aftreklijn pas tonen als er product is ingevuld in deze stap ---
+      const stepIndex = Math.floor(r/2);    // product/aftrek paren vormen 1 stap
       if (mainType === "aftrek") {
-      // Product-rij voor deze stap is altijd 2 * stepIndex
-      const productRow = stepIndex * 2;
-
-      // Als er (nog) niets staat in de product-rij -> lijn verbergen
-      if (!anyInputInRow(productRow)) {
-          cel.classList.remove("aftrek"); // haalt de dikke lijn weg
-  }
-}
-       
-      const mainType = (celData.type || "").split(" ")[0];
+        const productRow = stepIndex * 2;   // product-rij voor deze stap
+        if (!anyInputInRow(productRow)) {
+          cel.classList.remove("aftrek");   // dikke lijn verbergen tot product ingevuld
+        }
+      }
 
       // In stap-modus maken we 'product', 'aftrek' en 'gezakt' invulbaar
       const isEditableType = /^(product|aftrek|gezakt)$/.test(mainType);
       if (state.stepMode && isEditableType) {
         cel.contentEditable = "true";
         cel.classList.add("editable");
+
         // Toon de huidige invoer (1 teken) of leeg
         const v = (state.userGrid[r] && state.userGrid[r][c] != null) ? state.userGrid[r][c] : "";
         cel.textContent = v;
@@ -761,9 +755,7 @@ if (chk) {
         cel.addEventListener("beforeinput", (e) => {
           if (e.inputType === "insertText") {
             const ch = e.data;
-            if (!/^[0-9]$/.test(ch)) { e.preventDefault(); return; }
-            // Overschrijf de inhoud zodat er max 1 cijfer staat
-            // (we zetten in 'input' de definitieve inhoud)
+            if (!/^[0-9]$/.test(ch)) { e.preventDefault(); }
           }
         });
 
@@ -778,23 +770,18 @@ if (chk) {
         });
 
       } else {
-        // Niet invulbaar: toon de verwachte waarde (zoals vroeger)
-        // Werkveld leeg houden: product, aftrek en gezakt NIET tonen
-         const mainType = (celData.type || "").split(" ")[0];
-
-         if (mainType === "product" || mainType === "aftrek" || mainType === "gezakt") {
-          cel.textContent = "";
-}       else {
-          cel.textContent = celData.waarde;
-}
+        // Niet invulbaar: toon de opgave maar hou werkveld leeg
+        if (mainType === "product" || mainType === "aftrek" || mainType === "gezakt") {
+          cel.textContent = "";             // werkcellen leeg
+        } else {
+          cel.textContent = celData.waarde; // opgavecellen (dividend/deler) tonen
+        }
       }
 
       node.appendChild(cel);
     }
   }
 }
-};
-
 /* =========================================================
    ANTWOORDVELDEN
 ========================================================= */
@@ -1330,7 +1317,6 @@ function startNieuweOefening(){
     renderStepInputs();
   }
 }
-``
 
 /* =========================================================
    BOOTSTRAP
