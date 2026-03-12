@@ -774,6 +774,8 @@ if (chk) {
           if (txt.length > 1) txt = txt.slice(-1);
           e.currentTarget.textContent = txt;
           state.userGrid[r][c] = txt;
+
+           UI.tekenworkArea(state);
         });
 
       } else {
