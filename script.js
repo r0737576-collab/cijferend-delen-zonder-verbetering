@@ -639,16 +639,32 @@ if (chk) {
 
   // Als we (nog) niets willen tonen: teken lege cellen, zonder komma
   if (!state.revealQuotient) {
-    node.style.display = "grid";
-    node.style.gridTemplateColumns = `repeat(${digitsCount},40px)`;
-    for (let i = 0; i < digitsCount; i++) {
-      const cel = document.createElement("div");
-      cel.className = "gridcell";
-      cel.textContent = ""; // leeg
-      node.appendChild(cel);
-    }
-    return;
+  node.style.display = "grid";
+  node.style.gridTemplateColumns = `repeat(${digitsCount},40px)`;
+
+  if(!state.userQuotient){
+    state.userQuotient = Array(digitsCount).fill("");
   }
+
+  for (let i = 0; i < digitsCount; i++) {
+    const cel = document.createElement("div");
+    cel.className = "gridcell";
+    cel.contentEditable = true;
+
+    cel.textContent = state.userQuotient[i] || "";
+
+    cel.addEventListener("input", e=>{
+      let v = e.currentTarget.textContent.replace(/\D/g,"");
+      if(v.length>1) v=v.slice(-1);
+      e.currentTarget.textContent=v;
+      state.userQuotient[i]=v;
+    });
+
+    node.appendChild(cel);
+  }
+
+  return;
+}
 
   // --- Anders: de bestaande weergave (met cijfers en evt. komma) ---
   const showComma = state.showCommaPlaceholder;
@@ -708,11 +724,9 @@ if (chk) {
   node.style.gridTemplateRows = `repeat(${rows},40px)`;
 
   // Als stap-modus aan staat ➜ userGrid moet juiste maat hebben
-  if (state.stepMode) {
-    if (!state.userGrid || state.userGrid.length !== rows) {
-      initUserGrid();
-    }
-  }
+  if (!state.userGrid || state.userGrid.length !== rows) {
+  initUserGrid();
+   }
 
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
@@ -739,10 +753,9 @@ if (chk) {
 
       const editable = /^(product|aftrek|gezakt)$/.test(mainType);
 
-      if (state.stepMode && editable) {
+      if (editable) {
         // Leerling kan hier typen
         cel.contentEditable = "true";
-        cel.classList.add("editable");
 
         const v = state.userGrid[r]?.[c] ?? "";
         cel.textContent = v;
@@ -1274,6 +1287,7 @@ function startNieuweOefening(){
   state.stappen         = res.stappen;
   state.decimalQuotPos  = res.decimalQuotPos;
   state.userDecimalPos  = null;                 // eigen komma nog niet gezet
+   state.userQuotient = [];
   state.selectedIndex   = res.decimalQuotPos;
 
   const showDiv = toInternal(deeltal).includes(".");
