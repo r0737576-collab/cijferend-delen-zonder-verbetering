@@ -127,6 +127,7 @@ const state = {
 
   showCommaPlaceholder: false,
   decimalReminderShown: false,
+   revealQuotient: false,   // toon géén quotiëntcijfers bij start
   selectedIndex: null,
   decimalQuotPos: null,
   userDecimalPos: null,
@@ -631,53 +632,68 @@ if (chk) {
   },
 
   tekenQuotient(stappen){
-    const node=this.quotientNode;
-    node.innerHTML="";
+  const node = this.quotientNode;
+  node.innerHTML = "";
 
-    const digitsCount = stappen.length;
-    const showComma = state.showCommaPlaceholder;
+  const digitsCount = stappen.length;
 
-    const commaPos = showComma
-      ? (state.userDecimalPos ?? state.decimalQuotPos)
-      : null;
-
-    const totalCols = digitsCount + (showComma ? 1 : 0);
-
-    node.style.display="grid";
-    node.style.gridTemplateColumns=`repeat(${totalCols},40px)`;
-
-    let digitPtr=0;
-
-    for(let pos=0; pos<=digitsCount; pos++){
-
-      if(showComma && pos===commaPos){
-        const cel=document.createElement("div");
-        cel.className="gridcell comma";
-        cel.textContent=",";
-        cel.classList.add(
-          state.userDecimalPos==null ? "expected" : "userPlaced"
-        );
-        node.appendChild(cel);
-      }
-
-      if(digitPtr < digitsCount){
-        const cel=document.createElement("div");
-        cel.className="gridcell";
-        cel.textContent = stappen[digitPtr].q;
-
-        cel.addEventListener("click",()=>{
-          state.selectedIndex = pos;
-          this.tekenQuotient(stappen);
-        });
-
-        if(state.selectedIndex===pos)
-          cel.classList.add("sel");
-
-        node.appendChild(cel);
-        digitPtr++;
-      }
+  // Als we (nog) niets willen tonen: teken lege cellen, zonder komma
+  if (!state.revealQuotient) {
+    node.style.display = "grid";
+    node.style.gridTemplateColumns = `repeat(${digitsCount},40px)`;
+    for (let i = 0; i < digitsCount; i++) {
+      const cel = document.createElement("div");
+      cel.className = "gridcell";
+      cel.textContent = ""; // leeg
+      node.appendChild(cel);
     }
-  },
+    return;
+  }
+
+  // --- Anders: de bestaande weergave (met cijfers en evt. komma) ---
+  const showComma = state.showCommaPlaceholder;
+
+  const commaPos = showComma
+    ? (state.userDecimalPos ?? state.decimalQuotPos)
+    : null;
+
+  const totalCols = digitsCount + (showComma ? 1 : 0);
+
+  node.style.display = "grid";
+  node.style.gridTemplateColumns = `repeat(${totalCols},40px)`;
+
+  let digitPtr = 0;
+
+  for (let pos = 0; pos <= digitsCount; pos++) {
+
+    if (showComma && pos === commaPos) {
+      const cel = document.createElement("div");
+      cel.className = "gridcell comma";
+      cel.textContent = ",";
+      cel.classList.add(
+        state.userDecimalPos == null ? "expected" : "userPlaced"
+      );
+      node.appendChild(cel);
+    }
+
+    if (digitPtr < digitsCount) {
+      const cel = document.createElement("div");
+      cel.className = "gridcell";
+      cel.textContent = stappen[digitPtr].q;
+
+      cel.addEventListener("click", () => {
+        state.selectedIndex = pos;
+        this.tekenQuotient(stappen);
+      });
+
+      if (state.selectedIndex === pos)
+        cel.classList.add("sel");
+
+      node.appendChild(cel);
+      digitPtr++;
+    }
+  }
+},
 
   tekenworkArea(state){
   const node = this.workAreaNode;
@@ -709,7 +725,23 @@ if (chk) {
         const parts = celData.type.split(" ");
         parts.forEach(t => { if (t.trim()) cel.classList.add(t.trim()); });
       }
+      // --- NIEUW: aftreklijn pas tonen als er product is ingevuld in deze stap ---
+      const mainType = (celData.type || "").split(" ")[0];
 
+      // Bepaal voor deze rij bij welke stap we zitten
+      const rowIndex = r; // huidige rij in het grid
+      const stepIndex = Math.floor(rowIndex / 2);         // product=aftrek paren
+
+      if (mainType === "aftrek") {
+      // Product-rij voor deze stap is altijd 2 * stepIndex
+      const productRow = stepIndex * 2;
+
+      // Als er (nog) niets staat in de product-rij -> lijn verbergen
+      if (!anyInputInRow(productRow)) {
+          cel.classList.remove("aftrek"); // haalt de dikke lijn weg
+  }
+}
+       
       const mainType = (celData.type || "").split(" ")[0];
 
       // In stap-modus maken we 'product', 'aftrek' en 'gezakt' invulbaar
@@ -1221,68 +1253,84 @@ function checkWorkGrid() {
   }
 }
 
+function anyInputInRow(rowIndex) {
+  const grid = state.userGrid || [];
+  if (!grid[rowIndex]) return false;
+  return grid[rowIndex].some(v => v != null && String(v).trim() !== "");
+}
 /* =========================================================
    START NIEUWE OEFENING
 ========================================================= */
 function startNieuweOefening(){
-  const diff=document.getElementById("difficulty").value;
-  state.level=diff;
-  state.decimalReminderShown=false;
+  const diff = document.getElementById("difficulty").value;
+  state.level = diff;
+  state.decimalReminderShown = false;
 
   const oef = genereerOefening(diff);
 
-  let deeltal=oef.dividend;
-  let deler=oef.divisor;
+  let deeltal = oef.dividend;
+  let deler   = oef.divisor;
 
-  state.originalDividend=deeltal;
-  state.originalDivisor=deler;
+  state.originalDividend = deeltal;
+  state.originalDivisor  = deler;
 
-  if(diff==="5"){
-    const k=decimalPlaces(deler);
-    if(k>0){
-      const keep=Math.max(0,CONFIG.maxDecimalen-k);
-      deeltal = scaleNumber(deeltal,k,keep);
-      deler   = Math.round(parseFloat(toInternal(deler))*(10**k));
+  // Niveau 5: intern schalen (zoals jij al had)
+  if (diff === "5") {
+    const k = decimalPlaces(deler);
+    if (k > 0) {
+      const keep = Math.max(0, CONFIG.maxDecimalen - k);
+      deeltal = scaleNumber(deeltal, k, keep);
+      deler   = Math.round(parseFloat(toInternal(deler)) * (10 ** k));
     }
   }
 
-  state.dividend=deeltal;
-  state.divisor=deler;
+  state.dividend = deeltal;
+  state.divisor  = deler;
 
-  const res=berekenDelen(deeltal,deler);
-  state.stappen=res.stappen;
-  state.decimalQuotPos=res.decimalQuotPos;
-  state.userDecimalPos=null;
-  state.selectedIndex=res.decimalQuotPos;
+  // Bereken stappen en komma‑positie (worden gebruikt voor feedback/tekenen)
+  const res = berekenDelen(deeltal, deler);
+  state.stappen         = res.stappen;
+  state.decimalQuotPos  = res.decimalQuotPos;
+  state.userDecimalPos  = null;                 // eigen komma nog niet gezet
+  state.selectedIndex   = res.decimalQuotPos;
 
   const showDiv = toInternal(deeltal).includes(".");
   const showDer = toInternal(deler).includes(".");
   state.showCommaPlaceholder = showDiv || showDer;
 
-  state.decimalDividendPos=toInternal(deeltal).indexOf(".");
+  state.decimalDividendPos = toInternal(deeltal).indexOf(".");
 
-  const opgaveTekst = (diff==="5")
+  // Opgavetekst (niveau 5 toont originele schaal)
+  const opgaveTekst = (diff === "5")
     ? `${toUI(state.originalDividend)} : ${toUI(state.originalDivisor)} =`
     : `${toUI(deeltal)} : ${toUI(deler)} =`;
-
   document.getElementById("opgaveTekst").textContent = opgaveTekst;
 
+  // Antwoordvelden leeg + feedback leeg
   resetAnswerInputs();
-   clearFeedbackUI();
+  clearFeedbackUI();
+  document.getElementById("inputQuotient").value = "";
+  document.getElementById("inputRest").value = "";
 
-   // QUOTIENT + REST altijd leeg laten
-   document.getElementById("inputQuotient").value = "";
-   document.getElementById("inputRest").value = "";
+  // --- BELANGRIJK: quotiëntrij leeg houden bij het tekenen ---
+  state.revealQuotient = false;   // <<< HIER zetten we 'm uit
+  state.userDecimalPos = null;    // nog geen komma in quotiënt
 
-   // Werkveld tekenen (we maken het in de volgende stap ook leeg)
-   UI.tekenOefening();
+  // (optioneel) als je stap‑modus gebruikt met invulrooster:
+  if (state.stepMode && typeof initUserGrid === "function") {
+    initUserGrid();               // leeg invulrooster met juiste afmeting
+  }
 
-   // Als de stap-modus aanstaat, (her)bouw het paneel met lege velden
-   if (state.stepMode) {
-  initUserSteps();
-  renderStepInputs();
-   }
+  // Nu pas tekenen (grid, divisor, dividend, lege quotiënt en leeg werkveld)
+  UI.tekenOefening();
+
+  // Als je ook het oude stepInputs‑paneel gebruikt:
+  if (state.stepMode && typeof initUserSteps === "function" && typeof renderStepInputs === "function") {
+    initUserSteps();
+    renderStepInputs();
+  }
 }
+``
 
 /* =========================================================
    BOOTSTRAP
