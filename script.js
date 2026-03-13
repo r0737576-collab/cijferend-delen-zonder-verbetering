@@ -1280,10 +1280,9 @@ function checkWorkSteps() {
    Rooster-invoer voorbereiden (zelfde maat als verwacht rooster)
 ========================================================= */
 function initUserGrid() {
-  const rooster = vulRooster(state);
-  const rows = rooster.length;
-  const cols = Math.max(...rooster.map(r => r.length));
-  state.userGrid = Array.from({length: rows}, () => Array.from({length: cols}, () => ""));
+  const rows = state.stappen.length * 2;
+  const cols = Math.max(...state.stappen.map(s => s.startKolom + s.breedte + 1));
+  state.userGrid = maakLeegRooster(rows, cols);
 }
 
 /* =========================================================
@@ -1360,76 +1359,28 @@ function anyInputInRow(rowIndex) {
 /* =========================================================
    START NIEUWE OEFENING
 ========================================================= */
-function startNieuweOefening(){
-  const diff = document.getElementById("difficulty").value;
-  state.level = diff;
-  state.decimalReminderShown = false;
-
-  const oef = genereerOefening(diff);
-
-  let deeltal = oef.dividend;
-  let deler   = oef.divisor;
-
-  state.originalDividend = deeltal;
-  state.originalDivisor  = deler;
-
-  // Niveau 5: intern schalen (zoals jij al had)
-  if (diff === "5") {
-    const k = decimalPlaces(deler);
-    if (k > 0) {
-      const keep = Math.max(0, CONFIG.maxDecimalen - k);
-      deeltal = scaleNumber(deeltal, k, keep);
-      deler   = Math.round(parseFloat(toInternal(deler)) * (10 ** k));
-    }
-  }
-
-  state.dividend = deeltal;
-  state.divisor  = deler;
-
-  // Bereken stappen en komma‑positie (worden gebruikt voor feedback/tekenen)
-  const res = berekenDelen(deeltal, deler);
-  state.stappen         = res.stappen;
-  state.decimalQuotPos  = res.decimalQuotPos;
-  state.userDecimalPos  = null;                 // eigen komma nog niet gezet
-   state.userQuotient = [];
-  state.selectedIndex   = res.decimalQuotPos;
-
-  const showDiv = toInternal(deeltal).includes(".");
-  const showDer = toInternal(deler).includes(".");
-  state.showCommaPlaceholder = showDiv || showDer;
-
-  state.decimalDividendPos = toInternal(deeltal).indexOf(".");
-
-  // Opgavetekst (niveau 5 toont originele schaal)
-  const opgaveTekst = (diff === "5")
-    ? `${toUI(state.originalDividend)} : ${toUI(state.originalDivisor)} =`
-    : `${toUI(deeltal)} : ${toUI(deler)} =`;
-  document.getElementById("opgaveTekst").textContent = opgaveTekst;
-
-  // Antwoordvelden leeg + feedback leeg
-  resetAnswerInputs();
+function startNieuweOefening() {
   clearFeedbackUI();
-  document.getElementById("inputQuotient").value = "";
-  document.getElementById("inputRest").value = "";
+  resetAnswerInputs();
 
-  // --- BELANGRIJK: quotiëntrij leeg houden bij het tekenen ---
-  state.revealQuotient = false;   // <<< HIER zetten we 'm uit
-  state.userDecimalPos = null;    // nog geen komma in quotiënt
+  const oef = genereerOefening(state.level);
+  state.dividend = oef.dividend;
+  state.divisor  = oef.divisor;
+  state.originalDividend = oef.dividend;
+  state.originalDivisor  = oef.divisor;
 
-  // (optioneel) als je stap‑modus gebruikt met invulrooster:
-  if (state.stepMode && typeof initUserGrid === "function") {
-    initUserGrid();               // leeg invulrooster met juiste afmeting
-  }
+  const result = berekenDelen(state.dividend, state.divisor);
+  state.stappen = result.stappen;
+  state.decimalQuotPos = result.decimalQuotPos;
 
-  // Nu pas tekenen (grid, divisor, dividend, lege quotiënt en leeg werkveld)
+  initUserSteps();        // lege invoer voor stapmodus
+  renderStepInputs();     // update DOM
+  state.userGrid = maakLeegRooster(state.stappen.length*2, 10); // placeholder, later vulRooster
+
+  state.revealQuotient = false;
+  state.userDecimalPos = null;
+
   UI.tekenOefening();
-
-  // Als je ook het oude stepInputs‑paneel gebruikt:
-  if (state.stepMode && typeof initUserSteps === "function" && typeof renderStepInputs === "function") {
-    initUserSteps();
-    renderStepInputs();
-     UI.tekenOefening();
-  }
 }
 
 /* =========================================================
