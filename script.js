@@ -1428,6 +1428,7 @@ function startNieuweOefening(){
   if (state.stepMode && typeof initUserSteps === "function" && typeof renderStepInputs === "function") {
     initUserSteps();
     renderStepInputs();
+     UI.tekenOefening();
   }
 }
 
