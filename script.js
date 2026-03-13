@@ -835,37 +835,8 @@ if (chk) {
     }
   }
 }
-document.addEventListener("keydown", (e) => {
-  const arrowKeys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
-  if(!arrowKeys.includes(e.key)) return;
+};
 
-  const node = UI.workAreaNode;
-  if(!node || !state.userGrid) return;
-
-  // huidige selectie
-  const selected = node.querySelector(".cell-selected");
-  let r = 0, c = 0;
-
-  if(selected){
-    r = Number(selected.dataset.r);
-    c = Number(selected.dataset.c);
-    selected.classList.remove("cell-selected");
-  }
-
-  // verplaats afhankelijk van toets
-  if(e.key === "ArrowUp")    r = Math.max(r-1, 0);
-  if(e.key === "ArrowDown")  r = Math.min(r+1, state.userGrid.length-1);
-  if(e.key === "ArrowLeft")  c = Math.max(c-1, 0);
-  if(e.key === "ArrowRight") c = Math.min(c+1, state.userGrid[0].length-1);
-
-  // markeer nieuwe cel
-  const index = r*state.userGrid[0].length + c;
-  const cel = node.children[index];
-  if(cel) cel.classList.add("cell-selected");
-  cel?.focus?.();
-
-  e.preventDefault();
-});
 document.addEventListener("keydown", (e) => {
   const t = e.target;
   const isTextInput = t && (
@@ -1389,10 +1360,6 @@ function startNieuweOefening() {
 /* =========================================================
    BOOTSTRAP
 ========================================================= */
-window.addEventListener("DOMContentLoaded",()=>{
-  UI.init();
-  startNieuweOefening();
-});
 
 // ==================== AUTOMATISCH STARTEN ====================
 document.addEventListener("DOMContentLoaded",()=>{
