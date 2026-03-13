@@ -711,6 +711,20 @@ if (chk) {
   }
 },
 
+   function aftrekVolledigIngevuld(stapIndex){
+  const rooster = vulRooster(state);
+  const stap = state.stappen[stapIndex];
+
+  const rij = stapIndex*2 + 1; // aftrekrij
+
+  for(let i=0;i<stap.breedte;i++){
+    const col = stap.startKolom+i;
+    const v = state.userGrid?.[rij]?.[col];
+    if(!v || v.trim()==="") return false;
+  }
+  return true;
+},
+   
   tekenworkArea(state){
   const node = this.workAreaNode;
   node.innerHTML = "";
@@ -736,9 +750,26 @@ if (chk) {
 
       // type(s) zoals "product", "aftrek", "gezakt"
       if (celData.type) {
-        const parts = celData.type.split(" ");
-        parts.forEach(t => { if (t.trim()) cel.classList.add(t.trim()); });
+
+  const parts = celData.type.split(" ");
+
+  parts.forEach(t => {
+
+    if(!t.trim()) return;
+
+    // speciale behandeling voor groene komma-lijn
+    if(t==="vComma"){
+      const idx = state.stappen.findIndex(s=>s.decimalStap);
+      if(idx!==-1 && aftrekVolledigIngevuld(idx)){
+        cel.classList.add("vComma");
       }
+    }
+    else{
+      cel.classList.add(t.trim());
+    }
+
+  });
+}
 
       const mainType = (celData.type || "").split(" ")[0];
 
