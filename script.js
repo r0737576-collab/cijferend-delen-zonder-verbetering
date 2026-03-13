@@ -684,7 +684,9 @@ if (chk) {
   let txt = e.currentTarget.textContent.replace(/\D/g,"");
   if (txt.length > 1) txt = txt.slice(-1);
 
+  if(e.currentTarget.textContent !== txt){
   e.currentTarget.textContent = txt;
+}
   state.userGrid[r][c] = txt;
 });
 
@@ -815,13 +817,12 @@ if (chk) {
         });
 
         cel.addEventListener("input", e => {
-          let txt = e.currentTarget.textContent.replace(/\D/g,"");
-          if (txt.length > 1) txt = txt.slice(-1);
-          e.currentTarget.textContent = txt;
-          state.userGrid[r][c] = txt;
+  let txt = e.currentTarget.textContent.replace(/\D/g,"");
+  if (txt.length > 1) txt = txt.slice(-1);
 
-           UI.tekenworkArea(state);
-        });
+  e.currentTarget.textContent = txt;
+  state.userGrid[r][c] = txt;
+});
 
       } else {
         // Niet invulbaar → werkveld leeg houden
@@ -1271,7 +1272,7 @@ function checkWorkGrid() {
 
   const rooster = vulRooster(state);
   const rows = rooster.length;
-  const cols = Math.max(...rooster.map(r => r.length));
+  const cols = rooster.length ? Math.max(...rooster.map(r => r.length)) : 1;
 
   clearGridMarks();
 
