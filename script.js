@@ -824,6 +824,64 @@ if (chk) {
     }
   }
 }
+document.addEventListener("keydown", (e) => {
+  const arrowKeys = ["ArrowUp","ArrowDown","ArrowLeft","ArrowRight"];
+  if(!arrowKeys.includes(e.key)) return;
+
+  const node = UI.workAreaNode;
+  if(!node || !state.userGrid) return;
+
+  // huidige selectie
+  const selected = node.querySelector(".cell-selected");
+  let r = 0, c = 0;
+
+  if(selected){
+    r = Number(selected.dataset.r);
+    c = Number(selected.dataset.c);
+    selected.classList.remove("cell-selected");
+  }
+
+  // verplaats afhankelijk van toets
+  if(e.key === "ArrowUp")    r = Math.max(r-1, 0);
+  if(e.key === "ArrowDown")  r = Math.min(r+1, state.userGrid.length-1);
+  if(e.key === "ArrowLeft")  c = Math.max(c-1, 0);
+  if(e.key === "ArrowRight") c = Math.min(c+1, state.userGrid[0].length-1);
+
+  // markeer nieuwe cel
+  const index = r*state.userGrid[0].length + c;
+  const cel = node.children[index];
+  if(cel) cel.classList.add("cell-selected");
+  cel?.focus?.();
+
+  e.preventDefault();
+});
+document.addEventListener("keydown", (e) => {
+  const t = e.target;
+  const isTextInput = t && (
+    t.tagName === 'INPUT' ||
+    t.tagName === 'TEXTAREA' ||
+    t.isContentEditable
+  );
+
+  // alleen buiten normale inputs
+  if(isTextInput) return;
+
+  if(e.key === "," || e.key === "."){
+    if(!state.showCommaPlaceholder) return;
+
+    // bepaal huidige kolom op basis van geselecteerde cel
+    const sel = UI.workAreaNode.querySelector(".cell-selected");
+    let pos = sel ? Number(sel.dataset.c) : state.decimalQuotPos;
+
+    if(pos == null) pos = state.decimalQuotPos;
+
+    state.userDecimalPos = pos;
+    state.selectedIndex = pos; // ook voor grid weergave
+    UI.tekenQuotient(state.stappen);
+
+    e.preventDefault();
+  }
+});
 };
 /* =========================================================
    ANTWOORDVELDEN
