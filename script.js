@@ -165,7 +165,7 @@ function scaleNumber(val, k, keepDecimals){
 ========================================================= */
 function setFieldState(el, state) {
   if (!el) return;
-  el.classList.remove('input-ok','input-err');
+  cel.classList.remove('-ok','input-err');
   if (state === 'ok') el.classList.add('input-ok');
   if (state === 'err') el.classList.add('input-err');
 }
@@ -680,12 +680,13 @@ if (chk) {
 
     cel.textContent = state.userQuotient[i] || "";
 
-    cel.addEventListener("input", e=>{
-      let v = e.currentTarget.textContent.replace(/\D/g,"");
-      if(v.length>1) v=v.slice(-1);
-      e.currentTarget.textContent=v;
-      state.userQuotient[i]=v;
-    });
+    cel.addEventListener("input", e => {
+  let txt = e.currentTarget.textContent.replace(/\D/g,"");
+  if (txt.length > 1) txt = txt.slice(-1);
+
+  e.currentTarget.textContent = txt;
+  state.userGrid[r][c] = txt;
+});
 
     node.appendChild(cel);
   }
@@ -1346,7 +1347,8 @@ function startNieuweOefening() {
 
   initUserSteps();        // lege invoer voor stapmodus
   renderStepInputs();     // update DOM
-  state.userGrid = maakLeegRooster(state.stappen.length*2, 10); // placeholder, later vulRooster
+const cols = Math.max(...state.stappen.map(s => s.startKolom + s.breedte + 1));
+state.userGrid = maakLeegRooster(state.stappen.length * 2, cols);
 
   state.revealQuotient = false;
   state.userDecimalPos = null;
