@@ -449,20 +449,22 @@ function vulRooster(state){
   });
 
   // groene lijn bij Gemiddeld
-  if(state.level === "3"){
-    const idx = state.stappen.findIndex(s => s.decimalStap);
-    if(idx !== -1){
-      const stap = state.stappen[idx];
-      const col = stap.startKolom + stap.breedte;
-      const aftrekRij = idx*2 + 1;
+  /*
+if(state.level === "3"){
+  const idx = state.stappen.findIndex(s => s.decimalStap);
+  if(idx !== -1){
+    const stap = state.stappen[idx];
+    const col = stap.startKolom + stap.breedte;
+    const aftrekRij = idx*2 + 1;
 
-      for(let r = aftrekRij; r < rooster.length; r++){
-        const bestaand = rooster[r][col] || { waarde:"", type:"" };
-        const nieuwType = (bestaand.type ? (bestaand.type + " ") : "") + "vComma";
-        rooster[r][col] = { waarde: bestaand.waarde, type: nieuwType };
-      }
+    for(let r = aftrekRij; r < rooster.length; r++){
+      const bestaand = rooster[r][col] || { waarde:"", type:"" };
+      const nieuwType = (bestaand.type ? (bestaand.type + " ") : "") + "vComma";
+      rooster[r][col] = { waarde: bestaand.waarde, type: nieuwType };
     }
   }
+}
+*/
 
   return rooster;
 }
