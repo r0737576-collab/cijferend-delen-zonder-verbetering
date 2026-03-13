@@ -465,7 +465,7 @@ function vulRooster(state){
   }
 
   return rooster;
-},
+}
 
 function aftrekVolledigIngevuld(stapIndex){
   const rooster = vulRooster(state);
