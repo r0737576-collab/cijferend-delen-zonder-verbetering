@@ -465,8 +465,22 @@ function vulRooster(state){
   }
 
   return rooster;
-}
+},
 
+function aftrekVolledigIngevuld(stapIndex){
+  const rooster = vulRooster(state);
+  const stap = state.stappen[stapIndex];
+
+  const rij = stapIndex*2 + 1; // aftrekrij
+
+  for(let i=0;i<stap.breedte;i++){
+    const col = stap.startKolom+i;
+    const v = state.userGrid?.[rij]?.[col];
+    if(!v || v.trim()==="") return false;
+  }
+  return true;
+}
+   
 /* =========================================================
    UI
 ========================================================= */
@@ -711,20 +725,6 @@ if (chk) {
   }
 },
 
-   function aftrekVolledigIngevuld(stapIndex){
-  const rooster = vulRooster(state);
-  const stap = state.stappen[stapIndex];
-
-  const rij = stapIndex*2 + 1; // aftrekrij
-
-  for(let i=0;i<stap.breedte;i++){
-    const col = stap.startKolom+i;
-    const v = state.userGrid?.[rij]?.[col];
-    if(!v || v.trim()==="") return false;
-  }
-  return true;
-},
-   
   tekenworkArea(state){
   const node = this.workAreaNode;
   node.innerHTML = "";
