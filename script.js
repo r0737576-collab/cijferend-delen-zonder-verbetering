@@ -451,7 +451,7 @@ function vulRooster(state){
   // groene lijn bij Gemiddeld
   if(state.level === "3"){
     const idx = state.stappen.findIndex(s => s.decimalStap);
-    if(idx !== -1 && aftrekVolledigIngevuld(idx)){
+    if(idx !== -1 && typeof aftrekVolledigIngevuld === "function" && aftrekVolledigIngevuld(idx)){
       const stap = state.stappen[idx];
       const col = stap.startKolom + stap.breedte;
       const aftrekRij = idx*2 + 1;
