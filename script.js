@@ -41,105 +41,78 @@
 <script>
 "use strict";
 
-// ============= STATE =============
+// --- HULP ---
+const SEP_UI = ',';
+const toInternal = v => String(v).replace(',', '.');
+const parseNum = s => { const n=parseFloat(toInternal(s)); return Number.isFinite(n)?n:null; };
+const random = (a,b) => Math.floor(Math.random()*(b-a+1))+a;
+
+// --- STATE ---
 const state = {
-  dividend:0, divisor:0,
-  stappen:[], userSteps:[], level:"1"
+  dividend:0, divisor:0, stappen:[], stepMode:false, userSteps:[], 
+  decimalPos:null, showComma:false, selectedStep:null
 };
 
-// ============= HELPERS ===========
-function random(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
-function toInternal(val){return String(val).replace(',', '.');}
-function parseLearnerNumber(s){const n=parseFloat(toInternal(s)); return Number.isFinite(n)?n:null;}
-
-// ============= GENERATIE =========
-function genereerOefening(level){
-  switch(level){
-    case "1": return {dividend: random(10,99), divisor: random(2,9)};
-    case "2": return {dividend: random(10,999), divisor: random(2,9)};
-    case "3": return {dividend: random(100,9999), divisor: random(2,12)};
-    case "4": return {dividend: random(1000,99999), divisor: random(2,20)};
-    case "5": const d=random(2,10), q=random(1,200), r=random(0,d-1); return {dividend:q*d+r, divisor:d};
-    default: return {dividend: random(10,99), divisor: random(2,9)};
-  }
+// --- GENEREER OPGAVE ---
+function genereerOpdracht(){
+  const d=random(2,9); const q=random(2,99); const D=d*q;
+  state.dividend=D; state.divisor=d; berekenStappen(D,d);
 }
 
-// ============= BEREKEN STAPPEN =========
-function berekenDelen(dividend,deler){
-  const s=[];
-  let rest=0;
-  const digits=toInternal(dividend).replace(/\D/g,'').split('');
-  for(let i=0;i<digits.length;i++){
-    rest=rest*10+Number(digits[i]);
-    if(rest>=deler){
-      const q=Math.floor(rest/deler);
-      const product=q*deler;
-      const newRest=rest-product;
-      s.push({huidig:rest, q, product, rest:newRest});
-      rest=newRest;
-    } else {
-      s.push({huidig:rest, q:0, product:0, rest:rest});
-    }
-  }
-  return s;
-}
-
-// ============= INIT USER STEPS =========
-function initUserSteps(){state.userSteps=state.stappen.map(()=>({q:"",product:"",rest:""}));}
-
-// ============= RENDER =========
-function renderGrid(node,getal){
-  node.innerHTML="";
-  const chars=toInternal(getal).replace(/\D/g,'').split('');
-  node.style.gridTemplateColumns=`repeat(${chars.length},40px)`;
-  chars.forEach(c=>{const cel=document.createElement("div"); cel.className="gridcell"; cel.textContent=c; node.appendChild(cel);});
-}
-
-function renderQuotient(stappen){
-  const node=document.getElementById("quotientRow");
-  node.innerHTML="";
-  stappen.forEach(s=>{
-    const cel=document.createElement("div");
-    cel.className="gridcell";
-    cel.textContent=s.q;
-    node.appendChild(cel);
+// --- BEREKEN STAPPEN ---
+function berekenStappen(D,d){
+  const s=[], chars=toInternal(D).split(''), isDigit=c=>c>='0'&&c<='9';
+  let rest=0, started=false, decimalQuotPos=null;
+  chars.forEach((c,i)=>{
+    if(c==='.'){ if(decimalQuotPos===null) decimalQuotPos=s.length; return; }
+    if(!isDigit(c)) return;
+    rest=rest*10+Number(c);
+    if(rest>=d){ started=true; const q=Math.floor(rest/d); const product=q*d; rest=rest-product;
+      s.push({huidig:rest+product, product, rest, q}); 
+    } else if(started){ s.push({huidig:rest,product:0,rest,q:0}); }
   });
+  if(decimalQuotPos===null) decimalQuotPos=s.length;
+  state.stappen=s; state.decimalPos=decimalQuotPos;
 }
 
-function renderStepInputs(){
-  const wrap=document.getElementById("stepInputs");
-  wrap.innerHTML=state.stappen.map((s,i)=>{
-    return `<div class="stepRow" data-i="${i}">
-      <input class="stepInput" id="step-q-${i}" placeholder="q" value="${state.userSteps[i].q}">
-      <input class="stepInput" id="step-p-${i}" placeholder="product" value="${state.userSteps[i].product}">
-      <input class="stepInput" id="step-r-${i}" placeholder="rest" value="${state.userSteps[i].rest}">
-    </div>`;
-  }).join("");
-  state.stappen.forEach((_,i)=>{
-    ["q","p","r"].forEach(k=>{
-      const el=document.getElementById(`step-${k}-${i}`);
-      if(!el) return;
-      el.addEventListener("input",()=>state.userSteps[i][k]=el.value.trim());
-    });
+// --- ROOSTER FUNCTIES ---
+function maakRooster(){ 
+  const s=state.stappen; const r=s.length*2; const cols=Math.max(...s.map(st=>String(st.huidig).length))+2;
+  const grid=Array.from({length:r},()=>Array.from({length:cols},()=>({waarde:"",type:""})));
+  s.forEach((st,i)=>{
+    const p=i*2,a=p+1,b=String(st.huidig).padStart(cols,'0'),prod=String(st.product).padStart(cols,'0'),rest=String(st.rest).padStart(cols,'0');
+    for(let j=0;j<cols;j++){ grid[p][j]={waarde:prod[j],type:"product"}; grid[a][j]={waarde:rest[j],type:"rest"}; }
   });
+  return grid;
 }
 
-// ============= START OEFENING =========
-function startOefening(level){
-  state.level=level;
-  const oef=genereerOefening(level);
-  state.dividend=oef.dividend; state.divisor=oef.divisor;
-  state.stappen=berekenDelen(state.dividend,state.divisor);
-  initUserSteps();
-  renderGrid(document.getElementById("grid"),state.dividend);
-  renderGrid(document.getElementById("divGrid"),state.divisor);
-  renderQuotient(state.stappen);
-  renderStepInputs();
+// --- UI ---
+const UI = {
+  cacheDOM(){ this.workArea=document.getElementById("workArea"); this.quotientRow=document.getElementById("quotientRow"); },
+  tekenQuotient(){ 
+    const node=this.quotientRow; node.innerHTML=""; state.stappen.forEach(s=>{ const c=document.createElement("div"); c.className="gridcell"; c.textContent=s.q; node.appendChild(c); });
+  },
+  tekenWorkArea(){ 
+    const node=this.workArea; node.innerHTML=""; const grid=maakRooster();
+    grid.forEach(row=>{ row.forEach(cel=>{ const c=document.createElement("div"); c.className="gridcell"; c.textContent=cel.waarde; node.appendChild(c); }); });
+  },
+  init(){ 
+    this.cacheDOM();
+    document.getElementById("btnNew")?.addEventListener("click", startNieuweOefening); 
+  }
+};
+
+// --- START OEFENING ---
+function startNieuweOefening(){ 
+  genereerOpdracht(); 
+  UI.tekenQuotient(); UI.tekenWorkArea();
 }
 
-// ============= INIT UI =========
-document.getElementById("btnNew").addEventListener("click",()=>startOefening(document.getElementById("levelSelect").value));
-startOefening("1"); // start oefening bij laden
+// --- LOAD ---
+document.addEventListener("DOMContentLoaded",()=>{
+  UI.init();
+  startNieuweOefening();
+});
 </script>
 
 </body>
